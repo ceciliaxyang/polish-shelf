@@ -5,7 +5,7 @@
     id: "unique-id",           // any short unique text; saved combos refer to it
     name: "Name of polish",
     brand: "Brand name",
-    effect: "magnetic",        // how the swatch is drawn: sheer, magnetic, holo, shimmer, chrome, creme, glitter, flakies, duochrome
+    effect: "magnetic",        // how the swatch is drawn: magnetic, holo, thermal, multichrome (others use a simple fill)
     effects: ["magnetic", "shimmer"], // optional: effect pills on the card and filters it shows up under (adds multichrome)
     colors: ["#1b1030", "#b89cff"],
     url: "https://...",        // optional: product page the polish came from
@@ -211,5 +211,16 @@ const POLISHES = [
     shimmer: "#ffc4d8",
     url: "https://www.mooncat.com/products/koi-whiskers",
     photos: ["images/mooncat-koi-whiskers/1.jpg", "images/mooncat-koi-whiskers/2.jpg", "images/mooncat-koi-whiskers/3.jpg", "images/mooncat-koi-whiskers/4.jpg"], // saved from the product page
+  },
+  {
+    id: "mooncat-jewel-beetle",
+    name: "Jewel Beetle",
+    brand: "Mooncat",
+    effect: "multichrome",
+    effects: ["multichrome", "shimmer"],
+    // Multichrome: shifts pink -> gold -> green with the viewing angle (from the product page and photos)
+    colors: ["#d81e6c", "#f0507e", "#e8903a", "#c8b834", "#86c434", "#3e8a2c"], // [facing, ..., edge]
+    url: "https://www.mooncat.com/products/jewel-beetle",
+    photos: ["images/mooncat-jewel-beetle/1.jpg", "images/mooncat-jewel-beetle/2.jpg", "images/mooncat-jewel-beetle/3.jpg", "images/mooncat-jewel-beetle/4.jpg"], // saved from the product page
   },
 ];

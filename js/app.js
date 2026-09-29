@@ -181,6 +181,7 @@ function renderSwatch(cv, p, W, H) {
   if (p.effect === "magnetic") return magneticSwatch(cv, p, W, H);
   if (p.effect === "holo") return holoSwatch(cv, p, W, H);
   if (p.effect === "thermal") return thermalSwatch(cv, p, W, H);
+  if (p.effect === "multichrome") return multichromeSwatch(cv, p, W, H);
   const dpr = swatchDpr(W);
   cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
   const ctx = cv.getContext("2d"); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -597,6 +598,70 @@ function thermalSwatch(cv, p, W, H) {
   const wake = () => { if (!raf) raf = requestAnimationFrame(tick); };
   cv.onpointermove = e => { const r = cv.getBoundingClientRect(); const x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height; temp.target = ((x + y) / 2 - .5) * 1.8; wake(); };
   cv.onpointerleave = () => { temp.target = 0; wake(); };
+  cv.classList.add("interactive");
+  draw();
+}
+
+/*
+  Multichrome swatch (non-magnetic). The color depends on the angle you see the surface at, and a
+  nail curves across its width, so the colors run in bands down its length: the part facing you
+  shows the first color, and the sides, turning away, shift through the rest of the list. It is
+  packed with fine shimmer, like a metallic. Hovering tilts the nail: left and right move where the
+  facing band sits, up and down slide the whole range of colors, so it shifts like turning your hand.
+  colors = [facing, ..., edge]. Optional in js/polishes.js: shadow (edge color), chrome: { spread }.
+*/
+function multichromeSwatch(cv, p, W, H) {
+  const dpr = swatchDpr(W), cw = Math.round(W * dpr), ch = Math.round(H * dpr);
+  cv.width = cw; cv.height = ch;
+  const ctx = cv.getContext("2d", { willReadFrequently: true });
+  const opt = { spread: 1, ...p.chrome };
+  const shadow = rgb(p.shadow || shade(p.colors[p.colors.length - 1], -.55));
+  const R = rng(p.id || "p");
+  const PL = 256, pal = new Float32Array(PL * 3);
+  for (let i = 0; i < PL; i++) pal.set(rgb(palette(p.colors, i / (PL - 1))), i * 3);
+
+  // Fine shimmer: one particle per CSS pixel, each a little brighter or darker and nudged in hue.
+  const CELL = Math.max(2, Math.round(dpr)), gx = Math.ceil(cw / CELL), gy = Math.ceil(ch / CELL), N = gx * gy;
+  const pb = new Float32Array(N), ph = new Float32Array(N);
+  for (let i = 0; i < N; i++) { pb[i] = R(); ph[i] = R() - .5; }
+  const img = ctx.createImageData(cw, ch), px = img.data;
+  const rest = { x: .5, y: .5 }, cur = { ...rest }, target = { ...rest };
+  let raf = 0;
+
+  function draw() {
+    const axis = .5 + (cur.x - .5) * .7;          // where the facing band sits
+    const shift = (cur.y - .5) * .5;               // slide the whole range of colors
+    for (let cy = 0; cy < gy; cy++) {
+      const ny = (cy + .5) / gy, dome = (ny - .45) * (ny - .45) * .15; // slight curve top to bottom too
+      for (let cx = 0; cx < gx; cx++) {
+        const i = cy * gx + cx, nx = (cx + .5) / gx;
+        // Angle of the surface: 0 facing you, 1 at the far edge of the curve.
+        const u = Math.min(1, Math.abs(nx - axis) / .62), ang = Math.sqrt(u * u + dome);
+        let t = ang * opt.spread + shift + ph[i] * .06;
+        t = t < 0 ? -t : t; t = t > 1 ? 1 : t;           // colors mirror on both sides of the facing band
+        const k = ((t * (PL - 1)) | 0) * 3;
+        // Metallic light: brightest where the surface faces you, darker toward the edges; shimmer on top.
+        const light = .55 + .62 * Math.exp(-ang * ang * 3.5), sparkle = pb[i] > .96 ? .5 * (pb[i] - .96) * 25 : 0;
+        const g = light * (.8 + pb[i] * .35);
+        let r = pal[k] * g, gg = pal[k + 1] * g, bl = pal[k + 2] * g;
+        r += (255 - r) * sparkle * .5; gg += (255 - gg) * sparkle * .5; bl += (255 - bl) * sparkle * .5;
+        const edge = Math.max(0, u - .8) * 2.5;          // falls into shadow right at the rim
+        r += (shadow[0] - r) * edge; gg += (shadow[1] - gg) * edge; bl += (shadow[2] - bl) * edge;
+        const x0 = cx * CELL, y0 = cy * CELL, x1 = Math.min(cw, x0 + CELL), y1 = Math.min(ch, y0 + CELL);
+        for (let y = y0; y < y1; y++) for (let x = x0, o = (y * cw + x0) * 4; x < x1; x++, o += 4) { px[o] = r; px[o + 1] = gg; px[o + 2] = bl; px[o + 3] = 255; }
+      }
+    }
+    ctx.putImageData(img, 0, 0);
+  }
+
+  function tick() {
+    cur.x += (target.x - cur.x) * .15; cur.y += (target.y - cur.y) * .15;
+    draw();
+    raf = Math.abs(target.x - cur.x) + Math.abs(target.y - cur.y) > .002 ? requestAnimationFrame(tick) : 0;
+  }
+  function aim(x, y) { target.x = x; target.y = y; if (!raf) raf = requestAnimationFrame(tick); }
+  cv.onpointermove = e => { const r = cv.getBoundingClientRect(); aim((e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height); };
+  cv.onpointerleave = () => aim(rest.x, rest.y);
   cv.classList.add("interactive");
   draw();
 }
