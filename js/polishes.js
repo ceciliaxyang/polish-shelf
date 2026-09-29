@@ -219,7 +219,8 @@ const POLISHES = [
     effect: "multichrome",
     effects: ["multichrome", "shimmer"],
     // Multichrome: shifts pink -> gold -> green with the viewing angle (from the product page and photos)
-    colors: ["#d81e6c", "#f0507e", "#e8903a", "#c8b834", "#86c434", "#3e8a2c"], // [facing, ..., edge]
+    // Deep wine-magenta where it faces you, through hot pink and gold to yellow-green and green at the edges
+    colors: ["#8e1450", "#d42a82", "#e07a3a", "#dcb030", "#a8c83a", "#3c9a3e"], // [facing, ..., edge]
     url: "https://www.mooncat.com/products/jewel-beetle",
     photos: ["images/mooncat-jewel-beetle/1.jpg", "images/mooncat-jewel-beetle/2.jpg", "images/mooncat-jewel-beetle/3.jpg", "images/mooncat-jewel-beetle/4.jpg"], // saved from the product page
   },

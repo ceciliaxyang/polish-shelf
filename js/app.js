@@ -608,13 +608,15 @@ function thermalSwatch(cv, p, W, H) {
   shows the first color, and the sides, turning away, shift through the rest of the list. It is
   packed with fine shimmer, like a metallic. Hovering tilts the nail: left and right move where the
   facing band sits, up and down slide the whole range of colors, so it shifts like turning your hand.
-  colors = [facing, ..., edge]. Optional in js/polishes.js: shadow (edge color), chrome: { spread }.
+  colors = [facing, ..., edge]. Optional in js/polishes.js: shadow (edge color), chrome: { spread, jitter,
+  along, base }: how far the colors spread, how much each particle varies, how much they drift along
+  the length, and how dark the base between particles is (lower is darker).
 */
 function multichromeSwatch(cv, p, W, H) {
   const dpr = swatchDpr(W), cw = Math.round(W * dpr), ch = Math.round(H * dpr);
   cv.width = cw; cv.height = ch;
   const ctx = cv.getContext("2d", { willReadFrequently: true });
-  const opt = { spread: 1, ...p.chrome };
+  const opt = { spread: 1, jitter: .22, along: .3, base: .35, ...p.chrome };
   const shadow = rgb(p.shadow || shade(p.colors[p.colors.length - 1], -.55));
   const R = rng(p.id || "p");
   const PL = 256, pal = new Float32Array(PL * 3);
@@ -632,17 +634,19 @@ function multichromeSwatch(cv, p, W, H) {
     const axis = .5 + (cur.x - .5) * .7;          // where the facing band sits
     const shift = (cur.y - .5) * .5;               // slide the whole range of colors
     for (let cy = 0; cy < gy; cy++) {
-      const ny = (cy + .5) / gy, dome = (ny - .45) * (ny - .45) * .15; // slight curve top to bottom too
+      const ny = (cy + .5) / gy, dome = (ny - .5) * (ny - .5) * .6; // the nail also curves top to bottom, so bands bend near the ends
+      const along = (.5 - ny) * opt.along; // colors drift along the length (e.g. greener toward the tip)
       for (let cx = 0; cx < gx; cx++) {
         const i = cy * gx + cx, nx = (cx + .5) / gx;
         // Angle of the surface: 0 facing you, 1 at the far edge of the curve.
         const u = Math.min(1, Math.abs(nx - axis) / .62), ang = Math.sqrt(u * u + dome);
-        let t = ang * opt.spread + shift + ph[i] * .06;
+        let t = ang * opt.spread + shift + along + ph[i] * opt.jitter; // each particle catches a slightly different angle
         t = t < 0 ? -t : t; t = t > 1 ? 1 : t;           // colors mirror on both sides of the facing band
         const k = ((t * (PL - 1)) | 0) * 3;
         // Metallic light: brightest where the surface faces you, darker toward the edges; shimmer on top.
-        const light = .55 + .62 * Math.exp(-ang * ang * 3.5), sparkle = pb[i] > .96 ? .5 * (pb[i] - .96) * 25 : 0;
-        const g = light * (.8 + pb[i] * .35);
+        // Particles over a dark base: most are dim, some bright, so it reads as dense metallic shimmer with depth.
+        const light = .5 + .55 * Math.exp(-ang * ang * 3), sparkle = pb[i] > .97 ? (pb[i] - .97) * 20 : 0;
+        const g = light * (opt.base + pb[i] * pb[i] * (1.25 - opt.base));
         let r = pal[k] * g, gg = pal[k + 1] * g, bl = pal[k + 2] * g;
         r += (255 - r) * sparkle * .5; gg += (255 - gg) * sparkle * .5; bl += (255 - bl) * sparkle * .5;
         const edge = Math.max(0, u - .8) * 2.5;          // falls into shadow right at the rim
