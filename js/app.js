@@ -610,20 +610,21 @@ function thermalSwatch(cv, p, W, H) {
   facing band sits, up and down slide the whole range of colors, so it shifts like turning your hand.
   colors = [facing, ..., edge]. Optional in js/polishes.js: shadow (edge color), chrome: { spread, jitter,
   along, base }: how far the colors spread, how much each particle varies, how much they drift along
-  the length, and how dark the base between particles is (lower is darker).
+  the length, how dark the base between particles is (lower is darker), and grain (particle size in
+  CSS pixels).
 */
 function multichromeSwatch(cv, p, W, H) {
   const dpr = swatchDpr(W), cw = Math.round(W * dpr), ch = Math.round(H * dpr);
   cv.width = cw; cv.height = ch;
   const ctx = cv.getContext("2d", { willReadFrequently: true });
-  const opt = { spread: 1, jitter: .22, along: .3, base: .35, ...p.chrome };
+  const opt = { spread: 1, jitter: .22, along: .3, base: .55, grain: 1.7, ...p.chrome };
   const shadow = rgb(p.shadow || shade(p.colors[p.colors.length - 1], -.55));
   const R = rng(p.id || "p");
   const PL = 256, pal = new Float32Array(PL * 3);
   for (let i = 0; i < PL; i++) pal.set(rgb(palette(p.colors, i / (PL - 1))), i * 3);
 
-  // Fine shimmer: one particle per CSS pixel, each a little brighter or darker and nudged in hue.
-  const CELL = Math.max(2, Math.round(dpr)), gx = Math.ceil(cw / CELL), gy = Math.ceil(ch / CELL), N = gx * gy;
+  // Shimmer particles about grain CSS pixels across, each a little brighter or darker and nudged in hue.
+  const CELL = Math.max(2, Math.round(dpr * opt.grain)), gx = Math.ceil(cw / CELL), gy = Math.ceil(ch / CELL), N = gx * gy;
   const pb = new Float32Array(N), ph = new Float32Array(N);
   for (let i = 0; i < N; i++) { pb[i] = R(); ph[i] = R() - .5; }
   const img = ctx.createImageData(cw, ch), px = img.data;
@@ -645,7 +646,7 @@ function multichromeSwatch(cv, p, W, H) {
         const k = ((t * (PL - 1)) | 0) * 3;
         // Metallic light: brightest where the surface faces you, darker toward the edges; shimmer on top.
         // Particles over a dark base: most are dim, some bright, so it reads as dense metallic shimmer with depth.
-        const light = .5 + .55 * Math.exp(-ang * ang * 3), sparkle = pb[i] > .97 ? (pb[i] - .97) * 20 : 0;
+        const light = .64 + .5 * Math.exp(-ang * ang * 3), sparkle = pb[i] > .97 ? (pb[i] - .97) * 20 : 0;
         const g = light * (opt.base + pb[i] * pb[i] * (1.25 - opt.base));
         let r = pal[k] * g, gg = pal[k + 1] * g, bl = pal[k + 2] * g;
         r += (255 - r) * sparkle * .5; gg += (255 - gg) * sparkle * .5; bl += (255 - bl) * sparkle * .5;
