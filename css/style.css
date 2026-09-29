@@ -85,7 +85,7 @@ button, input, select { font: inherit; color: inherit; }
 .brand { font-size: 14px; }
 .name { font-size: 20px; font-weight: 500; }
 .card-fx { display: flex; flex-wrap: wrap; gap: 4px; }
-.pill.tiny { font-size: 12px; }
+.pill.tiny { padding: 6px 12px; font-size: 12px; line-height: 18px; } /* card effect pills (Figma: smaller pill) */
 .empty { grid-column: 1 / -1; border: 1px dashed var(--line); border-radius: 24px; padding: 1.5rem; text-align: center; color: var(--muted); font-size: 14px; }
 .empty strong { display: block; color: var(--fg); font-weight: normal; font-size: 18px; margin-bottom: 4px; }
 
