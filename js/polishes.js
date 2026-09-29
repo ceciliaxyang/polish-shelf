@@ -358,4 +358,30 @@ const POLISHES = [
     url: "https://www.mooncat.com/products/the-avatar-state",
     photos: ["images/mooncat-the-avatar-state/1.jpg", "images/mooncat-the-avatar-state/2.jpg", "images/mooncat-the-avatar-state/3.jpg", "images/mooncat-the-avatar-state/4.jpg"], // saved from the product page
   },
+  {
+    id: "mooncat-green-eyed-monster",
+    name: "Green Eyed Monster",
+    brand: "Mooncat",
+    effect: "glow",
+    effects: ["glow", "shimmer"],
+    // Milky white with green shimmer (with a hint of iridescent pink) by day; glows vivid green in the dark (from the product page and photos)
+    colors: ["#f1f2ee", "#b8e6c4", "#9ad8b0", "#ecc8e0"], // [daylight base, shimmer...]
+    glowColor: "#36f2a2",
+    glowCore: "#c8ffe2",
+    url: "https://www.mooncat.com/products/green-eyed-monster",
+    photos: ["images/mooncat-green-eyed-monster/1.jpg", "images/mooncat-green-eyed-monster/2.jpg", "images/mooncat-green-eyed-monster/3.jpg", "images/mooncat-green-eyed-monster/4.jpg"], // saved from the product page
+  },
+  {
+    id: "mooncat-moonlight-lullaby",
+    name: "Moonlight Lullaby",
+    brand: "Mooncat",
+    effect: "glow",
+    effects: ["glow", "shimmer"],
+    // Icy white with blue undertones and white shimmer by day; glows white in the dark (from the product page and photos)
+    colors: ["#dfe5f3", "#ffffff", "#c6d2f2", "#e2d8f4"], // [daylight base, shimmer...]
+    glowColor: "#d8ecff",
+    glowCore: "#ffffff",
+    url: "https://www.mooncat.com/products/moonlight-lullaby",
+    photos: ["images/mooncat-moonlight-lullaby/1.jpg", "images/mooncat-moonlight-lullaby/2.jpg", "images/mooncat-moonlight-lullaby/3.jpg", "images/mooncat-moonlight-lullaby/4.jpg"], // saved from the product page
+  },
 ];
