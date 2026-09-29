@@ -97,7 +97,7 @@ const POLISHES = [
     effect: "holo",
     effects: ["holo"],
     // Rose gold linear holographic: copper rose gold packed with holo particles; rainbow streak through the light (from the photos)
-    colors: ["#b27a5c"],
+    colors: ["#c28a70"],
     shadow: "#5e3c30",         // deeper bronze toward the edges
     url: "https://www.mooncat.com/products/fake-halo",
     photos: ["images/mooncat-fake-halo/1.jpg", "images/mooncat-fake-halo/2.jpg", "images/mooncat-fake-halo/3.jpg", "images/mooncat-fake-halo/4.jpg"], // saved from the product page

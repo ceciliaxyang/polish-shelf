@@ -380,67 +380,87 @@ function magneticSwatch(cv, p, W, H) {
 
 /*
   Holographic swatch (linear holo). The polish is packed with tiny reflective particles over a
-  metallic base. Where the light hits, they split it into a rainbow that lines up in a streak
-  through the light spot, running along the nail: warm white at the center, then orange, yellow,
-  green, blue and violet moving outward on both sides. Away from the streak each particle still
-  throws a random little flash of color. The light follows the pointer on hover.
+  metallic base. Most particles are dim copper; at any moment only some face the light, and those
+  flash bright with rainbow color. Near the light the glints line up into a streak along the nail:
+  warm white at the center, then orange, yellow, green, blue and violet outward on both sides.
+  Elsewhere, glints are sparser and take random colors. The brightest ones bloom slightly.
+  On hover the light follows the pointer and each particle turns on and off at its own angle,
+  so the glints twinkle as you move.
   Optional in js/polishes.js: shadow (edge color), holo: { strength, width, angle }.
 */
 function holoSwatch(cv, p, W, H) {
   const dpr = swatchDpr(W), cw = Math.round(W * dpr), ch = Math.round(H * dpr);
   cv.width = cw; cv.height = ch;
   const ctx = cv.getContext("2d", { willReadFrequently: true });
-  const base = rgb(p.colors[0]), shadow = rgb(p.shadow || shade(p.colors[0], -.35));
-  const opt = { strength: 1, width: .13, angle: 1.15, ...p.holo };
+  const base = rgb(p.colors[0]), warm = rgb(shade(p.colors[0], .35)), shadow = rgb(p.shadow || shade(p.colors[0], -.35));
+  const opt = { strength: 1, width: .09, angle: 1.15, ...p.holo };
   const R = rng(p.id || "p");
 
-  // Particles: one per 3x3 device pixels (about one CSS pixel), each with its own brightness and hue jitter.
-  const CELL = 3, gx = Math.ceil(cw / CELL), gy = Math.ceil(ch / CELL);
-  const pb = new Float32Array(gx * gy), ph = new Float32Array(gx * gy);
-  for (let i = 0; i < pb.length; i++) { pb[i] = R(); ph[i] = R(); }
-  // Spectrum from the center of the streak outward: warm white, orange, yellow, green, blue, violet.
-  const SPEC = ["#fff1dc", "#ffb060", "#ffe84a", "#6cf07a", "#40c8ff", "#5a6cff", "#b060ff"];
+  // Particles about one CSS pixel each: brightness, hue jitter, the angle at which it catches the light, and size.
+  const CELL = Math.max(2, Math.round(dpr)), gx = Math.ceil(cw / CELL), gy = Math.ceil(ch / CELL), N = gx * gy;
+  const pb = new Float32Array(N), ph = new Float32Array(N), pa = new Float32Array(N), big = new Uint8Array(N);
+  for (let i = 0; i < N; i++) { pb[i] = R(); ph[i] = R(); pa[i] = R(); big[i] = R() < .06 ? 1 : 0; }
+  // Spectrum from the center of the streak outward, and a full wheel for stray glints.
+  const SPEC = ["#fff4e2", "#ffb060", "#ffe84a", "#6cf07a", "#40c8ff", "#5a6cff", "#c060ff"];
   const RAIN = 256, rain = new Float32Array(RAIN * 3), wheel = new Float32Array(RAIN * 3);
   for (let i = 0; i < RAIN; i++) {
     rain.set(rgb(palette(SPEC, i / (RAIN - 1))), i * 3);
     const h = i / RAIN * 6, x = 1 - Math.abs(h % 2 - 1), [r, g, b] = h < 1 ? [1, x, 0] : h < 2 ? [x, 1, 0] : h < 3 ? [0, 1, x] : h < 4 ? [0, x, 1] : h < 5 ? [x, 0, 1] : [1, 0, x];
-    wheel.set([60 + 195 * r, 60 + 195 * g, 60 + 195 * b], i * 3);
+    wheel.set([70 + 185 * r, 70 + 185 * g, 70 + 185 * b], i * 3);
   }
   const img = ctx.createImageData(cw, ch), px = img.data;
   const rest = { x: .45, y: .45 }, cur = { ...rest }, target = { ...rest };
+  const blooms = [];
   let raf = 0;
 
   function draw() {
     const lx = cur.x, ly = cur.y * H / W, rot = opt.angle + (cur.x - .5) * .4, cos = Math.cos(rot), sin = Math.sin(rot);
+    const turn = cur.x * 2.3 + cur.y * 1.7; // moving the light turns every particle's facet a little
+    blooms.length = 0;
     for (let cy = 0; cy < gy; cy++) {
-      const ny = (cy + .5) * CELL / cw; // measured in swatch widths so the streak isn't squashed
-      const vy = ((cy + .5) * CELL / ch - .5) * 2;
+      const ny = (cy + .5) * CELL / cw, vy = ((cy + .5) * CELL / ch - .5) * 2;
       for (let cx = 0; cx < gx; cx++) {
-        const i = cy * gx + cx, b = pb[i], hj = ph[i], nx = (cx + .5) * CELL / cw;
+        const i = cy * gx + cx, b = pb[i], nx = (cx + .5) * CELL / cw;
         const dx = nx - lx, dy = ny - ly, u = dx * cos + dy * sin, v = -dx * sin + dy * cos; // u along the streak, v across it
-        const along = Math.exp(-u * u * 7), across = Math.abs(v) / opt.width;
-        // Metallic base: each particle a little brighter or darker; glowing warmer near the light.
+        const along = Math.exp(-u * u * 7), across = Math.abs(v) / opt.width, streak = along * Math.exp(-across * across / 9);
+        // Dim metallic base, a little warmer near the light.
         const glow = Math.exp(-(u * u * 3 + v * v * 40));
-        const lum = .72 + b * .5 + glow * .5;
-        let r = base[0] * lum, g = base[1] * lum, bl = base[2] * lum;
-        // Rainbow streak: color by distance across it, carried by the brighter particles.
-        const k = ((Math.max(0, Math.min(1, across / 3 + (hj - .5) * .12)) * (RAIN - 1)) | 0) * 3;
-        const s = opt.strength * along * Math.exp(-across * across / 9) * (.25 + .9 * b * b);
-        r += (rain[k] - r) * s; g += (rain[k + 1] - g) * s; bl += (rain[k + 2] - bl) * s;
-        // Every particle still throws a little random color; the brightest ones sparkle.
-        const w = ((hj * RAIN) | 0) * 3, sp = b > .9 ? .45 * (b - .9) * 10 * (.35 + .65 * along) : .025;
-        r += (wheel[w] - r) * sp; g += (wheel[w + 1] - g) * sp; bl += (wheel[w + 2] - bl) * sp;
+        const lum = .72 + b * .28;
+        let r = (base[0] + (warm[0] - base[0]) * glow * .6) * lum, g = (base[1] + (warm[1] - base[1]) * glow * .6) * lum, bl = (base[2] + (warm[2] - base[2]) * glow * .6) * lum;
+        // Is this particle facing the light right now? Sharp peak, so only some are lit at a time.
+        const f = Math.sin((pa[i] + turn) * 6.283), face = f > 0 ? f ** 10 : 0;
+        const lit = face * (.25 + .75 * Math.min(1, streak * 1.6 + glow * .5)) * opt.strength;
+        if (lit > .02) {
+          // Color: position across the streak near the light, random elsewhere; near the center it's almost white.
+          const k = ((Math.max(0, Math.min(1, across / 3 + (ph[i] - .5) * .15)) * (RAIN - 1)) | 0) * 3, w = ((ph[i] * RAIN) | 0) * 3;
+          const m = Math.min(1, streak * 1.8);
+          const c0 = rain[k] * m + wheel[w] * (1 - m), c1 = rain[k + 1] * m + wheel[w + 1] * (1 - m), c2 = rain[k + 2] * m + wheel[w + 2] * (1 - m);
+          const a = Math.min(1, lit * 1.4);
+          r += (c0 * 1.05 - r) * a; g += (c1 * 1.05 - g) * a; bl += (c2 * 1.05 - bl) * a;
+          if (lit > .5 || (big[i] && lit > .25)) blooms.push((cx + .5) * CELL / dpr, (cy + .5) * CELL / dpr, c0, c1, c2, lit, big[i]);
+        }
         // Hot spot where the light reflects.
-        const hot = Math.exp(-(u * u * 60 + v * v * 300)) * .75;
+        const hot = Math.exp(-(u * u * 60 + v * v * 300)) * .6;
         r += (255 - r) * hot; g += (246 - g) * hot; bl += (232 - bl) * hot;
-        const vx = (nx - .5) * 2, r2 = vx * vx + vy * vy, rim = r2 > .5 ? Math.min(1, (r2 - .5) / 1.1) * .6 : 0;
+        const vx = (nx - .5) * 2, r2 = vx * vx + vy * vy, rim = r2 > .5 ? Math.min(1, (r2 - .5) / 1.1) * .45 : 0;
         r += (shadow[0] - r) * rim; g += (shadow[1] - g) * rim; bl += (shadow[2] - bl) * rim;
-        // Fill the particle's block.
         const x0 = cx * CELL, y0 = cy * CELL, x1 = Math.min(cw, x0 + CELL), y1 = Math.min(ch, y0 + CELL);
         for (let y = y0; y < y1; y++) for (let x = x0, o = (y * cw + x0) * 4; x < x1; x++, o += 4) { px[o] = r; px[o + 1] = g; px[o + 2] = bl; px[o + 3] = 255; }
       }
     }
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.putImageData(img, 0, 0);
+    // Bloom: the brightest glints get a crisp core and a soft halo, and the big flakes look bigger.
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.globalCompositeOperation = "lighter";
+    for (let j = 0; j < blooms.length; j += 7) {
+      const x = blooms[j], y = blooms[j + 1], lit = blooms[j + 5], isBig = blooms[j + 6];
+      const col = `rgb(${blooms[j + 2] | 0},${blooms[j + 3] | 0},${blooms[j + 4] | 0})`;
+      ctx.fillStyle = col;
+      ctx.globalAlpha = .1 * lit; ctx.beginPath(); ctx.arc(x, y, isBig ? 3.2 : 2.2, 0, 7); ctx.fill();
+      ctx.globalAlpha = .45 * lit; ctx.beginPath(); ctx.arc(x, y, isBig ? 1.2 : .75, 0, 7); ctx.fill();
+    }
+    ctx.globalCompositeOperation = "source-over"; ctx.globalAlpha = 1;
   }
 
   function tick() {
