@@ -174,8 +174,9 @@ function renderNail(cv, layers, o) {
 
 // Close-up of one polish filling the whole card, like a zoomed-in photo of a painted nail.
 // Drawn at 3x pixel density so it stays sharp on retina screens.
-// 3x keeps card swatches crisp; the big swatch in the detail view uses 2x to stay smooth while animating.
-function swatchDpr(W) { return W > 300 ? 2 : 3; }
+// Card swatches use the screen's pixel density (at least 2x, at most 3x); the big swatch in the detail
+// view uses 2x to stay smooth while animating.
+function swatchDpr(W) { return W > 400 ? 2 : Math.min(3, Math.max(2, window.devicePixelRatio || 1)); }
 
 function renderSwatch(cv, p, W, H) {
   if (p.effect === "magnetic") return magneticSwatch(cv, p, W, H);
@@ -757,7 +758,7 @@ function renderShelf() {
     });
     text.append(title, fx);
     card.append(wrap, text); grid.appendChild(card);
-    renderSwatch(sw, p, 240, 260);
+    sw._p = p; drawCard(sw);
   }
 }
 
@@ -924,13 +925,28 @@ $("#saveCombo").onclick = () => {
 // Fill the full width: use the column count whose cards come closest to the breakpoint size, then
 // size the cards to exactly fill the row (never above 1.4x the design, 336px). Phones use CSS.
 const GAP = 40, MAX_CARD = 336;
+// Card swatches are drawn at the size they're actually shown (cards grow on bigger screens), so they
+// stay sharp instead of being stretched.
+function drawCard(cv) {
+  const w = Math.round(cv.parentElement.clientWidth) || 240;
+  cv._w = w; renderSwatch(cv, cv._p, w, Math.round(w * 260 / 240));
+}
+let redrawTimer = 0;
+function redrawCards() {
+  clearTimeout(redrawTimer);
+  redrawTimer = setTimeout(() => document.querySelectorAll("#grid .swatch").forEach(cv => {
+    if (Math.abs(cv.parentElement.clientWidth - cv._w) > 2) drawCard(cv);
+  }), 150);
+}
+
 function fitGrid() {
   const grid = $("#grid");
-  if (innerWidth <= 600) { grid.style.removeProperty("--card"); return; }
+  if (innerWidth <= 600) { grid.style.removeProperty("--card"); redrawCards(); return; }
   const base = parseFloat(getComputedStyle(grid).getPropertyValue("--card-base")) || 240, avail = grid.clientWidth;
   const n = Math.max(1, Math.round((avail + GAP) / (base + GAP)));
   const card = Math.min(MAX_CARD, (avail - (n - 1) * GAP) / n);
   grid.style.setProperty("--card", Math.floor(card) + "px");
+  redrawCards();
 }
 new ResizeObserver(fitGrid).observe($("#grid"));
 
