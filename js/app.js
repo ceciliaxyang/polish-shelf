@@ -486,7 +486,7 @@ function holoSwatch(cv, p, W, H) {
   Thermal swatch. Thermal polish changes color with temperature: colors = [cold, warm]. At rest it
   shows the in-between state real nails sit in: the thin tip (top) stays cold and dark while the
   area near the cuticle (bottom) is warm and light, and the change between them is streaky, like
-  brush strokes, rather than a clean fade. Hovering adds heat under the pointer, so the polish
+  brush strokes, rather than a clean fade. The gradient runs diagonally across the swatch. Hovering adds heat under the pointer, so the polish
   warms in a soft bloom there, and slowly cools back to the resting gradient after you move away.
   Optional in js/polishes.js: thermal: { rest, streaks } where rest (0 to 1) moves the resting
   line down (colder) or up (warmer) and streaks sets how brushy the transition is.
@@ -510,35 +510,42 @@ function thermalSwatch(cv, p, W, H) {
       const fx = x / 7, ix = fx | 0, tx = fx - ix, fy = y / gh * (rows - 2), iy = fy | 0, ty = fy - iy;
       const a = lat[iy * cols + ix] + (lat[iy * cols + ix + 1] - lat[iy * cols + ix]) * tx;
       const b = lat[(iy + 1) * cols + ix] + (lat[(iy + 1) * cols + ix + 1] - lat[(iy + 1) * cols + ix]) * tx;
-      streak[y * gw + x] = (a + (b - a) * ty) * .1 * opt.streaks;
+      streak[y * gw + x] = (a + (b - a) * ty) * .05 * opt.streaks;
     } }
   const heat = new Float32Array(N); // extra warmth added by the pointer; fades back to 0
 
-  // Glossy top coat, drawn once: the soft, blurred reflection of a window running down the curved
-  // nail, a fainter one on the far side, and a gentle sheen toward the top. Kept soft so it reads
-  // as shine rather than a drawn highlight.
+  // Glossy top coat, drawn once. Gloss reads as a crisp, bright reflection that fades along its
+  // length (a window caught on the curve of the nail), with a soft glow around it, rather than a
+  // broad hazy band, which reads as matte.
   const gloss = document.createElement("canvas"); gloss.width = cw; gloss.height = ch;
-  { const g = gloss.getContext("2d"); g.scale(dpr, dpr); g.filter = `blur(${W * .035 * dpr}px)`;
-    const band = (x, w, a) => {
-      const lg = g.createLinearGradient(0, 0, 0, H);
-      lg.addColorStop(0, `rgba(255,255,255,${a})`); lg.addColorStop(.55, `rgba(255,255,255,${a * .55})`); lg.addColorStop(1, "rgba(255,255,255,0)");
-      g.fillStyle = lg; g.beginPath(); g.ellipse(W * x, H * .42, W * w, H * .46, 0, 0, 7); g.fill();
+  { const g = gloss.getContext("2d"); g.scale(dpr, dpr);
+    const streakPath = (x0, y0, x1, y1, bow, w0, w1) => { // a tapered, gently curved stroke
+      const mx = (x0 + x1) / 2 + bow, my = (y0 + y1) / 2;
+      g.beginPath(); g.moveTo(x0 - w0, y0); g.quadraticCurveTo(mx - (w0 + w1) / 2, my, x1 - w1, y1);
+      g.lineTo(x1 + w1, y1); g.quadraticCurveTo(mx + (w0 + w1) / 2, my, x0 + w0, y0); g.closePath();
     };
-    band(.25, .07, .32); band(.84, .035, .14);
-    g.filter = "none";
-    const top = g.createLinearGradient(0, 0, 0, H * .35);
-    top.addColorStop(0, "rgba(255,255,255,.1)"); top.addColorStop(1, "rgba(255,255,255,0)");
-    g.fillStyle = top; g.fillRect(0, 0, W, H * .35); }
+    const fade = (a) => { const lg = g.createLinearGradient(0, H * .06, 0, H * .78);
+      lg.addColorStop(0, `rgba(255,255,255,${a})`); lg.addColorStop(.5, `rgba(255,255,255,${a * .6})`); lg.addColorStop(1, "rgba(255,255,255,0)"); return lg; };
+    // Soft glow around the main reflection.
+    g.filter = `blur(${10 * dpr}px)`; g.fillStyle = fade(.22);
+    streakPath(W * .27, H * .06, W * .22, H * .78, -W * .03, W * .06, W * .03); g.fill();
+    // Crisp core of the reflection.
+    g.filter = `blur(${1.2 * dpr}px)`; g.fillStyle = fade(.75);
+    streakPath(W * .27, H * .07, W * .22, H * .72, -W * .03, W * .018, W * .006); g.fill();
+    // Fainter reflection on the far edge.
+    g.fillStyle = fade(.3);
+    streakPath(W * .86, H * .12, W * .88, H * .55, W * .01, W * .008, W * .003); g.fill();
+    g.filter = "none"; }
   const ptr = { x: 0, y: 0, on: false };
   let raf = 0, last = 0;
 
   function draw() {
     for (let y = 0, i = 0; y < gh; y++) {
-      const t = y / (gh - 1); // 0 at the tip, 1 near the cuticle
-      const restT = (t - (1 - opt.rest) + .5); // resting warmth rises toward the cuticle
       for (let x = 0; x < gw; x++, i++) {
-        const T = restT + streak[i] + heat[i];
-        let f = (T - .05) / .9; f = f < 0 ? 0 : f > 1 ? 1 : f * f * f * (f * (6 * f - 15) + 10); // smootherstep over a wide band
+        // Diagonal: coldest at the top-left tip corner, warmest toward the bottom-right.
+        const t = (x / (gw - 1) + y / (gh - 1)) / 2;
+        const T = t - (1 - opt.rest) + .5 + streak[i] + heat[i];
+        let f = (T + .15) / 1.3; f = f < 0 ? 0 : f > 1 ? 1 : f * f * f * (f * (6 * f - 15) + 10); // smootherstep over a wide band
         // Jelly depth: a touch darker toward the sides.
         const vx = (x / gw - .5) * 2, shadeK = 1 - .18 * vx * vx;
         px[i * 4] = (cold[0] + (warm[0] - cold[0]) * f) * shadeK;
@@ -549,7 +556,7 @@ function thermalSwatch(cv, p, W, H) {
     }
     sctx.putImageData(img, 0, 0);
     ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = "high";
-    ctx.filter = `blur(${1.5 * dpr}px)`; // extra softening so the gradient reads as one smooth pour
+    ctx.filter = `blur(${3 * dpr}px)`; // extra softening so the gradient reads as one smooth pour
     ctx.drawImage(small, -4 * dpr, -4 * dpr, cw + 8 * dpr, ch + 8 * dpr);
     ctx.filter = "none";
     ctx.drawImage(gloss, 0, 0);
