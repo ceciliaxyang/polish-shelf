@@ -130,7 +130,7 @@ const POLISHES = [
     shimmer: "#6c7a34",        // olive-green flecks in the base
     shadow: "#11130d",
     grad: [.5, .5],            // pink-white toward the upper left, blue-teal toward the lower right
-    sparkle: { density: 4, size: 2, floor: .45, mix: 1, colors: ["#ff4a5a", "#ffffff", "#5ae07a", "#4a8aff", "#ff70d0", "#e8c060", "#b070ff"] },
+    sparkle: { density: 2.2, size: 1.4, floor: .22, mix: 1, colors: ["#ff4a5a", "#ffffff", "#5ae07a", "#4a8aff", "#ff70d0", "#e8c060", "#b070ff"] },
     url: "https://www.beeskneeslacquer.com/products/sprites",
     photos: ["images/beesknees-sprites/1.jpg", "images/beesknees-sprites/2.jpg", "images/beesknees-sprites/3.jpg", "images/beesknees-sprites/4.jpg"], // saved from the product page
   },
@@ -158,7 +158,7 @@ const POLISHES = [
     shimmer: "#c8a040",        // gold flecks in the base
     shadow: "#33230f",
     bead: { r: [.44, .46] }, catEye: { width: .1 }, // broad copper-pink glow
-    sparkle: { density: 5, size: 1.6, floor: .55, mix: 1, colors: ["#ff5aa0", "#ff7ab8", "#f28cc0", "#e8b048", "#f09060", "#ffd070"] }, // dense pink and gold particles across the nail
+    sparkle: { density: 2.5, size: 1.2, floor: .28, mix: 1, colors: ["#ff5aa0", "#ff7ab8", "#f28cc0", "#e8b048", "#f09060", "#ffd070"] }, // dense pink and gold particles across the nail
     url: "https://www.beeskneeslacquer.com/products/im-nobody",
     photos: ["images/beesknees-im-nobody/1.jpg", "images/beesknees-im-nobody/2.jpg", "images/beesknees-im-nobody/3.jpg", "images/beesknees-im-nobody/4.jpg"], // saved from the product page
   },

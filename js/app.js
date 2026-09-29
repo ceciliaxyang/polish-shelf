@@ -356,7 +356,7 @@ function magneticSwatch(cv, p, W, H) {
       const a = b * (spk.floor + (1 - spk.floor) * I) * (1 - .5 * k * Math.max(0, Math.hypot(x / W - .5, y / H - .5) * 2 - .6));
       if (a < .03) continue;
       const w = r > .5 ? .6 : spkCols ? 0 : .2; // bigger glints burn toward white at their core; colored particles stay saturated
-      ctx.globalAlpha = Math.min(1, spkCols ? a * 1.8 : a); // colored particles read as solid flecks
+      ctx.globalAlpha = Math.min(1, spkCols ? a * 1.2 : a); // colored particles read as distinct flecks
       let s0 = pal[pi], s1 = pal[pi + 1], s2 = pal[pi + 2];
       if (spkCols) { const q = spkCols[(c * spkCols.length) | 0], m = spk.mix; s0 += (q[0] - s0) * m; s1 += (q[1] - s1) * m; s2 += (q[2] - s2) * m; }
       ctx.fillStyle = `rgb(${s0 + (255 - s0) * w | 0},${s1 + (255 - s1) * w | 0},${s2 + (255 - s2) * w | 0})`;
@@ -520,9 +520,9 @@ function thermalSwatch(cv, p, W, H) {
   const gloss = document.createElement("canvas"); gloss.width = cw; gloss.height = ch;
   { const g = gloss.getContext("2d"); g.scale(dpr, dpr);
     const lg = g.createLinearGradient(0, H * .04, 0, H * .62);
-    lg.addColorStop(0, "rgba(255,236,255,.55)"); lg.addColorStop(.4, "rgba(255,236,255,.2)"); lg.addColorStop(1, "rgba(255,236,255,0)");
-    g.filter = `blur(${12 * dpr}px)`; g.fillStyle = lg;
-    g.beginPath(); g.ellipse(W * .27, H * .3, W * .1, H * .3, -.12, 0, 7); g.fill();
+    lg.addColorStop(0, "rgba(255,236,255,.26)"); lg.addColorStop(.5, "rgba(255,236,255,.1)"); lg.addColorStop(1, "rgba(255,236,255,0)");
+    g.filter = `blur(${26 * dpr}px)`; g.fillStyle = lg;
+    g.beginPath(); g.ellipse(W * .3, H * .32, W * .2, H * .38, -.2, 0, 7); g.fill();
     g.filter = "none"; }
   // Edges darken slightly where the curve turns away from the light.
   const edge = ctx.createRadialGradient(cw / 2, ch / 2, Math.min(cw, ch) * .42, cw / 2, ch / 2, Math.max(cw, ch) * .75);
