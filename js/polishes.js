@@ -236,6 +236,11 @@ const POLISHES = [
     colors: ["#4c1026", "#62dca4", "#2cbcb2", "#3284cc", "#5a44a8", "#86286c"], // [base, flash...]
     shadow: "#2a0716",
     grad: [.5, .4],            // greener toward the upper left, violet toward the lower right
+    // Halfway between shimmer and magnetic: a broader, softer glow, with shimmer particles packed
+    // across the whole nail so the burgundy reads as sparkly rather than smooth.
+    bead: { r: [.5, .52], glow: .75, span: .9 }, catEye: { width: .2, glow: .8 },
+    shimmer: "#2e7e86",
+    sparkle: { density: 3.5, size: 1.2, floor: .3, mix: .75, colors: ["#5ad8a8", "#3cb8c0", "#4a80d8", "#8a58c8", "#b0d860"] },
     url: "https://www.mooncat.com/products/root-of-all-evil",
     photos: ["images/mooncat-root-of-all-evil/1.jpg", "images/mooncat-root-of-all-evil/2.jpg", "images/mooncat-root-of-all-evil/3.jpg", "images/mooncat-root-of-all-evil/4.jpg"], // saved from the product page
   },
