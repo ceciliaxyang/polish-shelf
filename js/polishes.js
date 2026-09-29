@@ -310,9 +310,9 @@ const POLISHES = [
     effect: "shimmer",
     effects: ["shimmer", "sheer"],
     // Sheer white-gray with violet-pink shimmer (from the product page and photos)
-    baseColor: "#b4abb6",
+    baseColor: "#fbf9fa",      // white base (per your request)
     colors: ["#ec62f2", "#b47af4", "#8a88e6"], // shimmer colors [facing, ..., sides]
-    shadow: "#8e8494",
+    shadow: "#d8d2da",
     chrome: { grain: 1.1, cover: 1.15, sheen: 2.2, along: .1 },
     url: "https://www.mooncat.com/products/petals-for-a-narcissist",
     photos: ["images/mooncat-petals-for-a-narcissist/1.jpg", "images/mooncat-petals-for-a-narcissist/2.jpg", "images/mooncat-petals-for-a-narcissist/3.jpg", "images/mooncat-petals-for-a-narcissist/4.jpg"], // saved from the product page
@@ -324,9 +324,9 @@ const POLISHES = [
     effect: "shimmer",
     effects: ["shimmer"],
     // Ivory with orange shimmer; reads as a soft lilac-grey ivory with a peach-orange flash in the photos
-    baseColor: "#d8cdd0",
+    baseColor: "#fbf9fa",      // white base (per your request)
     colors: ["#f69a5e", "#f2b286"], // shimmer colors [facing, ..., sides]
-    shadow: "#b2a4a8",
+    shadow: "#dcd4d2",
     chrome: { grain: 1.1, cover: 1, sheen: 2.4, along: .1 },
     url: "https://www.mooncat.com/products/memento-mori",
     photos: ["images/mooncat-memento-mori/1.jpg", "images/mooncat-memento-mori/2.jpg", "images/mooncat-memento-mori/3.jpg", "images/mooncat-memento-mori/4.jpg"], // saved from the product page
