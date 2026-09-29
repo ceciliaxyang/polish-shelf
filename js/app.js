@@ -182,7 +182,7 @@ function renderSwatch(cv, p, W, H) {
   if (p.effect === "magnetic") return magneticSwatch(cv, p, W, H);
   if (p.effect === "holo") return holoSwatch(cv, p, W, H);
   if (p.effect === "thermal") return thermalSwatch(cv, p, W, H);
-  if (p.effect === "multichrome") return multichromeSwatch(cv, p, W, H);
+  if (p.effect === "multichrome") return p.glow ? magneticSwatch(cv, p, W, H) : multichromeSwatch(cv, p, W, H);
   const dpr = swatchDpr(W);
   cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
   const ctx = cv.getContext("2d"); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -273,7 +273,9 @@ function magneticSwatch(cv, p, W, H) {
 
   // h: 0 = glass bead, 1 = cat eye, in between blends the two. x/y: pointer, 0 to 1 across the swatch.
   // The resting shape comes from the Glass bead / Cat eye pills; with neither picked it sits in between.
-  let restH = finishH();
+  // A multichrome drawn with this swatch (p.glow) keeps one fixed shape: no glass bead / cat eye.
+  const fixedH = p.glow ? (p.glow.shape ?? .3) : null;
+  let restH = fixedH ?? finishH();
   const cur = { x: .5, y: .5, h: restH }, target = { ...cur };
   const ELUT = 1024, eI = new Float32Array(ELUT), eT = new Float32Array(ELUT);
   const PLUT = 256, pal = new Float32Array(PLUT * 3);
@@ -380,9 +382,9 @@ function magneticSwatch(cv, p, W, H) {
   }
   // Hovering moves the glow with the pointer. With no finish picked it also tightens into a cat eye;
   // with Glass bead or Cat eye picked it keeps that shape.
-  cv.onpointermove = e => { const r = cv.getBoundingClientRect(); aim((e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height, state.finish ? restH : 1); };
+  cv.onpointermove = e => { const r = cv.getBoundingClientRect(); aim((e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height, fixedH ?? (state.finish ? restH : 1)); };
   cv.onpointerleave = () => aim(.5, .5, restH);
-  cv.setFinish = () => { restH = finishH(); aim(.5, .5, restH); };
+  if (fixedH === null) cv.setFinish = () => { restH = finishH(); aim(.5, .5, restH); };
   cv.classList.add("interactive");
   draw();
 }

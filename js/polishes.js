@@ -230,12 +230,12 @@ const POLISHES = [
     brand: "Mooncat",
     effect: "multichrome",
     effects: ["multichrome", "shimmer"],
-    // Semi-sheer deep burgundy packed with teal-to-green-yellow shimmer: teal-green where it faces you,
-    // through blue and violet into the burgundy base at the edges (from the product page and photos)
-    colors: ["#5ad8a0", "#2cbcb2", "#3284cc", "#5a44a8", "#6c1c48", "#4a0f28"], // [facing, ..., edge]
-    baseColor: "#5a0f26",     // deep burgundy showing between the shimmer
+    // Semi-sheer deep burgundy packed with teal-to-green-yellow shimmer. Drawn like a magnetic (a soft
+    // glowing cloud of shimmer over the burgundy) but with one fixed shape: no glass bead / cat eye.
+    glow: { shape: .3 },
+    colors: ["#4c1026", "#62dca4", "#2cbcb2", "#3284cc", "#5a44a8", "#86286c"], // [base, flash...]
     shadow: "#2a0716",
-    chrome: { cover: 1.05 },
+    grad: [.5, .4],            // greener toward the upper left, violet toward the lower right
     url: "https://www.mooncat.com/products/root-of-all-evil",
     photos: ["images/mooncat-root-of-all-evil/1.jpg", "images/mooncat-root-of-all-evil/2.jpg", "images/mooncat-root-of-all-evil/3.jpg", "images/mooncat-root-of-all-evil/4.jpg"], // saved from the product page
   },
