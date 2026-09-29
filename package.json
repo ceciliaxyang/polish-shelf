@@ -1,0 +1,13 @@
+{
+  "name": "polish-shelf",
+  "version": "1.0.0",
+  "description": "Cecilia's nail polish gallery and layering bench",
+  "private": true,
+  "scripts": {
+    "dev": "serve -l 3001 .",
+    "start": "serve -l 3001 ."
+  },
+  "devDependencies": {
+    "serve": "^14.2.4"
+  }
+}

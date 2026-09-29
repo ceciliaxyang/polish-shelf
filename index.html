@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Polish Shelf</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="page">
+    <div class="layout closed" id="layout">
+      <main>
+        <div class="filters">
+          <div class="pills" id="fxPills" role="group" aria-label="Filter by effect"></div>
+          <div class="pills" id="finishPills" role="group" aria-label="Magnetic finish"></div>
+        </div>
+        <div class="grid" id="grid"></div>
+      </main>
+
+      <aside class="bench" id="bench" aria-label="Layering bench" hidden>
+        <div class="bench-head">
+          <div>
+            <h2>Layering bench</h2>
+            <p class="hint">Stack polishes to preview a combination.</p>
+          </div>
+          <button type="button" class="pill" id="closeBench">Close</button>
+        </div>
+        <div class="stage"><canvas id="bigNail"></canvas></div>
+        <div>
+          <span class="label">Applied in this order</span>
+          <ol class="layers" id="layers"></ol>
+        </div>
+        <div class="save-row">
+          <input id="comboName" type="text" placeholder="Name this combo" aria-label="Combo name">
+          <button class="pill" id="saveCombo" type="button">Save</button>
+        </div>
+        <div>
+          <span class="label">Saved combos</span>
+          <div class="combos" id="combos"></div>
+        </div>
+      </aside>
+    </div>
+  </div>
+  <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="mName" tabindex="-1" hidden>
+    <div class="modal-blur"></div>
+    <header class="modal-head">
+      <div class="mh-lead"><button type="button" class="mh-btn" id="mBack" aria-label="Back"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#222" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 8H2M7 3 2 8l5 5"/></svg></button></div>
+      <div class="mh-content">
+        <div class="mh-title"><p class="mh-brand" id="mBrand"></p></div>
+        <p class="mh-name" id="mName"></p>
+      </div>
+      <div class="mh-trail">
+        <a class="mh-btn" id="mLink" target="_blank" rel="noopener" aria-label="Open product page"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#222" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 9.5a3 3 0 0 0 4.24 0l2.5-2.5a3 3 0 0 0-4.24-4.24l-.9.9M9.5 6.5a3 3 0 0 0-4.24 0l-2.5 2.5a3 3 0 0 0 4.24 4.24l.9-.9"/></svg></a>
+        <button type="button" class="mh-btn" id="mClose" aria-label="Close"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#222" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></svg></button>
+      </div>
+    </header>
+    <div class="modal-body">
+      <div class="m-stage" id="mStage"></div>
+      <div class="m-carousel" id="mCarousel"></div>
+    </div>
+  </div>
+  <div class="toast" id="toast" hidden></div>
+
+  <script src="js/polishes.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
