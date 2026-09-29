@@ -11,6 +11,7 @@ const EFFECTS = {
   duochrome: "Duochrome",
   multichrome: "Multichrome",
   thermal:   "Thermal",
+  glow:      "Glow in the dark",
 };
 // Filter pills always shown, in this order; other effects get a pill once a polish uses them.
 const PILL_EFFECTS = ["sheer", "magnetic", "holo", "shimmer", "chrome"];
@@ -182,6 +183,7 @@ function renderSwatch(cv, p, W, H) {
   if (p.effect === "magnetic") return magneticSwatch(cv, p, W, H);
   if (p.effect === "holo") return holoSwatch(cv, p, W, H);
   if (p.effect === "thermal") return thermalSwatch(cv, p, W, H);
+  if (p.effect === "glow") return glowSwatch(cv, p, W, H);
   if (p.effect === "multichrome") return p.glow ? magneticSwatch(cv, p, W, H) : multichromeSwatch(cv, p, W, H);
   // Shimmer: a colored base with shimmer that catches the light where the nail faces you. It uses the
   // multichrome swatch with a base color and a sheen that fades toward the sides.
@@ -691,6 +693,82 @@ function multichromeSwatch(cv, p, W, H) {
   function aim(x, y) { target.x = x; target.y = y; if (!raf) raf = requestAnimationFrame(tick); }
   cv.onpointermove = e => { const r = cv.getBoundingClientRect(); aim((e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height); };
   cv.onpointerleave = () => aim(rest.x, rest.y);
+  cv.classList.add("interactive");
+  draw();
+}
+
+/*
+  Glow-in-the-dark swatch. At rest it shows the daylight look: colors[0] is the base, the rest are its
+  shimmer. Hovering is like cupping your hands around the nail: it goes dark around the cursor and the
+  glow (glowColor) comes up. When you move away the glow lingers and fades over a few seconds, the way
+  real glow-in-the-dark polish dims once the light is gone.
+  Optional in js/polishes.js: glowColor, glowCore (brightest glow), glow: { fade } (seconds to fade).
+*/
+function glowSwatch(cv, p, W, H) {
+  const dpr = swatchDpr(W), cw = Math.round(W * dpr), ch = Math.round(H * dpr);
+  cv.width = cw; cv.height = ch;
+  const ctx = cv.getContext("2d", { willReadFrequently: true });
+  const day = rgb(p.colors[0]), shim = (p.colors.length > 1 ? p.colors.slice(1) : [shade(p.colors[0], -.2)]).map(rgb);
+  const glowC = rgb(p.glowColor || "#3cf0dc"), core = rgb(p.glowCore || shade(p.glowColor || "#3cf0dc", .6));
+  const dark = [8, 14, 18];
+  const opt = { fade: 3.2, ...p.glowOpts };
+  const R = rng(p.id || "p");
+  const CELL = Math.max(2, Math.round(dpr)), gx = Math.ceil(cw / CELL), gy = Math.ceil(ch / CELL), N = gx * gy;
+  const pb = new Float32Array(N), pc = new Uint8Array(N);
+  for (let i = 0; i < N; i++) { pb[i] = R(); pc[i] = (R() * shim.length) | 0; }
+  const img = ctx.createImageData(cw, ch), px = img.data;
+  // night: 0 = daylight, 1 = fully dark and glowing. cup: where the hand shade is centered.
+  const st = { night: 0, target: 0, cx: .5, cy: .5 };
+  let raf = 0, last = 0;
+
+  function draw() {
+    const n = st.night;
+    for (let y = 0; y < gy; y++) {
+      const ny = (y + .5) / gy;
+      for (let x = 0; x < gx; x++) {
+        const i = y * gx + x, nx = (x + .5) / gx, b = pb[i];
+        // Daylight: sheer milky base, shimmer catching the light down the middle.
+        const sheen = Math.exp(-((nx - .5) * (nx - .5)) * 9), c = shim[pc[i]];
+        const sa = (.08 + b * b * .5) * (.4 + .6 * sheen);
+        const lit = .96 + b * .06;
+        let r = (day[0] + (c[0] - day[0]) * sa) * lit, g = (day[1] + (c[1] - day[1]) * sa) * lit, bl = (day[2] + (c[2] - day[2]) * sa) * lit;
+        const rim = Math.max(0, Math.abs(nx - .5) * 2 - .8) * 1.2;
+        r *= 1 - rim * .12; g *= 1 - rim * .12; bl *= 1 - rim * .1;
+        if (n > .002) {
+          // Hand shade: darkest around the cup, falling off toward the far edges.
+          const dx = nx - st.cx, dy = (ny - st.cy) * .8, cup = Math.exp(-(dx * dx + dy * dy) * 2.2);
+          const d = Math.min(1, n * (.8 + .5 * cup));
+          // Glow: even across the nail, a little brighter in the middle, with a soft grain; fades with n.
+          const center = Math.exp(-((nx - .5) ** 2 + (ny - .5) ** 2) * 2.5);
+          // Fades toward the edges so the nail reads as a light source glowing in the dark.
+          const ex = (nx - .5) * 2, ey = (ny - .5) * 2, e = Math.sqrt(ex * ex + ey * ey) / 1.3; // smooth, rounded falloff
+          const ff = Math.min(1, Math.max(0, (e - .35) / .65)), falloff = 1 - .55 * ff * ff * (3 - 2 * ff);
+          const gl = Math.min(1, (.82 + .3 * center + (b - .5) * .1) * Math.pow(n, .6)) * falloff;
+          const hot = Math.pow(center, 2) * gl * .75;
+          const gr = dark[0] + (glowC[0] - dark[0]) * gl + (core[0] - glowC[0]) * hot;
+          const gg2 = dark[1] + (glowC[1] - dark[1]) * gl + (core[1] - glowC[1]) * hot;
+          const gb = dark[2] + (glowC[2] - dark[2]) * gl + (core[2] - glowC[2]) * hot;
+          r += (gr - r) * d; g += (gg2 - g) * d; bl += (gb - bl) * d;
+        }
+        const x0 = x * CELL, y0 = y * CELL, x1 = Math.min(cw, x0 + CELL), y1 = Math.min(ch, y0 + CELL);
+        for (let yy = y0; yy < y1; yy++) for (let xx = x0, o = (yy * cw + x0) * 4; xx < x1; xx++, o += 4) { px[o] = r; px[o + 1] = g; px[o + 2] = bl; px[o + 3] = 255; }
+      }
+    }
+    ctx.putImageData(img, 0, 0);
+  }
+
+  function tick(now) {
+    const dt = Math.min(.05, (now - (last || now)) / 1000); last = now;
+    // Goes dark quickly under your hand; the glow fades slowly once you move away.
+    const rate = st.target > st.night ? 1 - Math.exp(-dt / .35) : 1 - Math.exp(-dt / (opt.fade / 3));
+    st.night += (st.target - st.night) * rate;
+    draw();
+    if (Math.abs(st.target - st.night) > .003) raf = requestAnimationFrame(tick);
+    else { st.night = st.target; draw(); raf = 0; last = 0; }
+  }
+  const wake = () => { if (!raf) raf = requestAnimationFrame(tick); };
+  cv.onpointermove = e => { const r = cv.getBoundingClientRect(); st.cx = (e.clientX - r.left) / r.width; st.cy = (e.clientY - r.top) / r.height; st.target = 1; wake(); };
+  cv.onpointerleave = () => { st.target = 0; wake(); };
   cv.classList.add("interactive");
   draw();
 }

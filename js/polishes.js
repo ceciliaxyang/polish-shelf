@@ -5,7 +5,7 @@
     id: "unique-id",           // any short unique text; saved combos refer to it
     name: "Name of polish",
     brand: "Brand name",
-    effect: "magnetic",        // how the swatch is drawn: magnetic, holo, thermal, multichrome (others use a simple fill)
+    effect: "magnetic",        // how the swatch is drawn: magnetic, holo, thermal, multichrome, shimmer, glow
     effects: ["magnetic", "shimmer"], // optional: effect pills on the card and filters it shows up under (adds multichrome)
     colors: ["#1b1030", "#b89cff"],
     url: "https://...",        // optional: product page the polish came from
@@ -344,5 +344,18 @@ const POLISHES = [
     chrome: { grain: 1.3, cover: .95, sheen: 1.3 },
     url: "https://www.mooncat.com/products/am-i-everything-you-fear",
     photos: ["images/mooncat-am-i-everything-you-fear/1.jpg", "images/mooncat-am-i-everything-you-fear/2.jpg", "images/mooncat-am-i-everything-you-fear/3.jpg", "images/mooncat-am-i-everything-you-fear/4.jpg"], // saved from the product page
+  },
+  {
+    id: "mooncat-the-avatar-state",
+    name: "The Avatar State",
+    brand: "Mooncat",
+    effect: "glow",
+    effects: ["glow", "shimmer", "sheer"],
+    // Sheer milky white with blue shimmer by day; glows bright aqua in the dark (from the product page and photos)
+    colors: ["#eef0f6", "#8ab6f2", "#a8cbff", "#c9dcff"], // [daylight base, shimmer...]
+    glowColor: "#35f0d8",
+    glowCore: "#c4fff4",
+    url: "https://www.mooncat.com/products/the-avatar-state",
+    photos: ["images/mooncat-the-avatar-state/1.jpg", "images/mooncat-the-avatar-state/2.jpg", "images/mooncat-the-avatar-state/3.jpg", "images/mooncat-the-avatar-state/4.jpg"], // saved from the product page
   },
 ];
