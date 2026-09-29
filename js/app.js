@@ -257,14 +257,14 @@ function magneticSwatch(cv, p, W, H) {
   // Each is [x, y, radius, brightness] in CSS pixels.
   const sparkles = [];
   // Optional per polish: sparkle: { density, floor } (density multiplies the count; floor keeps them lit outside the flash).
-  const spk = { density: 1, floor: .1, mix: .7, ...p.sparkle };
+  const spk = { density: 1, floor: .1, mix: .7, size: 1, ...p.sparkle };
   // Optional sparkle.colors: each particle gets its own color from this list (a multichrome that flashes many colors).
   const spkCols = spk.colors ? spk.colors.map(rgb) : null;
   for (let tries = 0; sparkles.length < W * H / 28 * spk.density && tries < W * H * 3; tries++) {
     const x = R() * W, y = R() * H, c = clump[((y * dpr) | 0) * cw + ((x * dpr) | 0)];
     if (R() > .25 + c * .9) continue;
     const big = R() < .03;
-    sparkles.push([x, y, big ? .5 + R() * .4 : .16 + Math.pow(R(), 2) * .3, big ? .85 + R() * .15 : .3 + R() * .6, R()]);
+    sparkles.push([x, y, (big ? .5 + R() * .4 : .16 + Math.pow(R(), 2) * .3) * spk.size, big ? .85 + R() * .15 : .3 + R() * .6, R()]);
   }
 
   // h: 0 = glass bead, 1 = cat eye, in between blends the two. x/y: pointer, 0 to 1 across the swatch.
@@ -347,13 +347,14 @@ function magneticSwatch(cv, p, W, H) {
     }
     ctx.globalAlpha = 1;
     // Sparkles on top, crisp, tinted by the flash around them; bright near the flash, faint in the base.
-    ctx.globalCompositeOperation = "lighter";
+    // Multicolored particles are painted over (not added) so each keeps its own hue instead of washing to white.
+    ctx.globalCompositeOperation = spkCols ? "source-over" : "lighter";
     for (const [x, y, r, b, c] of sparkles) {
       const [I, t] = field(x * dpr, y * dpr), pi = ((t * (PLUT - 1)) | 0) * 3;
       const a = b * (spk.floor + (1 - spk.floor) * I) * (1 - .5 * k * Math.max(0, Math.hypot(x / W - .5, y / H - .5) * 2 - .6));
       if (a < .03) continue;
       const w = r > .5 ? .6 : spkCols ? 0 : .2; // bigger glints burn toward white at their core; colored particles stay saturated
-      ctx.globalAlpha = Math.min(1, a);
+      ctx.globalAlpha = Math.min(1, spkCols ? a * 1.8 : a); // colored particles read as solid flecks
       let s0 = pal[pi], s1 = pal[pi + 1], s2 = pal[pi + 2];
       if (spkCols) { const q = spkCols[(c * spkCols.length) | 0], m = spk.mix; s0 += (q[0] - s0) * m; s1 += (q[1] - s1) * m; s2 += (q[2] - s2) * m; }
       ctx.fillStyle = `rgb(${s0 + (255 - s0) * w | 0},${s1 + (255 - s1) * w | 0},${s2 + (255 - s2) * w | 0})`;

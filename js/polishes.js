@@ -31,8 +31,8 @@
     flakes   optional list of flakie colors; they shift through the list as you hover (iridescent)
     glitter  optional color of small hex glitter
     holo     optional, holographic only: { strength, width, angle } how vivid the rainbow streak is, how wide, and its tilt
-    sparkle  optional { density, floor, colors, mix }: more sparkles, how lit they stay outside the flash
-             (defaults 1 and .1); colors gives each particle its own color, mixed in by mix (default .7)
+    sparkle  optional { density, floor, colors, mix, size }: more sparkles, how lit they stay outside the flash
+             (defaults 1 and .1); colors gives each particle its own color, mixed in by mix (default .7); size scales them
 */
 const POLISHES = [
   {
@@ -130,7 +130,7 @@ const POLISHES = [
     shimmer: "#6c7a34",        // olive-green flecks in the base
     shadow: "#11130d",
     grad: [.5, .5],            // pink-white toward the upper left, blue-teal toward the lower right
-    sparkle: { density: 6, floor: .45, mix: .9, colors: ["#ff4a5a", "#ffffff", "#5ae07a", "#4a8aff", "#ff70d0", "#e8c060", "#b070ff"] },
+    sparkle: { density: 4, size: 2, floor: .45, mix: 1, colors: ["#ff4a5a", "#ffffff", "#5ae07a", "#4a8aff", "#ff70d0", "#e8c060", "#b070ff"] },
     url: "https://www.beeskneeslacquer.com/products/sprites",
     photos: ["images/beesknees-sprites/1.jpg", "images/beesknees-sprites/2.jpg", "images/beesknees-sprites/3.jpg", "images/beesknees-sprites/4.jpg"], // saved from the product page
   },
