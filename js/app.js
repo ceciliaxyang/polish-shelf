@@ -629,6 +629,7 @@ function multichromeSwatch(cv, p, W, H) {
   const ctx = cv.getContext("2d", { willReadFrequently: true });
   const opt = { spread: 1, jitter: .22, along: .3, base: .55, grain: 1.7, cover: .75, sheen: 0, ...p.chrome };
   const tint = p.baseColor ? rgb(p.baseColor) : null; // optional polish color between the shimmer particles
+  const isShimmer = p.effect === "shimmer";
   const shadow = rgb(p.shadow || shade(p.colors[p.colors.length - 1], -.55));
   const R = rng(p.id || "p");
   const PL = 256, pal = new Float32Array(PL * 3);
@@ -643,7 +644,7 @@ function multichromeSwatch(cv, p, W, H) {
   let raf = 0;
 
   function draw() {
-    const axis = .5 + (cur.x - .5) * .7;          // where the facing band sits
+    const axis = .5 + (cur.x - .5) * (isShimmer ? 1.1 : .7); // where the facing band sits
     const shift = (cur.y - .5) * .5;               // slide the whole range of colors
     for (let cy = 0; cy < gy; cy++) {
       const ny = (cy + .5) / gy, dome = (ny - .5) * (ny - .5) * .6; // the nail also curves top to bottom, so bands bend near the ends
@@ -663,11 +664,14 @@ function multichromeSwatch(cv, p, W, H) {
         const g = tint ? light * (.95 + pb[i] * pb[i] * .45) : light * (opt.base + pb[i] * pb[i] * (1.25 - opt.base));
         let r = pal[k] * g, gg = pal[k + 1] * g, bl = pal[k + 2] * g;
         if (tint) { // a colored base (e.g. burgundy) shows between the dimmer particles
-          const a = Math.min(1, opt.cover * (.25 + pb[i] * pb[i] * 1.1) * (light / 1.14) * (opt.sheen ? Math.exp(-ang * ang * opt.sheen) : 1));
+          // Shimmers: the light catches most strongly at the pointer's height along the nail, so the
+          // flash visibly follows the cursor rather than only sliding sideways.
+          const catchY = isShimmer ? .55 + .75 * Math.exp(-(ny - cur.y) * (ny - cur.y) * 7) : 1;
+          const a = Math.min(1, opt.cover * catchY * (.25 + pb[i] * pb[i] * 1.1) * (light / 1.14) * (opt.sheen ? Math.exp(-ang * ang * opt.sheen) : 1));
           r = tint[0] + (r - tint[0]) * a; gg = tint[1] + (gg - tint[1]) * a; bl = tint[2] + (bl - tint[2]) * a;
         }
         r += (255 - r) * sparkle * .5; gg += (255 - gg) * sparkle * .5; bl += (255 - bl) * sparkle * .5;
-        const edge = Math.max(0, u - .8) * 2.5;          // falls into shadow right at the rim
+        const edge = Math.max(0, Math.abs(nx - .5) * 2 - .82) * 2.8; // falls into shadow at the nail's actual edges
         r += (shadow[0] - r) * edge; gg += (shadow[1] - gg) * edge; bl += (shadow[2] - bl) * edge;
         const x0 = cx * CELL, y0 = cy * CELL, x1 = Math.min(cw, x0 + CELL), y1 = Math.min(ch, y0 + CELL);
         for (let y = y0; y < y1; y++) for (let x = x0, o = (y * cw + x0) * 4; x < x1; x++, o += 4) { px[o] = r; px[o + 1] = gg; px[o + 2] = bl; px[o + 3] = 255; }
