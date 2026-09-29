@@ -206,7 +206,7 @@ const POLISHES = [
     effect: "thermal",
     effects: ["thermal", "shimmer"],
     // Thermal: coral when cold, pastel yellow when warm, with soft pink shimmer (sampled from the swatch grid)
-    colors: ["#f87a86", "#fbdc9e"], // [cold, warm]
+    colors: ["#f8768a", "#fadb84"], // [cold, warm]
     thermal: { rest: .42 },
     shimmer: "#ffc4d8",
     url: "https://www.mooncat.com/products/koi-whiskers",

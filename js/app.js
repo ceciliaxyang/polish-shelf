@@ -536,7 +536,8 @@ function thermalSwatch(cv, p, W, H) {
   const shimCol = p.shimmer || "#fff";
   // Edges darken slightly where the curve turns away from the light.
   const edge = ctx.createRadialGradient(cw / 2, ch / 2, Math.min(cw, ch) * .42, cw / 2, ch / 2, Math.max(cw, ch) * .75);
-  edge.addColorStop(0, "rgba(0,0,0,0)"); edge.addColorStop(1, "rgba(0,0,0,.2)");
+  // Tinted with the polish's own cold shade rather than black, so light polishes stay bright and clean.
+  const ec = rgb(shade(p.colors[0], -.25)); edge.addColorStop(0, `rgba(${ec},0)`); edge.addColorStop(1, `rgba(${ec},.22)`);
   let raf = 0;
 
   function draw() {
@@ -547,7 +548,7 @@ function thermalSwatch(cv, p, W, H) {
         const T = t - (1 - opt.rest) + .5 + streak[i] + temp.cur;
         let f = (T + .05) / .95; f = f < 0 ? 0 : f > 1 ? 1 : f * f * f * (f * (6 * f - 15) + 10); // smootherstep over a wide band
         // Jelly depth: a touch darker toward the sides.
-        const vx = (x / gw - .5) * 2, shadeK = 1 - .18 * vx * vx;
+        const vx = (x / gw - .5) * 2, shadeK = 1 - .08 * vx * vx;
         px[i * 4] = (cold[0] + (warm[0] - cold[0]) * f) * shadeK;
         px[i * 4 + 1] = (cold[1] + (warm[1] - cold[1]) * f) * shadeK;
         px[i * 4 + 2] = (cold[2] + (warm[2] - cold[2]) * f) * shadeK;
