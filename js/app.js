@@ -486,8 +486,9 @@ function holoSwatch(cv, p, W, H) {
   Thermal swatch. Thermal polish changes color with temperature: colors = [cold, warm]. At rest it
   shows the in-between state real nails sit in: the thin tip (top) stays cold and dark while the
   area near the cuticle (bottom) is warm and light, and the change between them is streaky, like
-  brush strokes, rather than a clean fade. The gradient runs diagonally across the swatch. Hovering adds heat under the pointer, so the polish
-  warms in a soft bloom there, and slowly cools back to the resting gradient after you move away.
+  brush strokes, rather than a clean fade. The gradient runs diagonally across the swatch. Hovering changes the temperature
+  of the whole nail: toward the top-left it goes colder and darker, toward the bottom-right warmer
+  and lighter.
   Optional in js/polishes.js: thermal: { rest, streaks } where rest (0 to 1) moves the resting
   line down (colder) or up (warmer) and streaks sets how brushy the transition is.
 */
@@ -512,7 +513,6 @@ function thermalSwatch(cv, p, W, H) {
       const b = lat[(iy + 1) * cols + ix] + (lat[(iy + 1) * cols + ix + 1] - lat[(iy + 1) * cols + ix]) * tx;
       streak[y * gw + x] = (a + (b - a) * ty) * .05 * opt.streaks;
     } }
-  const heat = new Float32Array(N); // extra warmth added by the pointer; fades back to 0
 
   // Glossy top coat, drawn once: the soft reflection of a large light (like a window) on the
   // curved surface. No hard shapes: a bright but blurred patch that fades downward, plus a slight
@@ -527,15 +527,14 @@ function thermalSwatch(cv, p, W, H) {
   // Edges darken slightly where the curve turns away from the light.
   const edge = ctx.createRadialGradient(cw / 2, ch / 2, Math.min(cw, ch) * .42, cw / 2, ch / 2, Math.max(cw, ch) * .75);
   edge.addColorStop(0, "rgba(0,0,0,0)"); edge.addColorStop(1, "rgba(0,0,0,.2)");
-  const ptr = { x: 0, y: 0, on: false };
-  let raf = 0, last = 0;
+  let raf = 0;
 
   function draw() {
     for (let y = 0, i = 0; y < gh; y++) {
       for (let x = 0; x < gw; x++, i++) {
         // Diagonal: coldest at the top-left tip corner, warmest toward the bottom-right.
         const t = (x / (gw - 1) + y / (gh - 1)) / 2;
-        const T = t - (1 - opt.rest) + .5 + streak[i] + heat[i];
+        const T = t - (1 - opt.rest) + .5 + streak[i] + temp.cur;
         let f = (T + .15) / 1.3; f = f < 0 ? 0 : f > 1 ? 1 : f * f * f * (f * (6 * f - 15) + 10); // smootherstep over a wide band
         // Jelly depth: a touch darker toward the sides.
         const vx = (x / gw - .5) * 2, shadeK = 1 - .18 * vx * vx;
@@ -554,29 +553,17 @@ function thermalSwatch(cv, p, W, H) {
     ctx.fillStyle = edge; ctx.fillRect(0, 0, cw, ch);
   }
 
-  function tick(now) {
-    const dt = Math.min(.05, (now - (last || now)) / 1000); last = now;
-    let any = false;
-    // Cool down toward the resting state over a couple of seconds.
-    const decay = Math.exp(-dt / 1.4);
-    for (let i = 0; i < N; i++) { heat[i] *= decay; if (heat[i] > .005) any = true; else heat[i] = 0; }
-    // Warm up under the pointer.
-    if (ptr.on) {
-      any = true;
-      const r = 16, cx = ptr.x * gw, cy = ptr.y * gh;
-      for (let y = Math.max(0, (cy - r * 2) | 0); y < Math.min(gh, cy + r * 2); y++)
-        for (let x = Math.max(0, (cx - r * 2) | 0); x < Math.min(gw, cx + r * 2); x++) {
-          const d2 = ((x - cx) ** 2 + (y - cy) ** 2) / (r * r), i = y * gw + x;
-          heat[i] = Math.min(1.2, heat[i] + dt * 2.2 * Math.exp(-d2) * (1 + streak[i]));
-        }
-    }
+  // Hover sets the temperature of the whole nail: toward the top-left it cools (darker), toward the
+  // bottom-right it warms (lighter). Moving off returns it to the resting gradient.
+  const temp = { cur: 0, target: 0 };
+  function tick() {
+    temp.cur += (temp.target - temp.cur) * .12;
     draw();
-    raf = any ? requestAnimationFrame(tick) : 0;
-    if (!raf) last = 0;
+    raf = Math.abs(temp.target - temp.cur) > .002 ? requestAnimationFrame(tick) : 0;
   }
   const wake = () => { if (!raf) raf = requestAnimationFrame(tick); };
-  cv.onpointermove = e => { const r = cv.getBoundingClientRect(); ptr.x = (e.clientX - r.left) / r.width; ptr.y = (e.clientY - r.top) / r.height; ptr.on = true; wake(); };
-  cv.onpointerleave = () => { ptr.on = false; wake(); };
+  cv.onpointermove = e => { const r = cv.getBoundingClientRect(); const x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height; temp.target = ((x + y) / 2 - .5) * 1.8; wake(); };
+  cv.onpointerleave = () => { temp.target = 0; wake(); };
   cv.classList.add("interactive");
   draw();
 }
