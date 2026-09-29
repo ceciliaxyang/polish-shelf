@@ -310,10 +310,10 @@ const POLISHES = [
     effect: "shimmer",
     effects: ["shimmer", "sheer"],
     // Sheer white-gray with violet-pink shimmer (from the product page and photos)
-    baseColor: "#b8b0b6",
-    colors: ["#e674ea", "#b684f0", "#8e8ee2"], // shimmer colors [facing, ..., sides]
-    shadow: "#8a8290",
-    chrome: { grain: 1.1, cover: .75, sheen: 3, along: .1 },
+    baseColor: "#b4abb6",
+    colors: ["#ec62f2", "#b47af4", "#8a88e6"], // shimmer colors [facing, ..., sides]
+    shadow: "#8e8494",
+    chrome: { grain: 1.1, cover: 1.15, sheen: 2.2, along: .1 },
     url: "https://www.mooncat.com/products/petals-for-a-narcissist",
     photos: ["images/mooncat-petals-for-a-narcissist/1.jpg", "images/mooncat-petals-for-a-narcissist/2.jpg", "images/mooncat-petals-for-a-narcissist/3.jpg", "images/mooncat-petals-for-a-narcissist/4.jpg"], // saved from the product page
   },
@@ -323,11 +323,11 @@ const POLISHES = [
     brand: "Mooncat",
     effect: "shimmer",
     effects: ["shimmer"],
-    // Ivory with orange shimmer (from the product page and photos)
-    baseColor: "#ede2dc",
-    colors: ["#f4a474", "#f2bc94"], // shimmer colors [facing, ..., sides]
-    shadow: "#c2b2aa",
-    chrome: { grain: 1.1, cover: .45, sheen: 2.6, along: .1 },
+    // Ivory with orange shimmer; reads as a soft lilac-grey ivory with a peach-orange flash in the photos
+    baseColor: "#d8cdd0",
+    colors: ["#f69a5e", "#f2b286"], // shimmer colors [facing, ..., sides]
+    shadow: "#b2a4a8",
+    chrome: { grain: 1.1, cover: 1, sheen: 2.4, along: .1 },
     url: "https://www.mooncat.com/products/memento-mori",
     photos: ["images/mooncat-memento-mori/1.jpg", "images/mooncat-memento-mori/2.jpg", "images/mooncat-memento-mori/3.jpg", "images/mooncat-memento-mori/4.jpg"], // saved from the product page
   },

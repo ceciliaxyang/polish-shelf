@@ -658,7 +658,9 @@ function multichromeSwatch(cv, p, W, H) {
         // Metallic light: brightest where the surface faces you, darker toward the edges; shimmer on top.
         // Particles over a dark base: most are dim, some bright, so it reads as dense metallic shimmer with depth.
         const light = .64 + .5 * Math.exp(-ang * ang * 3), sparkle = pb[i] > .97 ? (pb[i] - .97) * 20 : 0;
-        const g = light * (opt.base + pb[i] * pb[i] * (1.25 - opt.base));
+        // With a colored base, shimmer particles are never dimmer than full color (dim ones would read as
+        // grey on light polishes); otherwise dim particles let the dark base show between them.
+        const g = tint ? light * (.95 + pb[i] * pb[i] * .45) : light * (opt.base + pb[i] * pb[i] * (1.25 - opt.base));
         let r = pal[k] * g, gg = pal[k + 1] * g, bl = pal[k + 2] * g;
         if (tint) { // a colored base (e.g. burgundy) shows between the dimmer particles
           const a = Math.min(1, opt.cover * (.25 + pb[i] * pb[i] * 1.1) * (light / 1.14) * (opt.sheen ? Math.exp(-ang * ang * opt.sheen) : 1));
