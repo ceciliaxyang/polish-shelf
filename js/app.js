@@ -621,13 +621,14 @@ function thermalSwatch(cv, p, W, H) {
   the length, how dark the base between particles is (lower is darker), grain (particle size in
   CSS pixels) and cover (with baseColor: how much of the base the shimmer covers).
   baseColor: optional colored base (like a burgundy jelly) that shows between the particles; sheen
-  (with baseColor) makes the shimmer fade toward the sides so the base shows there (used for shimmers).
+  (with baseColor) makes the shimmer fade toward the sides so the base shows there (used for shimmers);
+  smooth (0 to 1) evens out the particles for a soft gleam rather than glitter.
 */
 function multichromeSwatch(cv, p, W, H) {
   const dpr = swatchDpr(W), cw = Math.round(W * dpr), ch = Math.round(H * dpr);
   cv.width = cw; cv.height = ch;
   const ctx = cv.getContext("2d", { willReadFrequently: true });
-  const opt = { spread: 1, jitter: .22, along: .3, base: .55, grain: 1.7, cover: .75, sheen: 0, ...p.chrome };
+  const opt = { spread: 1, jitter: .22, along: .3, base: .55, grain: 1.7, cover: .75, sheen: 0, smooth: 0, ...p.chrome };
   const tint = p.baseColor ? rgb(p.baseColor) : null; // optional polish color between the shimmer particles
   const isShimmer = p.effect === "shimmer";
   const shadow = rgb(p.shadow || shade(p.colors[p.colors.length - 1], -.55));
@@ -653,21 +654,23 @@ function multichromeSwatch(cv, p, W, H) {
         const i = cy * gx + cx, nx = (cx + .5) / gx;
         // Angle of the surface: 0 facing you, 1 at the far edge of the curve.
         const u = Math.min(1, Math.abs(nx - axis) / .62), ang = Math.sqrt(u * u + dome);
-        let t = ang * opt.spread + shift + along + ph[i] * opt.jitter; // each particle catches a slightly different angle
+        // smooth (0 to 1) evens out the particles so the shimmer gleams like a satin sheen instead of glittering.
+        const q = opt.smooth ? .6 + (pb[i] - .6) * (1 - opt.smooth) : pb[i];
+        let t = ang * opt.spread + shift + along + ph[i] * opt.jitter * (1 - opt.smooth); // each particle catches a slightly different angle
         t = t < 0 ? -t : t; t = t > 1 ? 1 : t;           // colors mirror on both sides of the facing band
         const k = ((t * (PL - 1)) | 0) * 3;
         // Metallic light: brightest where the surface faces you, darker toward the edges; shimmer on top.
         // Particles over a dark base: most are dim, some bright, so it reads as dense metallic shimmer with depth.
-        const light = .64 + .5 * Math.exp(-ang * ang * 3), sparkle = pb[i] > .97 ? (pb[i] - .97) * 20 : 0;
+        const light = .64 + .5 * Math.exp(-ang * ang * 3), sparkle = pb[i] > .97 ? (pb[i] - .97) * 20 * (1 - opt.smooth) : 0;
         // With a colored base, shimmer particles are never dimmer than full color (dim ones would read as
         // grey on light polishes); otherwise dim particles let the dark base show between them.
-        const g = tint ? light * (.95 + pb[i] * pb[i] * .45) : light * (opt.base + pb[i] * pb[i] * (1.25 - opt.base));
+        const g = tint ? light * (.95 + q * q * .45) : light * (opt.base + q * q * (1.25 - opt.base));
         let r = pal[k] * g, gg = pal[k + 1] * g, bl = pal[k + 2] * g;
         if (tint) { // a colored base (e.g. burgundy) shows between the dimmer particles
           // Shimmers: the light catches most strongly at the pointer's height along the nail, so the
           // flash visibly follows the cursor rather than only sliding sideways.
           const catchY = isShimmer ? .55 + .75 * Math.exp(-(ny - cur.y) * (ny - cur.y) * 7) : 1;
-          const a = Math.min(1, opt.cover * catchY * (.25 + pb[i] * pb[i] * 1.1) * (light / 1.14) * (opt.sheen ? Math.exp(-ang * ang * opt.sheen) : 1));
+          const a = Math.min(1, opt.cover * catchY * (.25 + q * q * 1.1) * (light / 1.14) * (opt.sheen ? Math.exp(-ang * ang * opt.sheen) : 1));
           r = tint[0] + (r - tint[0]) * a; gg = tint[1] + (gg - tint[1]) * a; bl = tint[2] + (bl - tint[2]) * a;
         }
         r += (255 - r) * sparkle * .5; gg += (255 - gg) * sparkle * .5; bl += (255 - bl) * sparkle * .5;
