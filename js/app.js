@@ -555,8 +555,8 @@ function renderShelf() {
     sw.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openDetail(p, wrap); } };
     const text = document.createElement("div"); text.className = "card-text";
     const title = document.createElement("div"); title.className = "card-title";
-    const br = document.createElement("p"); br.className = "brand"; br.textContent = p.brand || "";
-    const nm = document.createElement("p"); nm.className = "name"; nm.textContent = p.name || "Untitled";
+    const br = document.createElement("p"); br.className = "brand"; br.textContent = p.brand || ""; br.title = br.textContent;
+    const nm = document.createElement("p"); nm.className = "name"; nm.textContent = p.name || "Untitled"; nm.title = nm.textContent;
     title.append(br, nm);
     const fx = document.createElement("div"); fx.className = "card-fx";
     effectsOf(p).forEach(k => {
@@ -642,7 +642,6 @@ function closeDetail() {
     setTimeout(done, 450);
   } else done();
 }
-$("#mBack").onclick = closeDetail;
 $("#mClose").onclick = closeDetail;
 document.addEventListener("keydown", e => { if (e.key === "Escape") closeDetail(); });
 

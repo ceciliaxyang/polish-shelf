@@ -63,7 +63,8 @@ button, input, select { font: inherit; color: inherit; }
 .swatch-btn.on svg { fill: currentColor; }
 .card-text { display: flex; flex-direction: column; gap: 12px; width: 100%; }
 .card-title { display: flex; flex-direction: column; gap: 8px; }
-.card-title p { margin: 0; overflow-wrap: anywhere; }
+.card-title { min-width: 0; width: 100%; }
+.card-title p { margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } /* one line max */
 .brand { font-size: 14px; }
 .name { font-size: 20px; font-weight: 500; }
 .card-fx { display: flex; flex-wrap: wrap; gap: 4px; }
@@ -107,7 +108,7 @@ body.detail-open .page { filter: blur(50px); }
 .modal.open .modal-blur, .modal.open .modal-head, .modal.open .m-carousel { opacity: 1; }
 .modal.open .m-carousel { transition-delay: .15s; }
 .modal-head { position: absolute; top: 0; left: 0; right: 0; display: flex; gap: 16px; min-height: 88px; padding: 24px 48px; }
-.mh-lead, .mh-trail { display: flex; align-items: flex-start; width: 97px; padding-top: 24px; flex-shrink: 0; }
+.mh-trail { display: flex; align-items: flex-start; width: 97px; padding-top: 24px; flex-shrink: 0; }
 .mh-trail { justify-content: flex-end; gap: 8px; }
 .mh-content { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; padding: 24px 0 12px; }
 .mh-title { padding: 2px 0; }
@@ -136,7 +137,7 @@ body.detail-open .page { filter: blur(50px); }
 .m-thumb:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
 @media (max-width: 600px) {
   .modal-head { padding: 12px 16px; }
-  .mh-lead, .mh-trail { width: auto; padding-top: 12px; }
+  .mh-trail { width: auto; padding-top: 12px; }
   .mh-content { padding: 12px 0 8px; }
   .modal-body { --gap: 16px; }
   .m-carousel { gap: 8px; }

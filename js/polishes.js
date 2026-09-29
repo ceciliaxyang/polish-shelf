@@ -153,9 +153,12 @@ const POLISHES = [
     brand: "Bee's Knees",
     effect: "magnetic",
     effects: ["magnetic", "multichrome"],
-    // Sepia brown base; mosaic magnetic with a bright pink and a rich gold pigment (from the product page)
-    colors: ["#3e3416", "#f47eae", "#ec9272", "#e2b444", "#b88a2c"],
-    shadow: "#211b08",
+    // Sepia olive-bronze base packed with pink and gold magnetic particles; bright pink core warming into gold (from the photos)
+    colors: ["#6a4a24", "#f27aa8", "#ea8a6c", "#dca24a", "#bc8a36"],
+    shimmer: "#c8a040",        // gold flecks in the base
+    shadow: "#33230f",
+    bead: { r: [.44, .46] }, catEye: { width: .1 }, // broad copper-pink glow
+    sparkle: { density: 5, size: 1.6, floor: .55, mix: 1, colors: ["#ff5aa0", "#ff7ab8", "#f28cc0", "#e8b048", "#f09060", "#ffd070"] }, // dense pink and gold particles across the nail
     url: "https://www.beeskneeslacquer.com/products/im-nobody",
     photos: ["images/beesknees-im-nobody/1.jpg", "images/beesknees-im-nobody/2.jpg", "images/beesknees-im-nobody/3.jpg", "images/beesknees-im-nobody/4.jpg"], // saved from the product page
   },
