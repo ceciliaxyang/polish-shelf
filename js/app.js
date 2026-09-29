@@ -291,7 +291,8 @@ function magneticSwatch(cv, p, W, H) {
     const h = cur.h, k = 1 - h;
     // Glow shape: round and centered for the bead, a long thin stripe through the pointer for the cat eye.
     const cx = (.5 * k + cur.x * h) * cw, cy = (.5 * k + cur.y * h) * ch;
-    const rot = 1.0 + (cur.x - .5) * .5; // cat eye runs diagonally, tilting a little as it moves
+    const rot = fixedH !== null && p.glow.rot != null ? p.glow.rot + (cur.x - .5) * .3 // fixed-shape glow: its own angle
+      : 1.0 + (cur.x - .5) * .5; // cat eye runs diagonally, tilting a little as it moves
     const rx = (bead.r[0] * k + 1.1 * h) * cw, ry = (bead.r[1] * k + cat.width * h) * ch;
     const cos = Math.cos(rot), sin = Math.sin(rot);
     const span = bead.span * k + cat.span * h, peak = bead.glow * k + cat.glow * h;
