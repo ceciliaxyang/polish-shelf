@@ -107,11 +107,13 @@ const POLISHES = [
     name: "Knight, Knave, Optimist",
     brand: "Bee's Knees",
     effect: "magnetic",
-    effects: ["magnetic", "flakies"],
-    // Blackened base; limestone magnetic shimmer with blue-to-purple magnetic flakes that have a subtle holo (from the product page)
-    colors: ["#26212c", "#d8cec2", "#aa9cb8", "#7462b4", "#4c3c9c"],
-    shadow: "#141118",
-    flakes: ["#4a6ae8", "#6a52e0", "#8a5af0", "#5ab4e8"], // blue -> purple, a hint of holo
+    effects: ["magnetic", "shimmer"],
+    // Dark grey-purple base; pinkish limestone shimmer glow with a dark purplish-blue streak and fine blue sparkle (from the photos)
+    colors: ["#322a3a", "#e2cac4", "#bda8b4", "#7c6cd2", "#4c46d2", "#3834a0"],
+    shadow: "#1a1520",
+    grad: [.2, -.9],           // blue-violet toward the top of the glow, limestone lower down
+    sparkle: { density: 2.2, floor: .3 }, // fine sparkle across the nail
+    bead: { glow: .8 }, catEye: { glow: .85 }, // softer limestone glow, so the dark base shows
     url: "https://www.beeskneeslacquer.com/products/knight-knave-optimist",
     photos: ["images/beesknees-knight-knave-optimist/1.jpg", "images/beesknees-knight-knave-optimist/2.jpg", "images/beesknees-knight-knave-optimist/3.jpg", "images/beesknees-knight-knave-optimist/4.jpg"], // saved from the product page
   },
