@@ -162,4 +162,15 @@ const POLISHES = [
     url: "https://www.beeskneeslacquer.com/products/im-nobody",
     photos: ["images/beesknees-im-nobody/1.jpg", "images/beesknees-im-nobody/2.jpg", "images/beesknees-im-nobody/3.jpg", "images/beesknees-im-nobody/4.jpg"], // saved from the product page
   },
+  {
+    id: "mooncat-dark-omens",
+    name: "Dark Omens",
+    brand: "Mooncat",
+    effect: "thermal",
+    effects: ["thermal"],
+    // Thermal: deep purple-black when cold, light orchid purple when warm (from the product page and photos)
+    colors: ["#2a1428", "#9c5ca6"], // [cold, warm]
+    url: "https://www.mooncat.com/products/dark-omens",
+    photos: ["images/mooncat-dark-omens/1.jpg", "images/mooncat-dark-omens/2.jpg", "images/mooncat-dark-omens/3.jpg", "images/mooncat-dark-omens/4.jpg"], // saved from the product page
+  },
 ];

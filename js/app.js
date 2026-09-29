@@ -10,6 +10,7 @@ const EFFECTS = {
   flakies:   "Flakies",
   duochrome: "Duochrome",
   multichrome: "Multichrome",
+  thermal:   "Thermal",
 };
 // Filter pills always shown, in this order; other effects get a pill once a polish uses them.
 const PILL_EFFECTS = ["sheer", "magnetic", "holo", "shimmer", "chrome"];
@@ -179,6 +180,7 @@ function swatchDpr(W) { return W > 300 ? 2 : 3; }
 function renderSwatch(cv, p, W, H) {
   if (p.effect === "magnetic") return magneticSwatch(cv, p, W, H);
   if (p.effect === "holo") return holoSwatch(cv, p, W, H);
+  if (p.effect === "thermal") return thermalSwatch(cv, p, W, H);
   const dpr = swatchDpr(W);
   cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
   const ctx = cv.getContext("2d"); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -476,6 +478,87 @@ function holoSwatch(cv, p, W, H) {
   function aim(x, y) { target.x = x; target.y = y; if (!raf) raf = requestAnimationFrame(tick); }
   cv.onpointermove = e => { const r = cv.getBoundingClientRect(); aim((e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height); };
   cv.onpointerleave = () => aim(rest.x, rest.y);
+  cv.classList.add("interactive");
+  draw();
+}
+
+/*
+  Thermal swatch. Thermal polish changes color with temperature: colors = [cold, warm]. At rest it
+  shows the in-between state real nails sit in: the thin tip (top) stays cold and dark while the
+  area near the cuticle (bottom) is warm and light, and the change between them is streaky, like
+  brush strokes, rather than a clean fade. Hovering adds heat under the pointer, so the polish
+  warms in a soft bloom there, and slowly cools back to the resting gradient after you move away.
+  Optional in js/polishes.js: thermal: { rest, streaks } where rest (0 to 1) moves the resting
+  line down (colder) or up (warmer) and streaks sets how brushy the transition is.
+*/
+function thermalSwatch(cv, p, W, H) {
+  const dpr = swatchDpr(W), cw = Math.round(W * dpr), ch = Math.round(H * dpr);
+  cv.width = cw; cv.height = ch;
+  const ctx = cv.getContext("2d");
+  const cold = rgb(p.colors[0]), warm = rgb(p.colors[1] || shade(p.colors[0], .5));
+  const opt = { rest: .5, streaks: 1, ...p.thermal };
+  const R = rng(p.id || "p");
+
+  // Work on a coarse grid of heat (one cell per 2 CSS pixels) and let the canvas smooth it when scaled up.
+  const gw = Math.ceil(W / 2), gh = Math.ceil(H / 2), N = gw * gh;
+  const small = document.createElement("canvas"); small.width = gw; small.height = gh;
+  const sctx = small.getContext("2d"), img = sctx.createImageData(gw, gh), px = img.data;
+  // Brush streaks: slow random variation across the width, stretched top to bottom.
+  const streak = new Float32Array(N);
+  { const cols = Math.ceil(gw / 7) + 2, rows = 5, lat = Array.from({ length: cols * rows }, () => R() - .5);
+    for (let y = 0; y < gh; y++) for (let x = 0; x < gw; x++) {
+      const fx = x / 7, ix = fx | 0, tx = fx - ix, fy = y / gh * (rows - 2), iy = fy | 0, ty = fy - iy;
+      const a = lat[iy * cols + ix] + (lat[iy * cols + ix + 1] - lat[iy * cols + ix]) * tx;
+      const b = lat[(iy + 1) * cols + ix] + (lat[(iy + 1) * cols + ix + 1] - lat[(iy + 1) * cols + ix]) * tx;
+      streak[y * gw + x] = (a + (b - a) * ty) * .22 * opt.streaks + (R() - .5) * .02;
+    } }
+  const heat = new Float32Array(N); // extra warmth added by the pointer; fades back to 0
+  const ptr = { x: 0, y: 0, on: false };
+  let raf = 0, last = 0;
+
+  function draw() {
+    for (let y = 0, i = 0; y < gh; y++) {
+      const t = y / (gh - 1); // 0 at the tip, 1 near the cuticle
+      const restT = (t - (1 - opt.rest) + .5); // resting warmth rises toward the cuticle
+      for (let x = 0; x < gw; x++, i++) {
+        const T = restT + streak[i] + heat[i];
+        let f = (T - .2) / .6; f = f < 0 ? 0 : f > 1 ? 1 : f * f * (3 - 2 * f);
+        // Jelly depth: a touch darker toward the sides.
+        const vx = (x / gw - .5) * 2, shadeK = 1 - .18 * vx * vx;
+        px[i * 4] = (cold[0] + (warm[0] - cold[0]) * f) * shadeK;
+        px[i * 4 + 1] = (cold[1] + (warm[1] - cold[1]) * f) * shadeK;
+        px[i * 4 + 2] = (cold[2] + (warm[2] - cold[2]) * f) * shadeK;
+        px[i * 4 + 3] = 255;
+      }
+    }
+    sctx.putImageData(img, 0, 0);
+    ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(small, 0, 0, cw, ch);
+  }
+
+  function tick(now) {
+    const dt = Math.min(.05, (now - (last || now)) / 1000); last = now;
+    let any = false;
+    // Cool down toward the resting state over a couple of seconds.
+    const decay = Math.exp(-dt / 1.4);
+    for (let i = 0; i < N; i++) { heat[i] *= decay; if (heat[i] > .005) any = true; else heat[i] = 0; }
+    // Warm up under the pointer.
+    if (ptr.on) {
+      any = true;
+      const r = 16, cx = ptr.x * gw, cy = ptr.y * gh;
+      for (let y = Math.max(0, (cy - r * 2) | 0); y < Math.min(gh, cy + r * 2); y++)
+        for (let x = Math.max(0, (cx - r * 2) | 0); x < Math.min(gw, cx + r * 2); x++) {
+          const d2 = ((x - cx) ** 2 + (y - cy) ** 2) / (r * r), i = y * gw + x;
+          heat[i] = Math.min(1.2, heat[i] + dt * 2.2 * Math.exp(-d2) * (1 + streak[i]));
+        }
+    }
+    draw();
+    raf = any ? requestAnimationFrame(tick) : 0;
+    if (!raf) last = 0;
+  }
+  const wake = () => { if (!raf) raf = requestAnimationFrame(tick); };
+  cv.onpointermove = e => { const r = cv.getBoundingClientRect(); ptr.x = (e.clientX - r.left) / r.width; ptr.y = (e.clientY - r.top) / r.height; ptr.on = true; wake(); };
+  cv.onpointerleave = () => { ptr.on = false; wake(); };
   cv.classList.add("interactive");
   draw();
 }
