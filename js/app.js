@@ -505,6 +505,7 @@ function thermalSwatch(cv, p, W, H) {
   const gw = Math.ceil(W / 2), gh = Math.ceil(H / 2), N = gw * gh;
   const small = document.createElement("canvas"); small.width = gw; small.height = gh;
   const sctx = small.getContext("2d"), img = sctx.createImageData(gw, gh), px = img.data;
+  const tmp = new Uint8ClampedArray(px.length);
   // Brush streaks: slow random variation across the width, stretched top to bottom.
   const streak = new Float32Array(N);
   { const cols = Math.ceil(gw / 7) + 2, rows = 5, lat = Array.from({ length: cols * rows }, () => R() - .5);
@@ -516,15 +517,15 @@ function thermalSwatch(cv, p, W, H) {
     } }
 
   // Glossy top coat, drawn once: the soft reflection of a large light (like a window) on the
-  // curved surface. No hard shapes: a bright but blurred patch that fades downward, plus a slight
-  // darkening at the very edges where the curve turns away from the light.
+  // curved surface, plus a slight darkening at the very edges where the curve turns away from the
+  // light. The reflection is a radial gradient squashed into an ellipse, so its edges are soft by
+  // construction (canvas blur filters aren't supported in Safari).
   const gloss = document.createElement("canvas"); gloss.width = cw; gloss.height = ch;
   { const g = gloss.getContext("2d"); g.scale(dpr, dpr);
-    const lg = g.createLinearGradient(0, H * .04, 0, H * .62);
-    lg.addColorStop(0, "rgba(255,236,255,.26)"); lg.addColorStop(.5, "rgba(255,236,255,.1)"); lg.addColorStop(1, "rgba(255,236,255,0)");
-    g.filter = `blur(${26 * dpr}px)`; g.fillStyle = lg;
-    g.beginPath(); g.ellipse(W * .3, H * .32, W * .2, H * .38, -.2, 0, 7); g.fill();
-    g.filter = "none"; }
+    g.translate(W * .3, H * .3); g.rotate(-.2); g.scale(1, 2.1);
+    const rg = g.createRadialGradient(0, 0, 0, 0, 0, W * .26);
+    rg.addColorStop(0, "rgba(255,236,255,.24)"); rg.addColorStop(.45, "rgba(255,236,255,.12)"); rg.addColorStop(1, "rgba(255,236,255,0)");
+    g.fillStyle = rg; g.fillRect(-W, -H, W * 2, H * 2); }
   // Optional suspended bits, fixed in the polish: flakes (iridescent, shifting color with temperature)
   // and shimmer (fine sparkle of one color).
   const flakes = p.flakes ? Array.from({ length: Math.round(W * H / 420) }, () => {
@@ -555,11 +556,20 @@ function thermalSwatch(cv, p, W, H) {
         px[i * 4 + 3] = 255;
       }
     }
+    // Extra softening so the gradient reads as one smooth pour: a small box blur on the grid itself
+    // (done in code rather than with a canvas filter so it looks the same in Safari).
+    for (let pass = 0; pass < 2; pass++) {
+      tmp.set(px);
+      for (let y = 0; y < gh; y++) for (let x = 0; x < gw; x++) {
+        let r = 0, g = 0, b = 0, n = 0;
+        for (let yy = Math.max(0, y - 2); yy <= Math.min(gh - 1, y + 2); yy++)
+          for (let xx = Math.max(0, x - 2); xx <= Math.min(gw - 1, x + 2); xx++) { const o = (yy * gw + xx) * 4; r += tmp[o]; g += tmp[o + 1]; b += tmp[o + 2]; n++; }
+        const o = (y * gw + x) * 4; px[o] = r / n; px[o + 1] = g / n; px[o + 2] = b / n;
+      }
+    }
     sctx.putImageData(img, 0, 0);
     ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = "high";
-    ctx.filter = `blur(${3 * dpr}px)`; // extra softening so the gradient reads as one smooth pour
-    ctx.drawImage(small, -4 * dpr, -4 * dpr, cw + 8 * dpr, ch + 8 * dpr);
-    ctx.filter = "none";
+    ctx.drawImage(small, 0, 0, cw, ch);
     ctx.globalCompositeOperation = "screen"; ctx.drawImage(gloss, 0, 0); ctx.globalCompositeOperation = "source-over"; // screen keeps the shine luminous, not grey
     ctx.fillStyle = edge; ctx.fillRect(0, 0, cw, ch);
     if (flakes.length || shimmer.length) {
