@@ -169,7 +169,7 @@ const POLISHES = [
     effect: "thermal",
     effects: ["thermal"],
     // Thermal: deep purple-black when cold, light orchid purple when warm (from the product page and photos)
-    colors: ["#361a38", "#9c5ca6"], // [cold, warm]
+    colors: ["#3a1432", "#bc64a0"], // [cold, warm], sampled from the darkest and lightest areas of the swatch photos
     thermal: { rest: .42 },    // mostly the mid plum of the in-between state, darker top-left, lighter bottom-right
     url: "https://www.mooncat.com/products/dark-omens",
     photos: ["images/mooncat-dark-omens/1.jpg", "images/mooncat-dark-omens/2.jpg", "images/mooncat-dark-omens/3.jpg", "images/mooncat-dark-omens/4.jpg"], // saved from the product page

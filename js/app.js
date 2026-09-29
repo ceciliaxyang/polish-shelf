@@ -535,7 +535,7 @@ function thermalSwatch(cv, p, W, H) {
         // Diagonal: coldest at the top-left tip corner, warmest toward the bottom-right.
         const t = (x / (gw - 1) + y / (gh - 1)) / 2;
         const T = t - (1 - opt.rest) + .5 + streak[i] + temp.cur;
-        let f = (T + .15) / 1.3; f = f < 0 ? 0 : f > 1 ? 1 : f * f * f * (f * (6 * f - 15) + 10); // smootherstep over a wide band
+        let f = (T + .05) / .95; f = f < 0 ? 0 : f > 1 ? 1 : f * f * f * (f * (6 * f - 15) + 10); // smootherstep over a wide band
         // Jelly depth: a touch darker toward the sides.
         const vx = (x / gw - .5) * 2, shadeK = 1 - .18 * vx * vx;
         px[i * 4] = (cold[0] + (warm[0] - cold[0]) * f) * shadeK;
