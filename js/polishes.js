@@ -102,4 +102,55 @@ const POLISHES = [
     url: "https://www.mooncat.com/products/fake-halo",
     photos: ["images/mooncat-fake-halo/1.jpg", "images/mooncat-fake-halo/2.jpg", "images/mooncat-fake-halo/3.jpg", "images/mooncat-fake-halo/4.jpg"], // saved from the product page
   },
+  {
+    id: "beesknees-knight-knave-optimist",
+    name: "Knight, Knave, Optimist",
+    brand: "Bee's Knees",
+    effect: "magnetic",
+    effects: ["magnetic", "flakies"],
+    // Blackened base; limestone magnetic shimmer with blue-to-purple magnetic flakes that have a subtle holo (from the product page)
+    colors: ["#26212c", "#d8cec2", "#aa9cb8", "#7462b4", "#4c3c9c"],
+    shadow: "#141118",
+    flakes: ["#4a6ae8", "#6a52e0", "#8a5af0", "#5ab4e8"], // blue -> purple, a hint of holo
+    url: "https://www.beeskneeslacquer.com/products/knight-knave-optimist",
+    photos: ["images/beesknees-knight-knave-optimist/1.jpg", "images/beesknees-knight-knave-optimist/2.jpg", "images/beesknees-knight-knave-optimist/3.jpg", "images/beesknees-knight-knave-optimist/4.jpg"], // saved from the product page
+  },
+  {
+    id: "beesknees-sprites",
+    name: "Sprites",
+    brand: "Bee's Knees",
+    effect: "magnetic",
+    effects: ["magnetic", "multichrome"],
+    // Grayed-out green base; mosaic magnetic that reads pink-purple, with rich purple and deep blue pigments (from the product page)
+    colors: ["#26302a", "#ec7ad6", "#b45ee4", "#6c62e0", "#3c7ae0", "#46c8d4"],
+    shadow: "#131a16",
+    grad: [.6, .4],            // pinker on one side, blue-teal toward the other, as in the photos
+    url: "https://www.beeskneeslacquer.com/products/sprites",
+    photos: ["images/beesknees-sprites/1.jpg", "images/beesknees-sprites/2.jpg", "images/beesknees-sprites/3.jpg", "images/beesknees-sprites/4.jpg"], // saved from the product page
+  },
+  {
+    id: "beesknees-soon-you-will-not-have-to-drown",
+    name: "Soon You Will Not Have to Drown",
+    brand: "Bee's Knees",
+    effect: "magnetic",
+    effects: ["magnetic", "multichrome"],
+    // Deep navy base; mosaic magnetic with a rich gold and a purple pigment (from the product page)
+    colors: ["#151a3a", "#e6e274", "#a6d470", "#6aa6a0", "#a45ee2", "#7438d0"],
+    shadow: "#0a0d24",
+    grad: [.9, .3],            // gold-green on one side, purple toward the other
+    url: "https://www.beeskneeslacquer.com/products/soon-you-will-not-have-to-drown",
+    photos: ["images/beesknees-soon-you-will-not-have-to-drown/1.jpg", "images/beesknees-soon-you-will-not-have-to-drown/2.jpg", "images/beesknees-soon-you-will-not-have-to-drown/3.jpg", "images/beesknees-soon-you-will-not-have-to-drown/4.jpg"], // saved from the product page
+  },
+  {
+    id: "beesknees-im-nobody",
+    name: "I'm Nobody",
+    brand: "Bee's Knees",
+    effect: "magnetic",
+    effects: ["magnetic", "multichrome"],
+    // Sepia brown base; mosaic magnetic with a bright pink and a rich gold pigment (from the product page)
+    colors: ["#3e3416", "#f47eae", "#ec9272", "#e2b444", "#b88a2c"],
+    shadow: "#211b08",
+    url: "https://www.beeskneeslacquer.com/products/im-nobody",
+    photos: ["images/beesknees-im-nobody/1.jpg", "images/beesknees-im-nobody/2.jpg", "images/beesknees-im-nobody/3.jpg", "images/beesknees-im-nobody/4.jpg"], // saved from the product page
+  },
 ];
