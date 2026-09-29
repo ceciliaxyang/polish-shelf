@@ -264,11 +264,14 @@ const POLISHES = [
     brand: "Mooncat",
     effect: "shimmer",
     effects: ["shimmer", "glitter"],
-    // Sage green with violet shimmer and micro holographic glitter (from the product page and photos)
-    baseColor: "#6c7856",
-    colors: ["#e474e6", "#b664e2", "#8c74c4"], // shimmer colors [facing, ..., sides]
-    shadow: "#434b34",
-    chrome: { grain: 1.2, cover: .85, sheen: 2.6, along: .1 },
+    // Moss green with violet shimmer and micro holographic glitter. In the photos the shimmer gathers into a
+    // small, intense electric-violet glow where the light hits, over an otherwise solid green (from the photos).
+    glow: { shape: .05 },      // drawn with the glowing-spot swatch, fixed shape (no glass bead / cat eye)
+    colors: ["#5e6e34", "#f6b4ff", "#dc4cf2", "#a646dc", "#6e5a8c"], // [base, glow core -> edge]
+    shadow: "#39431c",
+    bead: { r: [.2, .24], glow: 1, span: .85 },
+    shimmer: "#8e7aa8",        // faint violet shimmer across the green
+    sparkle: { density: 1.4, size: 1.1, floor: .15, mix: .8, colors: ["#ffffff", "#f0a0ff", "#a0e0ff", "#fff0a0"] }, // micro holo glitter
     url: "https://www.mooncat.com/products/garden-of-evil",
     photos: ["images/mooncat-garden-of-evil/1.jpg", "images/mooncat-garden-of-evil/2.jpg", "images/mooncat-garden-of-evil/3.jpg", "images/mooncat-garden-of-evil/4.jpg"], // saved from the product page
   },

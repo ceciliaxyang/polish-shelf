@@ -185,6 +185,7 @@ function renderSwatch(cv, p, W, H) {
   if (p.effect === "multichrome") return p.glow ? magneticSwatch(cv, p, W, H) : multichromeSwatch(cv, p, W, H);
   // Shimmer: a colored base with shimmer that catches the light where the nail faces you. It uses the
   // multichrome swatch with a base color and a sheen that fades toward the sides.
+  if (p.effect === "shimmer" && p.glow) return magneticSwatch(cv, p, W, H); // shimmer that gathers into a glowing spot
   if (p.effect === "shimmer" && p.baseColor) return multichromeSwatch(cv, p, W, H);
   const dpr = swatchDpr(W);
   cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
