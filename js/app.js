@@ -526,7 +526,7 @@ function thermalSwatch(cv, p, W, H) {
     g.filter = "none"; }
   // Edges darken slightly where the curve turns away from the light.
   const edge = ctx.createRadialGradient(cw / 2, ch / 2, Math.min(cw, ch) * .42, cw / 2, ch / 2, Math.max(cw, ch) * .75);
-  edge.addColorStop(0, "rgba(0,0,0,0)"); edge.addColorStop(1, "rgba(0,0,0,.28)");
+  edge.addColorStop(0, "rgba(0,0,0,0)"); edge.addColorStop(1, "rgba(0,0,0,.2)");
   const ptr = { x: 0, y: 0, on: false };
   let raf = 0, last = 0;
 
