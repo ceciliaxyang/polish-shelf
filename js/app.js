@@ -915,6 +915,20 @@ $("#saveCombo").onclick = () => {
   $("#comboName").value = ""; toast(`Saved ${name}`);
 };
 
+/* ---------- grid fit ---------- */
+// Fill the full width: use the column count whose cards come closest to the breakpoint size, then
+// size the cards to exactly fill the row (never above 1.4x the design, 336px). Phones use CSS.
+const GAP = 40, MAX_CARD = 336;
+function fitGrid() {
+  const grid = $("#grid");
+  if (innerWidth <= 600) { grid.style.removeProperty("--card"); return; }
+  const base = parseFloat(getComputedStyle(grid).getPropertyValue("--card-base")) || 240, avail = grid.clientWidth;
+  const n = Math.max(1, Math.round((avail + GAP) / (base + GAP)));
+  const card = Math.min(MAX_CARD, (avail - (n - 1) * GAP) / n);
+  grid.style.setProperty("--card", Math.floor(card) + "px");
+}
+new ResizeObserver(fitGrid).observe($("#grid"));
+
 /* ---------- boot ---------- */
 buildPills();
 buildFinishPills();
