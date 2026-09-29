@@ -183,6 +183,9 @@ function renderSwatch(cv, p, W, H) {
   if (p.effect === "holo") return holoSwatch(cv, p, W, H);
   if (p.effect === "thermal") return thermalSwatch(cv, p, W, H);
   if (p.effect === "multichrome") return p.glow ? magneticSwatch(cv, p, W, H) : multichromeSwatch(cv, p, W, H);
+  // Shimmer: a colored base with shimmer that catches the light where the nail faces you. It uses the
+  // multichrome swatch with a base color and a sheen that fades toward the sides.
+  if (p.effect === "shimmer" && p.baseColor) return multichromeSwatch(cv, p, W, H);
   const dpr = swatchDpr(W);
   cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
   const ctx = cv.getContext("2d"); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -615,13 +618,14 @@ function thermalSwatch(cv, p, W, H) {
   along, base }: how far the colors spread, how much each particle varies, how much they drift along
   the length, how dark the base between particles is (lower is darker), grain (particle size in
   CSS pixels) and cover (with baseColor: how much of the base the shimmer covers).
-  baseColor: optional colored base (like a burgundy jelly) that shows between the particles.
+  baseColor: optional colored base (like a burgundy jelly) that shows between the particles; sheen
+  (with baseColor) makes the shimmer fade toward the sides so the base shows there (used for shimmers).
 */
 function multichromeSwatch(cv, p, W, H) {
   const dpr = swatchDpr(W), cw = Math.round(W * dpr), ch = Math.round(H * dpr);
   cv.width = cw; cv.height = ch;
   const ctx = cv.getContext("2d", { willReadFrequently: true });
-  const opt = { spread: 1, jitter: .22, along: .3, base: .55, grain: 1.7, cover: .75, ...p.chrome };
+  const opt = { spread: 1, jitter: .22, along: .3, base: .55, grain: 1.7, cover: .75, sheen: 0, ...p.chrome };
   const tint = p.baseColor ? rgb(p.baseColor) : null; // optional polish color between the shimmer particles
   const shadow = rgb(p.shadow || shade(p.colors[p.colors.length - 1], -.55));
   const R = rng(p.id || "p");
@@ -655,7 +659,7 @@ function multichromeSwatch(cv, p, W, H) {
         const g = light * (opt.base + pb[i] * pb[i] * (1.25 - opt.base));
         let r = pal[k] * g, gg = pal[k + 1] * g, bl = pal[k + 2] * g;
         if (tint) { // a colored base (e.g. burgundy) shows between the dimmer particles
-          const a = Math.min(1, opt.cover * (.25 + pb[i] * pb[i] * 1.1) * (light / 1.14));
+          const a = Math.min(1, opt.cover * (.25 + pb[i] * pb[i] * 1.1) * (light / 1.14) * (opt.sheen ? Math.exp(-ang * ang * opt.sheen) : 1));
           r = tint[0] + (r - tint[0]) * a; gg = tint[1] + (gg - tint[1]) * a; bl = tint[2] + (bl - tint[2]) * a;
         }
         r += (255 - r) * sparkle * .5; gg += (255 - gg) * sparkle * .5; bl += (255 - bl) * sparkle * .5;
@@ -767,6 +771,7 @@ function renderShelf() {
     text.append(title, fx);
     card.append(wrap, text); grid.appendChild(card);
     sw._p = p; drawCard(sw);
+    if (autoIO) autoIO.observe(sw);
   }
 }
 
@@ -791,6 +796,7 @@ function openDetail(p, card) {
   stage.appendChild(cv); detail.cv = cv;
   const sr = stage.getBoundingClientRect();
   renderSwatch(cv, p, Math.round(sr.width), Math.round(sr.height));
+  if (autoIO) autoIO.observe(cv);
 
   // Gallery: the swatch first, then the saved photos.
   const car = $("#mCarousel"); car.innerHTML = "";
@@ -957,6 +963,40 @@ function fitGrid() {
   redrawCards();
 }
 new ResizeObserver(fitGrid).observe($("#grid"));
+
+/* ---------- auto-animate on touch screens ---------- */
+// Phones and tablets have no hover, so any swatch that's on screen moves on its own, as if a finger
+// were hovering over it. Each one wanders on its own slow path (two sine waves per axis with random
+// speeds and phases), so no two swatches follow the same motion.
+const noHover = matchMedia("(hover: none)").matches;
+const drifting = new Map(); // canvas -> its path
+const autoIO = noHover ? new IntersectionObserver(entries => entries.forEach(e => {
+  if (e.isIntersecting) { if (!drifting.has(e.target)) drifting.set(e.target, newPath()); }
+  else drifting.delete(e.target);
+}), { threshold: .35 }) : null;
+
+function newPath() {
+  const r = Math.random;
+  return { t: r() * 100, fx: [.05 + r() * .05, .13 + r() * .1], fy: [.04 + r() * .05, .11 + r() * .09],
+           px: [r() * 6.28, r() * 6.28], py: [r() * 6.28, r() * 6.28], ax: .26 + r() * .1, ay: .24 + r() * .1 };
+}
+let lastDrift = 0;
+function drift(now) {
+  const dt = Math.min(.1, (now - (lastDrift || now)) / 1000); lastDrift = now;
+  const detailOpen = document.body.classList.contains("detail-open");
+  for (const [cv, p] of drifting) {
+    if (!cv.isConnected) { drifting.delete(cv); continue; }
+    if (detailOpen && !cv.closest("#mStage")) continue; // the shelf is hidden behind the dialog
+    p.t += dt;
+    const w = (f, ph, t) => Math.sin(t * f * 6.283 + ph);
+    const x = .5 + p.ax * w(p.fx[0], p.px[0], p.t) + p.ax * .45 * w(p.fx[1], p.px[1], p.t);
+    const y = .5 + p.ay * w(p.fy[0], p.py[0], p.t) + p.ay * .45 * w(p.fy[1], p.py[1], p.t);
+    const r = cv.getBoundingClientRect();
+    cv.onpointermove && cv.onpointermove({ clientX: r.left + x * r.width, clientY: r.top + y * r.height });
+  }
+  requestAnimationFrame(drift);
+}
+if (noHover) requestAnimationFrame(drift);
 
 /* ---------- boot ---------- */
 buildPills();

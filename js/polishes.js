@@ -244,4 +244,102 @@ const POLISHES = [
     url: "https://www.mooncat.com/products/root-of-all-evil",
     photos: ["images/mooncat-root-of-all-evil/1.jpg", "images/mooncat-root-of-all-evil/2.jpg", "images/mooncat-root-of-all-evil/3.jpg", "images/mooncat-root-of-all-evil/4.jpg"], // saved from the product page
   },
+  {
+    id: "mooncat-sin-eater",
+    name: "Sin Eater",
+    brand: "Mooncat",
+    effect: "shimmer",
+    effects: ["shimmer", "multichrome"],
+    // Deep wine purple with subtle color-shifting red-to-orange-to-green shimmer (from the product page and photos)
+    baseColor: "#4a1438",
+    colors: ["#d6404c", "#e27a34", "#a0a044", "#4c7c3c"], // shimmer colors [facing, ..., sides]
+    shadow: "#2a0a20",
+    chrome: { grain: 1.3, cover: .9, sheen: 1.6 },
+    url: "https://www.mooncat.com/products/sin-eater",
+    photos: ["images/mooncat-sin-eater/1.jpg", "images/mooncat-sin-eater/2.jpg", "images/mooncat-sin-eater/3.jpg", "images/mooncat-sin-eater/4.jpg"], // saved from the product page
+  },
+  {
+    id: "mooncat-garden-of-evil",
+    name: "Garden of Evil",
+    brand: "Mooncat",
+    effect: "shimmer",
+    effects: ["shimmer", "glitter"],
+    // Sage green with violet shimmer and micro holographic glitter (from the product page and photos)
+    baseColor: "#6c7856",
+    colors: ["#e474e6", "#b664e2", "#8c74c4"], // shimmer colors [facing, ..., sides]
+    shadow: "#434b34",
+    chrome: { grain: 1.2, cover: .85, sheen: 2.6, along: .1 },
+    url: "https://www.mooncat.com/products/garden-of-evil",
+    photos: ["images/mooncat-garden-of-evil/1.jpg", "images/mooncat-garden-of-evil/2.jpg", "images/mooncat-garden-of-evil/3.jpg", "images/mooncat-garden-of-evil/4.jpg"], // saved from the product page
+  },
+  {
+    id: "mooncat-sand-viper",
+    name: "Sand Viper",
+    brand: "Mooncat",
+    effect: "shimmer",
+    effects: ["shimmer", "sheer"],
+    // Sheer light pink-beige jelly with orange-red shimmer (from the product page and photos)
+    baseColor: "#cc8e8c",
+    colors: ["#f4907a", "#e4705e"], // shimmer colors [facing, ..., sides]
+    shadow: "#9e6a6a",
+    chrome: { grain: 1.1, cover: .5, sheen: 2.2, along: .1 },
+    url: "https://www.mooncat.com/products/sand-viper",
+    photos: ["images/mooncat-sand-viper/1.jpg", "images/mooncat-sand-viper/2.jpg", "images/mooncat-sand-viper/3.jpg", "images/mooncat-sand-viper/4.jpg"], // saved from the product page
+  },
+  {
+    id: "mooncat-dark-horse",
+    name: "Dark Horse",
+    brand: "Mooncat",
+    effect: "shimmer",
+    effects: ["shimmer"],
+    // Dark brown with warm light brown shimmer (from the product page and photos)
+    baseColor: "#351a0c",
+    colors: ["#e8aa64", "#c67e42", "#8a522a"], // shimmer colors [facing, ..., sides]
+    shadow: "#1e0e06",
+    chrome: { grain: 1.1, cover: .95, sheen: 1.4, along: .1 },
+    url: "https://www.mooncat.com/products/dark-horse",
+    photos: ["images/mooncat-dark-horse/1.jpg", "images/mooncat-dark-horse/2.jpg", "images/mooncat-dark-horse/3.jpg", "images/mooncat-dark-horse/4.jpg"], // saved from the product page
+  },
+  {
+    id: "mooncat-petals-for-a-narcissist",
+    name: "Petals for a Narcissist",
+    brand: "Mooncat",
+    effect: "shimmer",
+    effects: ["shimmer", "sheer"],
+    // Sheer white-gray with violet-pink shimmer (from the product page and photos)
+    baseColor: "#b8b0b6",
+    colors: ["#e674ea", "#b684f0", "#8e8ee2"], // shimmer colors [facing, ..., sides]
+    shadow: "#8a8290",
+    chrome: { grain: 1.1, cover: .75, sheen: 3, along: .1 },
+    url: "https://www.mooncat.com/products/petals-for-a-narcissist",
+    photos: ["images/mooncat-petals-for-a-narcissist/1.jpg", "images/mooncat-petals-for-a-narcissist/2.jpg", "images/mooncat-petals-for-a-narcissist/3.jpg", "images/mooncat-petals-for-a-narcissist/4.jpg"], // saved from the product page
+  },
+  {
+    id: "mooncat-memento-mori",
+    name: "Memento Mori",
+    brand: "Mooncat",
+    effect: "shimmer",
+    effects: ["shimmer"],
+    // Ivory with orange shimmer (from the product page and photos)
+    baseColor: "#ede2dc",
+    colors: ["#f4a474", "#f2bc94"], // shimmer colors [facing, ..., sides]
+    shadow: "#c2b2aa",
+    chrome: { grain: 1.1, cover: .45, sheen: 2.6, along: .1 },
+    url: "https://www.mooncat.com/products/memento-mori",
+    photos: ["images/mooncat-memento-mori/1.jpg", "images/mooncat-memento-mori/2.jpg", "images/mooncat-memento-mori/3.jpg", "images/mooncat-memento-mori/4.jpg"], // saved from the product page
+  },
+  {
+    id: "mooncat-am-i-everything-you-fear",
+    name: "Am I Everything You Fear?",
+    brand: "Mooncat",
+    effect: "shimmer",
+    effects: ["shimmer", "multichrome", "glitter"],
+    // Dusty deep teal with color-shifting pink-to-orange-to-green shimmer and micro holographic glitter (from the product page and photos)
+    baseColor: "#1e4a4c",
+    colors: ["#f274b4", "#ea9264", "#b4c264", "#52a684"], // shimmer colors [facing, ..., sides]
+    shadow: "#0e2a2c",
+    chrome: { grain: 1.3, cover: .95, sheen: 1.3 },
+    url: "https://www.mooncat.com/products/am-i-everything-you-fear",
+    photos: ["images/mooncat-am-i-everything-you-fear/1.jpg", "images/mooncat-am-i-everything-you-fear/2.jpg", "images/mooncat-am-i-everything-you-fear/3.jpg", "images/mooncat-am-i-everything-you-fear/4.jpg"], // saved from the product page
+  },
 ];

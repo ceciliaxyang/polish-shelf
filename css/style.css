@@ -17,8 +17,10 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
 }
 button, input, select { font: inherit; color: inherit; }
-.page { padding: 124px 40px 60px; }
-@media (max-width: 600px) { .page { padding: 40px 16px; } }
+/* viewport-fit=cover lets the page (and the dialog) draw under the phone's status bar; the safe-area
+   insets keep content clear of the notch. */
+.page { padding: calc(124px + env(safe-area-inset-top)) calc(40px + env(safe-area-inset-right)) 60px calc(40px + env(safe-area-inset-left)); }
+@media (max-width: 600px) { .page { padding: calc(40px + env(safe-area-inset-top)) 16px calc(40px + env(safe-area-inset-bottom)); } }
 
 .layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 40px; align-items: start; }
 .layout.closed { grid-template-columns: minmax(0, 1fr); }
@@ -122,7 +124,7 @@ body.detail-open .page { filter: blur(50px); }
 .modal-head, .m-carousel { opacity: 0; transition: opacity .3s ease; }
 .modal.open .modal-blur, .modal.open .modal-head, .modal.open .m-carousel { opacity: 1; }
 .modal.open .m-carousel { transition-delay: .15s; }
-.modal-head { position: absolute; top: 0; left: 0; right: 0; display: flex; gap: 16px; min-height: 88px; padding: 24px 48px; }
+.modal-head { position: absolute; top: 0; left: 0; right: 0; display: flex; gap: 16px; min-height: 88px; padding: calc(24px + env(safe-area-inset-top)) 48px 24px; }
 .mh-trail { display: flex; align-items: flex-start; width: 97px; padding-top: 24px; flex-shrink: 0; }
 .mh-trail { justify-content: flex-end; gap: 8px; }
 .mh-content { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; padding: 24px 0 12px; }
@@ -140,8 +142,8 @@ body.detail-open .page { filter: blur(50px); }
    (swatch is 520/480 of its width tall; 5 thumbnails share the width less 4 x 16px gaps at 83.5:80), capped by the screen width. */
 .modal-body {
   --gap: 32px;
-  --w: min(calc(100vw - 32px), calc((100vh - var(--head, 88px) - 96px - var(--gap) + 12.26px) / 1.275));
-  position: absolute; left: 0; right: 0; top: calc(var(--head, 88px) + 48px); bottom: 48px;
+  --w: min(calc(100vw - 32px), calc((100dvh - var(--head, 88px) - 96px - env(safe-area-inset-bottom) - var(--gap) + 12.26px) / 1.275));
+  position: absolute; left: 0; right: 0; top: calc(var(--head, 88px) + 48px); bottom: calc(48px + env(safe-area-inset-bottom));
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--gap);
 }
 .m-stage { position: relative; width: var(--w); height: calc(var(--w) * 520 / 480); border-radius: 48px; overflow: hidden; background: var(--swatch); }
@@ -151,7 +153,7 @@ body.detail-open .page { filter: blur(50px); }
 .m-thumb img, .m-thumb canvas { display: block; width: 100%; height: 100%; object-fit: cover; }
 .m-thumb:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
 @media (max-width: 600px) {
-  .modal-head { padding: 12px 16px; }
+  .modal-head { padding: calc(12px + env(safe-area-inset-top)) 16px 12px; }
   .mh-trail { width: auto; padding-top: 12px; }
   .mh-content { padding: 12px 0 8px; }
   .modal-body { --gap: 16px; }
