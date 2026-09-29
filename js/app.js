@@ -514,28 +514,19 @@ function thermalSwatch(cv, p, W, H) {
     } }
   const heat = new Float32Array(N); // extra warmth added by the pointer; fades back to 0
 
-  // Glossy top coat, drawn once. Gloss reads as a crisp, bright reflection that fades along its
-  // length (a window caught on the curve of the nail), with a soft glow around it, rather than a
-  // broad hazy band, which reads as matte.
+  // Glossy top coat, drawn once: the soft reflection of a large light (like a window) on the
+  // curved surface. No hard shapes: a bright but blurred patch that fades downward, plus a slight
+  // darkening at the very edges where the curve turns away from the light.
   const gloss = document.createElement("canvas"); gloss.width = cw; gloss.height = ch;
   { const g = gloss.getContext("2d"); g.scale(dpr, dpr);
-    const streakPath = (x0, y0, x1, y1, bow, w0, w1) => { // a tapered, gently curved stroke
-      const mx = (x0 + x1) / 2 + bow, my = (y0 + y1) / 2;
-      g.beginPath(); g.moveTo(x0 - w0, y0); g.quadraticCurveTo(mx - (w0 + w1) / 2, my, x1 - w1, y1);
-      g.lineTo(x1 + w1, y1); g.quadraticCurveTo(mx + (w0 + w1) / 2, my, x0 + w0, y0); g.closePath();
-    };
-    const fade = (a) => { const lg = g.createLinearGradient(0, H * .06, 0, H * .78);
-      lg.addColorStop(0, `rgba(255,255,255,${a})`); lg.addColorStop(.5, `rgba(255,255,255,${a * .6})`); lg.addColorStop(1, "rgba(255,255,255,0)"); return lg; };
-    // Soft glow around the main reflection.
-    g.filter = `blur(${10 * dpr}px)`; g.fillStyle = fade(.22);
-    streakPath(W * .27, H * .06, W * .22, H * .78, -W * .03, W * .06, W * .03); g.fill();
-    // Crisp core of the reflection.
-    g.filter = `blur(${1.2 * dpr}px)`; g.fillStyle = fade(.75);
-    streakPath(W * .27, H * .07, W * .22, H * .72, -W * .03, W * .018, W * .006); g.fill();
-    // Fainter reflection on the far edge.
-    g.fillStyle = fade(.3);
-    streakPath(W * .86, H * .12, W * .88, H * .55, W * .01, W * .008, W * .003); g.fill();
+    const lg = g.createLinearGradient(0, H * .04, 0, H * .62);
+    lg.addColorStop(0, "rgba(255,236,255,.55)"); lg.addColorStop(.4, "rgba(255,236,255,.2)"); lg.addColorStop(1, "rgba(255,236,255,0)");
+    g.filter = `blur(${12 * dpr}px)`; g.fillStyle = lg;
+    g.beginPath(); g.ellipse(W * .27, H * .3, W * .1, H * .3, -.12, 0, 7); g.fill();
     g.filter = "none"; }
+  // Edges darken slightly where the curve turns away from the light.
+  const edge = ctx.createRadialGradient(cw / 2, ch / 2, Math.min(cw, ch) * .42, cw / 2, ch / 2, Math.max(cw, ch) * .75);
+  edge.addColorStop(0, "rgba(0,0,0,0)"); edge.addColorStop(1, "rgba(0,0,0,.28)");
   const ptr = { x: 0, y: 0, on: false };
   let raf = 0, last = 0;
 
@@ -559,7 +550,8 @@ function thermalSwatch(cv, p, W, H) {
     ctx.filter = `blur(${3 * dpr}px)`; // extra softening so the gradient reads as one smooth pour
     ctx.drawImage(small, -4 * dpr, -4 * dpr, cw + 8 * dpr, ch + 8 * dpr);
     ctx.filter = "none";
-    ctx.drawImage(gloss, 0, 0);
+    ctx.globalCompositeOperation = "screen"; ctx.drawImage(gloss, 0, 0); ctx.globalCompositeOperation = "source-over"; // screen keeps the shine luminous, not grey
+    ctx.fillStyle = edge; ctx.fillRect(0, 0, cw, ch);
   }
 
   function tick(now) {
