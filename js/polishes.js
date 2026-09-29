@@ -31,7 +31,8 @@
     flakes   optional list of flakie colors; they shift through the list as you hover (iridescent)
     glitter  optional color of small hex glitter
     holo     optional, holographic only: { strength, width, angle } how vivid the rainbow streak is, how wide, and its tilt
-    sparkle  optional { density, floor }: more sparkles, and how lit they stay outside the flash (defaults 1 and .1)
+    sparkle  optional { density, floor, colors, mix }: more sparkles, how lit they stay outside the flash
+             (defaults 1 and .1); colors gives each particle its own color, mixed in by mix (default .7)
 */
 const POLISHES = [
   {
@@ -123,10 +124,13 @@ const POLISHES = [
     brand: "Bee's Knees",
     effect: "magnetic",
     effects: ["magnetic", "multichrome"],
-    // Grayed-out green base; mosaic magnetic that reads pink-purple, with rich purple and deep blue pigments (from the product page)
-    colors: ["#26302a", "#ec7ad6", "#b45ee4", "#6c62e0", "#3c7ae0", "#46c8d4"],
-    shadow: "#131a16",
-    grad: [.6, .4],            // pinker on one side, blue-teal toward the other, as in the photos
+    // Dark olive-grey base; mosaic magnetic whose particles flash many colors: white-pink core, magenta, violet and blue,
+    // with red, green, gold and white glints mixed through (from the photos)
+    colors: ["#22251c", "#f6dcf0", "#e676cc", "#a262e2", "#5a82e6", "#44bcc4"],
+    shimmer: "#6c7a34",        // olive-green flecks in the base
+    shadow: "#11130d",
+    grad: [.5, .5],            // pink-white toward the upper left, blue-teal toward the lower right
+    sparkle: { density: 6, floor: .45, mix: .9, colors: ["#ff4a5a", "#ffffff", "#5ae07a", "#4a8aff", "#ff70d0", "#e8c060", "#b070ff"] },
     url: "https://www.beeskneeslacquer.com/products/sprites",
     photos: ["images/beesknees-sprites/1.jpg", "images/beesknees-sprites/2.jpg", "images/beesknees-sprites/3.jpg", "images/beesknees-sprites/4.jpg"], // saved from the product page
   },
