@@ -43,10 +43,12 @@ button, input, select { font: inherit; color: inherit; }
 .pill.small { padding: 6px 12px; font-size: 13px; line-height: 16px; }
 
 /* Shelf grid */
-.grid { display: grid; grid-template-columns: repeat(auto-fill, 240px); gap: 40px; }
+/* Card size grows with the screen: 240px (the design) up to 1.4x (336px) on wide screens.
+   Roughly five cards fit across; on phones it switches to two per row that share the width. */
+.grid { --card: clamp(240px, calc((100vw - 80px - 160px) / 5), 336px); display: grid; grid-template-columns: repeat(auto-fill, var(--card)); gap: 40px; }
 .card { display: flex; flex-direction: column; align-items: flex-start; gap: 28px; }
-.swatch-wrap { position: relative; width: 240px; height: 260px; border-radius: 48px; overflow: hidden; background: var(--swatch); }
-.swatch { display: block; width: 240px; height: 260px; }
+.swatch-wrap { position: relative; width: var(--card); aspect-ratio: 240 / 260; border-radius: calc(var(--card) * .2); overflow: hidden; background: var(--swatch); }
+.swatch { display: block; width: 100%; height: 100%; }
 .swatch.interactive { cursor: crosshair; }
 /* Frosted round button on the swatch (Figma "Icon Button", Material style) */
 .swatch-btn {
@@ -56,6 +58,13 @@ button, input, select { font: inherit; color: inherit; }
   color: #fff; background: rgba(17, 17, 17, .5);
   -webkit-backdrop-filter: blur(48px); backdrop-filter: blur(48px);
   cursor: pointer;
+}
+@media (max-width: 600px) {
+  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px 16px; }
+  .swatch-wrap { width: 100%; border-radius: 32px; }
+  .card { gap: 16px; }
+  .swatch-btn { top: 12px; right: 12px; width: 40px; height: 40px; padding: 10px; }
+  .name { font-size: 17px; }
 }
 .swatch-btn:hover { background: rgba(17, 17, 17, .62); }
 .swatch-btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
