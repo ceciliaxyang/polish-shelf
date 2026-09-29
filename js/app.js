@@ -611,14 +611,16 @@ function thermalSwatch(cv, p, W, H) {
   facing band sits, up and down slide the whole range of colors, so it shifts like turning your hand.
   colors = [facing, ..., edge]. Optional in js/polishes.js: shadow (edge color), chrome: { spread, jitter,
   along, base }: how far the colors spread, how much each particle varies, how much they drift along
-  the length, how dark the base between particles is (lower is darker), and grain (particle size in
-  CSS pixels).
+  the length, how dark the base between particles is (lower is darker), grain (particle size in
+  CSS pixels) and cover (with baseColor: how much of the base the shimmer covers).
+  baseColor: optional colored base (like a burgundy jelly) that shows between the particles.
 */
 function multichromeSwatch(cv, p, W, H) {
   const dpr = swatchDpr(W), cw = Math.round(W * dpr), ch = Math.round(H * dpr);
   cv.width = cw; cv.height = ch;
   const ctx = cv.getContext("2d", { willReadFrequently: true });
-  const opt = { spread: 1, jitter: .22, along: .3, base: .55, grain: 1.7, ...p.chrome };
+  const opt = { spread: 1, jitter: .22, along: .3, base: .55, grain: 1.7, cover: .75, ...p.chrome };
+  const tint = p.baseColor ? rgb(p.baseColor) : null; // optional polish color between the shimmer particles
   const shadow = rgb(p.shadow || shade(p.colors[p.colors.length - 1], -.55));
   const R = rng(p.id || "p");
   const PL = 256, pal = new Float32Array(PL * 3);
@@ -650,6 +652,10 @@ function multichromeSwatch(cv, p, W, H) {
         const light = .64 + .5 * Math.exp(-ang * ang * 3), sparkle = pb[i] > .97 ? (pb[i] - .97) * 20 : 0;
         const g = light * (opt.base + pb[i] * pb[i] * (1.25 - opt.base));
         let r = pal[k] * g, gg = pal[k + 1] * g, bl = pal[k + 2] * g;
+        if (tint) { // a colored base (e.g. burgundy) shows between the dimmer particles
+          const a = Math.min(1, opt.cover * (.25 + pb[i] * pb[i] * 1.1) * (light / 1.14));
+          r = tint[0] + (r - tint[0]) * a; gg = tint[1] + (gg - tint[1]) * a; bl = tint[2] + (bl - tint[2]) * a;
+        }
         r += (255 - r) * sparkle * .5; gg += (255 - gg) * sparkle * .5; bl += (255 - bl) * sparkle * .5;
         const edge = Math.max(0, u - .8) * 2.5;          // falls into shadow right at the rim
         r += (shadow[0] - r) * edge; gg += (shadow[1] - gg) * edge; bl += (shadow[2] - bl) * edge;

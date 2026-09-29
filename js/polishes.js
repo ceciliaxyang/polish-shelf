@@ -233,8 +233,9 @@ const POLISHES = [
     // Semi-sheer deep burgundy packed with teal-to-green-yellow shimmer: teal-green where it faces you,
     // through blue and violet into the burgundy base at the edges (from the product page and photos)
     colors: ["#5ad8a0", "#2cbcb2", "#3284cc", "#5a44a8", "#6c1c48", "#4a0f28"], // [facing, ..., edge]
+    baseColor: "#5a0f26",     // deep burgundy showing between the shimmer
     shadow: "#2a0716",
-    chrome: { base: .45 },
+    chrome: { cover: 1.05 },
     url: "https://www.mooncat.com/products/root-of-all-evil",
     photos: ["images/mooncat-root-of-all-evil/1.jpg", "images/mooncat-root-of-all-evil/2.jpg", "images/mooncat-root-of-all-evil/3.jpg", "images/mooncat-root-of-all-evil/4.jpg"], // saved from the product page
   },
