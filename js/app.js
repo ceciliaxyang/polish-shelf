@@ -490,7 +490,8 @@ function holoSwatch(cv, p, W, H) {
   of the whole nail: toward the top-left it goes colder and darker, toward the bottom-right warmer
   and lighter.
   Optional in js/polishes.js: thermal: { rest, streaks } where rest (0 to 1) moves the resting
-  line down (colder) or up (warmer) and streaks sets how brushy the transition is.
+  line down (colder) or up (warmer) and streaks sets how brushy the transition is; flakes (list of
+  colors, shifting with temperature) and shimmer (one color of fine sparkle) suspended in the polish.
 */
 function thermalSwatch(cv, p, W, H) {
   const dpr = swatchDpr(W), cw = Math.round(W * dpr), ch = Math.round(H * dpr);
@@ -524,6 +525,15 @@ function thermalSwatch(cv, p, W, H) {
     g.filter = `blur(${26 * dpr}px)`; g.fillStyle = lg;
     g.beginPath(); g.ellipse(W * .3, H * .32, W * .2, H * .38, -.2, 0, 7); g.fill();
     g.filter = "none"; }
+  // Optional suspended bits, fixed in the polish: flakes (iridescent, shifting color with temperature)
+  // and shimmer (fine sparkle of one color).
+  const flakes = p.flakes ? Array.from({ length: Math.round(W * H / 420) }, () => {
+    const r = 1.5 + Math.pow(R(), 2) * 4.5, n = 5 + ((R() * 3) | 0), rot = R() * 6.3;
+    return { x: R() * W, y: R() * H, phase: R(), pts: Array.from({ length: n }, (_, i) => {
+      const a = rot + i / n * 6.283, rr = r * (.55 + R() * .6); return [Math.cos(a) * rr, Math.sin(a) * rr]; }) };
+  }) : [];
+  const shimmer = p.shimmer ? Array.from({ length: Math.round(W * H / 40) }, () => [R() * W, R() * H, .3 + R() * .5, R()]) : [];
+  const shimCol = p.shimmer || "#fff";
   // Edges darken slightly where the curve turns away from the light.
   const edge = ctx.createRadialGradient(cw / 2, ch / 2, Math.min(cw, ch) * .42, cw / 2, ch / 2, Math.max(cw, ch) * .75);
   edge.addColorStop(0, "rgba(0,0,0,0)"); edge.addColorStop(1, "rgba(0,0,0,.2)");
@@ -551,6 +561,18 @@ function thermalSwatch(cv, p, W, H) {
     ctx.filter = "none";
     ctx.globalCompositeOperation = "screen"; ctx.drawImage(gloss, 0, 0); ctx.globalCompositeOperation = "source-over"; // screen keeps the shine luminous, not grey
     ctx.fillStyle = edge; ctx.fillRect(0, 0, cw, ch);
+    if (flakes.length || shimmer.length) {
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.fillStyle = shimCol;
+      for (const [x, y, r, b] of shimmer) { ctx.globalAlpha = .25 + .45 * b; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill(); }
+      for (const f of flakes) {
+        let t = (f.phase + temp.cur * .6 + 2) % 2; if (t > 1) t = 2 - t;
+        ctx.globalAlpha = .6 + .3 * Math.sin(f.phase * 12 + temp.cur * 4);
+        ctx.fillStyle = palette(p.flakes, t);
+        ctx.beginPath(); f.pts.forEach(([dx, dy], i) => i ? ctx.lineTo(f.x + dx, f.y + dy) : ctx.moveTo(f.x + dx, f.y + dy)); ctx.closePath(); ctx.fill();
+      }
+      ctx.globalAlpha = 1; ctx.setTransform(1, 0, 0, 1, 0, 0);
+    }
   }
 
   // Hover sets the temperature of the whole nail: toward the top-left it cools (darker), toward the

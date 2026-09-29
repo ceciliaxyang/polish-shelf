@@ -174,4 +174,42 @@ const POLISHES = [
     url: "https://www.mooncat.com/products/dark-omens",
     photos: ["images/mooncat-dark-omens/1.jpg", "images/mooncat-dark-omens/2.jpg", "images/mooncat-dark-omens/3.jpg", "images/mooncat-dark-omens/4.jpg"], // saved from the product page
   },
+  {
+    id: "mooncat-queen-of-the-dead",
+    name: "Queen of the Dead",
+    brand: "Mooncat",
+    effect: "thermal",
+    effects: ["thermal"],
+    // Thermal: deep wine red when cold, raspberry red when warm (colors sampled from the cold/warm swatch grid)
+    colors: ["#240710", "#a4102a"], // [cold, warm]
+    thermal: { rest: .42 },
+    url: "https://www.mooncat.com/products/queen-of-the-dead",
+    photos: ["images/mooncat-queen-of-the-dead/1.jpg", "images/mooncat-queen-of-the-dead/2.jpg", "images/mooncat-queen-of-the-dead/3.jpg", "images/mooncat-queen-of-the-dead/4.jpg"], // saved from the product page
+  },
+  {
+    id: "mooncat-banished-prince",
+    name: "Banished Prince",
+    brand: "Mooncat",
+    effect: "thermal",
+    effects: ["thermal", "flakies"],
+    // Thermal: dark red when cold, bright red when warm, with iridescent orange-to-yellow-to-green flakies (sampled from the swatch grid)
+    colors: ["#3a0a08", "#c41c0e"], // [cold, warm]
+    thermal: { rest: .42 },
+    flakes: ["#ff8a2a", "#ffb640", "#f0d848", "#a8d040"],
+    url: "https://www.mooncat.com/products/banished-prince",
+    photos: ["images/mooncat-banished-prince/1.jpg", "images/mooncat-banished-prince/2.jpg", "images/mooncat-banished-prince/3.jpg", "images/mooncat-banished-prince/4.jpg"], // saved from the product page
+  },
+  {
+    id: "mooncat-koi-whiskers",
+    name: "Koi Whiskers",
+    brand: "Mooncat",
+    effect: "thermal",
+    effects: ["thermal", "shimmer"],
+    // Thermal: coral when cold, pastel yellow when warm, with soft pink shimmer (sampled from the swatch grid)
+    colors: ["#f87a86", "#fbdc9e"], // [cold, warm]
+    thermal: { rest: .42 },
+    shimmer: "#ffc4d8",
+    url: "https://www.mooncat.com/products/koi-whiskers",
+    photos: ["images/mooncat-koi-whiskers/1.jpg", "images/mooncat-koi-whiskers/2.jpg", "images/mooncat-koi-whiskers/3.jpg", "images/mooncat-koi-whiskers/4.jpg"], // saved from the product page
+  },
 ];
