@@ -807,21 +807,8 @@ const saveBench = () => save(KEY.bench, bench.layers);
 function toast(msg) { const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => t.hidden = true, 2600); }
 
 /* ---------- shelf ---------- */
-// How magnetic swatches rest: 0 = glass bead, 1 = cat eye, in between when no finish pill is picked.
+// How magnetic swatches rest: 0 = glass bead, 1 = cat eye, in between when no finish is picked (the finish pills were removed, so always in between).
 function finishH() { return state.finish === "bead" ? 0 : state.finish === "cat" ? 1 : .5; }
-function buildFinishPills() {
-  const box = $("#finishPills");
-  [["bead", "Glass bead"], ["cat", "Cat eye"]].forEach(([k, label]) => {
-    const b = document.createElement("button"); b.type = "button"; b.className = "pill"; b.textContent = label; b.setAttribute("aria-pressed", "false");
-    b.onclick = () => {
-      state.finish = state.finish === k ? null : k;
-      box.querySelectorAll(".pill").forEach((x, i) => x.setAttribute("aria-pressed", state.finish === ["bead", "cat"][i]));
-      document.querySelectorAll(".swatch").forEach(cv => cv.setFinish && cv.setFinish());
-    };
-    box.appendChild(b);
-  });
-}
-
 function buildPills() {
   const used = state.polishes.flatMap(effectsOf).filter(k => EFFECTS[k] && !PILL_EFFECTS.includes(k));
   const box = $("#fxPills");
@@ -1115,7 +1102,6 @@ if (noHover) requestAnimationFrame(drift);
 
 /* ---------- boot ---------- */
 buildPills();
-buildFinishPills();
 renderShelf();
 renderBench();
 renderCombos();
