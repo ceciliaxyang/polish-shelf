@@ -201,15 +201,11 @@ body.detail-open .page::after { opacity: 1; }
    buttons centered in it, so swatch, title and buttons all share one vertical center.
    Left: 29px past the swatch. */
 /* The nav (header and swatch) is fixed, so it stays put while the photos scroll underneath. Once the
-   photos start to scroll, a frosted backing fades in behind it (a gradient, not a background-color, so
-   Safari on iOS doesn't paint the status bar solid white). */
+   photos start to scroll, the brand and name fade away; the swatch and buttons stay. */
 .modal-head { position: fixed; z-index: 2; top: 0; left: 0; right: 0; display: flex; align-items: center; gap: 16px; box-sizing: content-box; height: 72px; padding: calc(32px + env(safe-area-inset-top)) 48px 16px calc(36px + 72px + 29px); }
 .mh-trail { display: flex; align-items: center; justify-content: flex-end; gap: 8px; width: 97px; flex-shrink: 0; }
-.modal-head { transition: opacity .3s ease, -webkit-backdrop-filter .2s ease, backdrop-filter .2s ease; }
-.modal.scrolled .modal-head { -webkit-backdrop-filter: blur(24px); backdrop-filter: blur(24px); }
-.modal-head::before { content: ""; position: absolute; z-index: -1; inset: 0; background-image: linear-gradient(rgba(255, 255, 255, .8), rgba(255, 255, 255, .8));
-  box-shadow: 0 1px 0 rgba(0, 0, 0, .06); opacity: 0; transition: opacity .2s ease; pointer-events: none; }
-.modal.scrolled .modal-head::before { opacity: 1; }
+.mh-content { transition: opacity .2s ease; }
+.modal.scrolled .mh-content { opacity: 0; pointer-events: none; } /* once the photos scroll, only the swatch and buttons stay */
 .mh-content { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
 .mh-title { padding: 2px 0; }
 .mh-brand, .mh-name { margin: 0; color: #000; overflow-wrap: anywhere; }
