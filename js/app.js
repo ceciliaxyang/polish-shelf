@@ -1066,20 +1066,19 @@ const isSheer = p => p.effect === "sheer" || p.effect === "sheermag" || effectsO
 // The big preview. Each polish paints over everything below it, so the preview starts from the topmost
 // polish that isn't sheer. Sheer layers above it combine with it: they tint it (multiply) and add their
 // own shimmer and sparkle (screen).
-// A sheer layered over another polish, in up to three passes:
+// A sheer layered over another polish goes on in up to three passes:
 //   1. tint: its base color multiplies with the polish below (skipped for clear toppers like Bubbly),
 //      so darker sheers deepen what's underneath instead of veiling it grey;
 //   2. glow: its shimmer or magnetic flash drawn on black and added as light (screen);
 //   3. glitter: its sparkle drawn on black at full strength, packed densely and gathered into the flash,
 //      so the reflective part stays concentrated and bright.
 // Magnetic sheers gather into a tight cat eye stripe, the way the magnet pulls them on a real nail.
-function layerSheer(ctx, q, W, H, ow, oh) {
-  const draw = (p, op, alpha) => { const cv = document.createElement("canvas"); renderSwatch(cv, p, W, H); ctx.globalCompositeOperation = op; ctx.globalAlpha = alpha; ctx.drawImage(cv, 0, 0, ow, oh); };
+// Each layer becomes a list of drawing steps: { cv, op, alpha } draws a rendered swatch, { fill, op, alpha }
+// fills a flat color. The swatch canvases stay live, so the stack can be redrawn as they animate.
+function sheerOps(q, W, H) {
+  const ops = [], draw = (p, op, alpha) => { const cv = document.createElement("canvas"); renderSwatch(cv, p, W, H); ops.push({ cv, op, alpha }); };
   const magnetic = q.effect === "magnetic" || q.effect === "sheermag" || !!q.glow; // drawn by the magnetic swatch
-  if (!q.clear) {
-    ctx.globalCompositeOperation = "multiply"; ctx.globalAlpha = .6;
-    ctx.fillStyle = q.baseColor || q.colors[0]; ctx.fillRect(0, 0, ow, oh);
-  }
+  if (!q.clear) ops.push({ fill: q.baseColor || q.colors[0], op: "multiply", alpha: .6 });
   if (magnetic) {
     const shape = q.effect === "sheermag" || q.effect === "magnetic" ? { glow: { shape: .9 }, catEye: { ...q.catEye, width: .07 } } : {};
     const blk = { ...q, ...shape, colors: ["#000000", ...q.colors.slice(1)], shadow: "#000000" };
@@ -1090,26 +1089,59 @@ function layerSheer(ctx, q, W, H, ow, oh) {
     // Other sheers (shimmers, glow in the dark): their shimmer on a black base, added as light.
     draw({ ...q, colors: q.baseColor ? q.colors : ["#000000", ...q.colors.slice(1)], baseColor: q.baseColor ? "#000000" : undefined, shadow: "#000000" }, "screen", .95);
   }
+  return ops;
 }
-function stackCanvas(W, H) {
+function stackOps(W, H) {
   const live = liveLayers(bench.layers);
   if (!live.length || !W || !H) return null;
-  const out = document.createElement("canvas"), dpr = swatchDpr(W);
-  out.width = Math.round(W * dpr); out.height = Math.round(H * dpr);
-  const ctx = out.getContext("2d");
   let start = 0;
   live.forEach((L, i) => { if (!isSheer(L.polish)) start = i; });
+  const ops = [];
   live.slice(start).forEach((L, i) => {
-    if (!i) { const cv = document.createElement("canvas"); renderSwatch(cv, L.polish, W, H); ctx.drawImage(cv, 0, 0, out.width, out.height); return; }
-    layerSheer(ctx, L.polish, W, H, out.width, out.height);
+    if (!i) { const cv = document.createElement("canvas"); renderSwatch(cv, L.polish, W, H); ops.push({ cv, op: "source-over", alpha: 1 }); }
+    else ops.push(...sheerOps(L.polish, W, H));
   });
+  return ops;
+}
+function composeOps(ctx, ops, ow, oh) {
+  ctx.globalCompositeOperation = "source-over"; ctx.globalAlpha = 1; ctx.clearRect(0, 0, ow, oh);
+  for (const o of ops) {
+    ctx.globalCompositeOperation = o.op; ctx.globalAlpha = o.alpha;
+    if (o.fill) { ctx.fillStyle = o.fill; ctx.fillRect(0, 0, ow, oh); } else ctx.drawImage(o.cv, 0, 0, ow, oh);
+  }
   ctx.globalCompositeOperation = "source-over"; ctx.globalAlpha = 1;
+}
+function stackCanvas(W, H) {
+  const ops = stackOps(W, H);
+  if (!ops) return null;
+  const out = document.createElement("canvas"), dpr = swatchDpr(W);
+  out.width = Math.round(W * dpr); out.height = Math.round(H * dpr);
+  composeOps(out.getContext("2d"), ops, out.width, out.height);
   return out;
 }
+// The big preview is interactive: the pointer (or the touch-screen drift) is passed to every layer's own
+// swatch, each animates the way it does on the shelf (magnetic glow following, thermal shifting, glints
+// flashing), and the stack is recomposed every frame while any of them is moving.
 function renderStage() {
   const box = $("#stage"); box.innerHTML = "";
-  const cv = stackCanvas(Math.round(box.clientWidth), Math.round(box.clientHeight));
-  if (cv) box.appendChild(cv);
+  const W = Math.round(box.clientWidth), H = Math.round(box.clientHeight), ops = stackOps(W, H);
+  if (ops) {
+    const out = document.createElement("canvas"), dpr = swatchDpr(W);
+    out.width = Math.round(W * dpr); out.height = Math.round(H * dpr);
+    const ctx = out.getContext("2d");
+    // The layer canvases sit hidden under the preview at the same size, so their own pointer maths work.
+    const holder = document.createElement("div"); holder.className = "stage-layers"; holder.setAttribute("aria-hidden", "true");
+    ops.forEach(o => o.cv && holder.appendChild(o.cv));
+    box.append(holder, out);
+    composeOps(ctx, ops, out.width, out.height);
+    let until = 0, raf = 0;
+    const loop = now => { composeOps(ctx, ops, out.width, out.height); raf = now < until ? requestAnimationFrame(loop) : 0; };
+    const kick = () => { until = performance.now() + 3500; if (!raf) raf = requestAnimationFrame(loop); }; // long enough for glow fades
+    out.onpointermove = e => { ops.forEach(o => o.cv && o.cv.onpointermove && o.cv.onpointermove(e)); kick(); };
+    out.onpointerleave = e => { ops.forEach(o => o.cv && o.cv.onpointerleave && o.cv.onpointerleave(e)); kick(); };
+    out.classList.add("interactive");
+    if (autoIO) autoIO.observe(out);
+  }
   renderPeek();
 }
 
