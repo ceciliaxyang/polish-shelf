@@ -2,7 +2,6 @@
 const EFFECTS = {
   sheer:     "Sheer",
   magnetic:  "Magnetic",
-  sheermag:  "Sheer magnetic",
   holo:      "Holographic",
   shimmer:   "Shimmer",
   chrome:    "Chrome",
@@ -15,11 +14,12 @@ const EFFECTS = {
   glow:      "Glow in the dark",
 };
 // Some effects share a category (one filter pill and one card label): chrome counts as Multichrome,
-// glitter as Shimmer. Swatches still draw by the polish's own effect.
-const CATEGORY = { chrome: "multichrome", glitter: "shimmer" };
+// glitter as Shimmer, and sheer magnetic as Magnetic (sheer magnetic polishes list both Sheer and
+// Magnetic in their effects). Swatches still draw by the polish's own effect.
+const CATEGORY = { chrome: "multichrome", glitter: "shimmer", sheermag: "magnetic" };
 const category = k => CATEGORY[k] || k;
 // Filter pills always shown, in this order; other effects get a pill once a polish uses them.
-const PILL_EFFECTS = ["sheer", "magnetic", "sheermag", "holo", "shimmer", "multichrome"];
+const PILL_EFFECTS = ["sheer", "magnetic", "holo", "shimmer", "multichrome"];
 const SKIN = "#f3d4c2";
 const NATURAL = "#f2d6cf";
 
