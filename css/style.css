@@ -211,8 +211,13 @@ body.detail-open .page::after { opacity: 1; }
 .mh-brand, .mh-name { margin: 0; color: #000; overflow-wrap: anywhere; }
 .mh-brand { font-size: 14px; }
 .mh-name { font-size: 20px; font-weight: 500; }
-.mh-btn { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; padding: 12px; border: 0; border-radius: 100px; background: #f2f2f2; mix-blend-mode: multiply; cursor: pointer; }
-.mh-btn:hover { background: #ebebeb; }
+/* Material buttons: translucent, blurring whatever passes behind them (photos, as they scroll) */
+.mh-btn { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; padding: 12px; border: 0; border-radius: 100px;
+  background: rgba(242, 242, 242, .7); -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6);
+  box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .6); cursor: pointer; transition: background .15s ease; }
+.mh-btn:hover { background: rgba(232, 232, 232, .85); }
+.bench .mh-btn { background: #f2f2f2; -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none; } /* the Layers pane keeps its plain grey close button */
+.bench .mh-btn:hover { background: #ebebeb; }
 .mh-btn:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
 .mh-btn[hidden] { display: none; }
 /* Detail view layout (Figma "Desktop - 4"): the live swatch sits small in the header's upper-left
@@ -221,6 +226,8 @@ body.detail-open .page::after { opacity: 1; }
    (48px); the dialog scrolls if they run past the screen. Phones get a single column. */
 .m-swatch { position: fixed; z-index: 3; top: calc(32px + env(safe-area-inset-top)); left: 36px; width: 72px; height: 72px; border-radius: 16px; overflow: hidden; background: var(--swatch); }
 .m-swatch canvas { display: block; width: 100%; height: 100%; }
+.m-swatch { transition: box-shadow .25s ease; }
+.modal.scrolled .m-swatch { box-shadow: 0 10px 28px rgba(0, 0, 0, .22), 0 2px 6px rgba(0, 0, 0, .14); } /* lifts off the photos while pinned */
 .modal-body { position: absolute; left: 36px; right: 48px; top: calc(var(--head, 156px) + 8px); padding-bottom: calc(48px + env(safe-area-inset-bottom)); }
 .m-photos { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
 .m-photos img { display: block; width: 100%; aspect-ratio: 1; height: auto; object-fit: cover; border-radius: 48px; background: var(--swatch); }
