@@ -38,6 +38,8 @@
              deep is the share suspended deeper inside a sheer polish, drawn softer and dimmer (default 0)
     grain    optional, magnetic: strength of the fine light/dark speckle in the body (default .06)
 */
+// Shelf order: Mooncat magnetics, Bee's Knees magnetics, bold Mooncat shimmers, holographic, thermals,
+// neutral shimmers, sheers, glow in the dark, then ILNP magnetics. The shelf shows polishes in this order.
 const POLISHES = [
   {
     id: "mooncat-404-soul-not-found",
@@ -94,18 +96,6 @@ const POLISHES = [
     glitter: "#e0301c",        // red glitter
     url: "https://www.mooncat.com/products/jasmine-dragon",
     photos: ["images/mooncat-jasmine-dragon/1.jpg", "images/mooncat-jasmine-dragon/2.jpg", "images/mooncat-jasmine-dragon/3.jpg", "images/mooncat-jasmine-dragon/4.jpg"], // saved from the product page
-  },
-  {
-    id: "mooncat-fake-halo",
-    name: "Fake Halo",
-    brand: "Mooncat",
-    effect: "holo",
-    effects: ["holo"],
-    // Rose gold linear holographic: copper rose gold packed with holo particles; rainbow streak through the light (from the photos)
-    colors: ["#c28a70"],
-    shadow: "#5e3c30",         // deeper bronze toward the edges
-    url: "https://www.mooncat.com/products/fake-halo",
-    photos: ["images/mooncat-fake-halo/1.jpg", "images/mooncat-fake-halo/2.jpg", "images/mooncat-fake-halo/3.jpg", "images/mooncat-fake-halo/4.jpg"], // saved from the product page
   },
   {
     id: "beesknees-knight-knave-optimist",
@@ -167,6 +157,123 @@ const POLISHES = [
     photos: ["images/beesknees-im-nobody/1.jpg", "images/beesknees-im-nobody/2.jpg", "images/beesknees-im-nobody/3.jpg", "images/beesknees-im-nobody/4.jpg"], // saved from the product page
   },
   {
+    id: "mooncat-jewel-beetle",
+    name: "Jewel Beetle",
+    brand: "Mooncat",
+    effect: "multichrome",
+    effects: ["multichrome", "shimmer"],
+    // Multichrome: shifts pink -> gold -> green with the viewing angle (from the product page and photos)
+    // Deep wine-magenta where it faces you, through hot pink and gold to yellow-green and green at the edges
+    colors: ["#8e1450", "#d42a82", "#e07a3a", "#dcb030", "#a8c83a", "#3c9a3e"], // [facing, ..., edge]
+    url: "https://www.mooncat.com/products/jewel-beetle",
+    photos: ["images/mooncat-jewel-beetle/1.jpg", "images/mooncat-jewel-beetle/2.jpg", "images/mooncat-jewel-beetle/3.jpg", "images/mooncat-jewel-beetle/4.jpg"], // saved from the product page
+  },
+  {
+    id: "mooncat-root-of-all-evil",
+    name: "Root of All Evil",
+    brand: "Mooncat",
+    effect: "multichrome",
+    effects: ["multichrome", "shimmer"],
+    // Semi-sheer deep burgundy packed with teal-to-green-yellow shimmer. Drawn like a magnetic (a soft
+    // glowing cloud of shimmer over the burgundy) but with one fixed shape: no glass bead / cat eye.
+    glow: { shape: .3 },
+    colors: ["#4c1026", "#62dca4", "#2cbcb2", "#3284cc", "#5a44a8", "#86286c"], // [base, flash...]
+    shadow: "#2a0716",
+    grad: [.5, .4],            // greener toward the upper left, violet toward the lower right
+    // Halfway between shimmer and magnetic: a broader, softer glow, with shimmer particles packed
+    // across the whole nail so the burgundy reads as sparkly rather than smooth.
+    bead: { r: [.5, .52], glow: .75, span: .9 }, catEye: { width: .2, glow: .8 },
+    shimmer: "#2e7e86",
+    sparkle: { density: 3.5, size: 1.2, floor: .3, mix: .75, colors: ["#5ad8a8", "#3cb8c0", "#4a80d8", "#8a58c8", "#b0d860"] },
+    url: "https://www.mooncat.com/products/root-of-all-evil",
+    photos: ["images/mooncat-root-of-all-evil/1.jpg", "images/mooncat-root-of-all-evil/2.jpg", "images/mooncat-root-of-all-evil/3.jpg", "images/mooncat-root-of-all-evil/4.jpg"], // saved from the product page
+  },
+  {
+    id: "mooncat-deadly-nightshade",
+    name: "Deadly Nightshade",
+    brand: "Mooncat",
+    effect: "multichrome",
+    effects: ["shimmer"],
+    // Ultra shifty shimmer over a reddish plum: a warm gold-orange glow where it faces you, fading through
+    // copper into red-purple, with teal and green flashing at the edges (from the product page and photos)
+    colors: ["#f2b04a", "#e08a34", "#c0603a", "#963a60", "#7a2a62", "#2a8a78", "#5cb24a"], // [facing, ..., edge]
+    chrome: { smooth: .55 },   // a smooth, oily shift rather than coarse grain
+    glimmer: { color: "#2af0e0", share: .06 }, // bright electric-teal glimmers throughout
+    url: "https://www.mooncat.com/products/deadly-nightshade",
+    photos: ["images/mooncat-deadly-nightshade/1.jpg", "images/mooncat-deadly-nightshade/2.jpg", "images/mooncat-deadly-nightshade/3.jpg", "images/mooncat-deadly-nightshade/4.jpg"], // saved from the product page
+  },
+  {
+    id: "mooncat-sin-eater",
+    name: "Sin Eater",
+    brand: "Mooncat",
+    effect: "shimmer",
+    effects: ["shimmer", "multichrome"],
+    // Deep wine purple with subtle color-shifting red-to-orange-to-green shimmer (from the product page and photos)
+    baseColor: "#4a1438",
+    colors: ["#d6404c", "#e27a34", "#a0a044", "#4c7c3c"], // shimmer colors [facing, ..., sides]
+    shadow: "#2a0a20",
+    chrome: { grain: 1.3, cover: .9, sheen: 1.6 },
+    url: "https://www.mooncat.com/products/sin-eater",
+    photos: ["images/mooncat-sin-eater/1.jpg", "images/mooncat-sin-eater/2.jpg", "images/mooncat-sin-eater/3.jpg", "images/mooncat-sin-eater/4.jpg"], // saved from the product page
+  },
+  {
+    id: "mooncat-garden-of-evil",
+    name: "Garden of Evil",
+    brand: "Mooncat",
+    effect: "shimmer",
+    effects: ["shimmer", "glitter"],
+    // Moss green with violet shimmer and micro holographic glitter. In the photos the shimmer gathers into a
+    // small, intense electric-violet glow where the light hits, over an otherwise solid green (from the photos).
+    glow: { shape: .05, rot: 0 }, // glowing-spot swatch, fixed shape (no glass bead / cat eye), upright
+    colors: ["#6c7c3c", "#ec5cff", "#cc2cee", "#9e3ed6", "#8c6a8c"], // [base, glow core -> edge]: magenta core, violet, then a mauve haze into the green
+    shadow: "#4c5828",
+    bead: { r: [.15, .36], glow: 1, span: .9 }, // a tall, narrow glow running down the nail
+    shimmer: "#8e7aa8",        // faint violet shimmer across the green
+    sparkle: { density: 2.6, size: 1.1, floor: .32, mix: .85, colors: ["#ffffff", "#f0a0ff", "#a0e0ff", "#fff0a0", "#b0ffb0", "#ffb0d0"] }, // micro holo glitter across the whole nail
+    url: "https://www.mooncat.com/products/garden-of-evil",
+    photos: ["images/mooncat-garden-of-evil/1.jpg", "images/mooncat-garden-of-evil/2.jpg", "images/mooncat-garden-of-evil/3.jpg", "images/mooncat-garden-of-evil/4.jpg"], // saved from the product page
+  },
+  {
+    id: "mooncat-am-i-everything-you-fear",
+    name: "Am I Everything You Fear?",
+    brand: "Mooncat",
+    effect: "shimmer",
+    effects: ["shimmer", "multichrome", "glitter"],
+    // Dusty deep teal with color-shifting pink-to-orange-to-green shimmer and micro holographic glitter (from the product page and photos)
+    baseColor: "#1e4a4c",
+    colors: ["#f274b4", "#ea9264", "#b4c264", "#52a684"], // shimmer colors [facing, ..., sides]
+    shadow: "#0e2a2c",
+    chrome: { grain: 1.3, cover: .95, sheen: 1.3 },
+    url: "https://www.mooncat.com/products/am-i-everything-you-fear",
+    photos: ["images/mooncat-am-i-everything-you-fear/1.jpg", "images/mooncat-am-i-everything-you-fear/2.jpg", "images/mooncat-am-i-everything-you-fear/3.jpg", "images/mooncat-am-i-everything-you-fear/4.jpg"], // saved from the product page
+  },
+  {
+    id: "mooncat-bottled-rage",
+    name: "Bottled Rage",
+    brand: "Mooncat",
+    effect: "shimmer",
+    effects: ["shimmer"],
+    // Dark burgundy red-black with fiery red-orange shimmer (from the product page and photos)
+    baseColor: "#360810",
+    colors: ["#ff5a2c", "#e2321e", "#a8141e", "#5c0a14"], // shimmer colors [facing, ..., sides]
+    shadow: "#1a0306",
+    chrome: { grain: 1.1, cover: .9, sheen: 1.8 },
+    url: "https://www.mooncat.com/products/bottled-rage",
+    photos: ["images/mooncat-bottled-rage/1.jpg", "images/mooncat-bottled-rage/2.jpg", "images/mooncat-bottled-rage/3.jpg", "images/mooncat-bottled-rage/4.jpg"], // saved from the product page
+  },
+  {
+    id: "mooncat-fake-halo",
+    name: "Fake Halo",
+    brand: "Mooncat",
+    effect: "holo",
+    effects: ["holo"],
+    // Rose gold linear holographic: copper rose gold packed with holo particles; rainbow streak through the light (from the photos)
+    colors: ["#c28a70"],
+    shadow: "#5e3c30",         // deeper bronze toward the edges
+    url: "https://www.mooncat.com/products/fake-halo",
+    photos: ["images/mooncat-fake-halo/1.jpg", "images/mooncat-fake-halo/2.jpg", "images/mooncat-fake-halo/3.jpg", "images/mooncat-fake-halo/4.jpg"], // saved from the product page
+  },
+  {
     id: "mooncat-dark-omens",
     name: "Dark Omens",
     brand: "Mooncat",
@@ -217,69 +324,6 @@ const POLISHES = [
     photos: ["images/mooncat-koi-whiskers/1.jpg", "images/mooncat-koi-whiskers/2.jpg", "images/mooncat-koi-whiskers/3.jpg", "images/mooncat-koi-whiskers/4.jpg"], // saved from the product page
   },
   {
-    id: "mooncat-jewel-beetle",
-    name: "Jewel Beetle",
-    brand: "Mooncat",
-    effect: "multichrome",
-    effects: ["multichrome", "shimmer"],
-    // Multichrome: shifts pink -> gold -> green with the viewing angle (from the product page and photos)
-    // Deep wine-magenta where it faces you, through hot pink and gold to yellow-green and green at the edges
-    colors: ["#8e1450", "#d42a82", "#e07a3a", "#dcb030", "#a8c83a", "#3c9a3e"], // [facing, ..., edge]
-    url: "https://www.mooncat.com/products/jewel-beetle",
-    photos: ["images/mooncat-jewel-beetle/1.jpg", "images/mooncat-jewel-beetle/2.jpg", "images/mooncat-jewel-beetle/3.jpg", "images/mooncat-jewel-beetle/4.jpg"], // saved from the product page
-  },
-  {
-    id: "mooncat-root-of-all-evil",
-    name: "Root of All Evil",
-    brand: "Mooncat",
-    effect: "multichrome",
-    effects: ["multichrome", "shimmer"],
-    // Semi-sheer deep burgundy packed with teal-to-green-yellow shimmer. Drawn like a magnetic (a soft
-    // glowing cloud of shimmer over the burgundy) but with one fixed shape: no glass bead / cat eye.
-    glow: { shape: .3 },
-    colors: ["#4c1026", "#62dca4", "#2cbcb2", "#3284cc", "#5a44a8", "#86286c"], // [base, flash...]
-    shadow: "#2a0716",
-    grad: [.5, .4],            // greener toward the upper left, violet toward the lower right
-    // Halfway between shimmer and magnetic: a broader, softer glow, with shimmer particles packed
-    // across the whole nail so the burgundy reads as sparkly rather than smooth.
-    bead: { r: [.5, .52], glow: .75, span: .9 }, catEye: { width: .2, glow: .8 },
-    shimmer: "#2e7e86",
-    sparkle: { density: 3.5, size: 1.2, floor: .3, mix: .75, colors: ["#5ad8a8", "#3cb8c0", "#4a80d8", "#8a58c8", "#b0d860"] },
-    url: "https://www.mooncat.com/products/root-of-all-evil",
-    photos: ["images/mooncat-root-of-all-evil/1.jpg", "images/mooncat-root-of-all-evil/2.jpg", "images/mooncat-root-of-all-evil/3.jpg", "images/mooncat-root-of-all-evil/4.jpg"], // saved from the product page
-  },
-  {
-    id: "mooncat-sin-eater",
-    name: "Sin Eater",
-    brand: "Mooncat",
-    effect: "shimmer",
-    effects: ["shimmer", "multichrome"],
-    // Deep wine purple with subtle color-shifting red-to-orange-to-green shimmer (from the product page and photos)
-    baseColor: "#4a1438",
-    colors: ["#d6404c", "#e27a34", "#a0a044", "#4c7c3c"], // shimmer colors [facing, ..., sides]
-    shadow: "#2a0a20",
-    chrome: { grain: 1.3, cover: .9, sheen: 1.6 },
-    url: "https://www.mooncat.com/products/sin-eater",
-    photos: ["images/mooncat-sin-eater/1.jpg", "images/mooncat-sin-eater/2.jpg", "images/mooncat-sin-eater/3.jpg", "images/mooncat-sin-eater/4.jpg"], // saved from the product page
-  },
-  {
-    id: "mooncat-garden-of-evil",
-    name: "Garden of Evil",
-    brand: "Mooncat",
-    effect: "shimmer",
-    effects: ["shimmer", "glitter"],
-    // Moss green with violet shimmer and micro holographic glitter. In the photos the shimmer gathers into a
-    // small, intense electric-violet glow where the light hits, over an otherwise solid green (from the photos).
-    glow: { shape: .05, rot: 0 }, // glowing-spot swatch, fixed shape (no glass bead / cat eye), upright
-    colors: ["#6c7c3c", "#ec5cff", "#cc2cee", "#9e3ed6", "#8c6a8c"], // [base, glow core -> edge]: magenta core, violet, then a mauve haze into the green
-    shadow: "#4c5828",
-    bead: { r: [.15, .36], glow: 1, span: .9 }, // a tall, narrow glow running down the nail
-    shimmer: "#8e7aa8",        // faint violet shimmer across the green
-    sparkle: { density: 2.6, size: 1.1, floor: .32, mix: .85, colors: ["#ffffff", "#f0a0ff", "#a0e0ff", "#fff0a0", "#b0ffb0", "#ffb0d0"] }, // micro holo glitter across the whole nail
-    url: "https://www.mooncat.com/products/garden-of-evil",
-    photos: ["images/mooncat-garden-of-evil/1.jpg", "images/mooncat-garden-of-evil/2.jpg", "images/mooncat-garden-of-evil/3.jpg", "images/mooncat-garden-of-evil/4.jpg"], // saved from the product page
-  },
-  {
     id: "mooncat-sand-viper",
     name: "Sand Viper",
     brand: "Mooncat",
@@ -308,20 +352,6 @@ const POLISHES = [
     photos: ["images/mooncat-dark-horse/1.jpg", "images/mooncat-dark-horse/2.jpg", "images/mooncat-dark-horse/3.jpg", "images/mooncat-dark-horse/4.jpg"], // saved from the product page
   },
   {
-    id: "mooncat-petals-for-a-narcissist",
-    name: "Petals for a Narcissist",
-    brand: "Mooncat",
-    effect: "shimmer",
-    effects: ["shimmer", "sheer"],
-    // Sheer white-gray with violet-pink shimmer (from the product page and photos)
-    baseColor: "#fbf9fa",      // white base (per your request)
-    colors: ["#ec62f2", "#b47af4", "#8a88e6"], // shimmer colors [facing, ..., sides]
-    shadow: "#d8d2da",
-    chrome: { grain: .9, cover: 1.15, sheen: 2.2, along: .1, smooth: .85 }, // a soft gleam, not glitter
-    url: "https://www.mooncat.com/products/petals-for-a-narcissist",
-    photos: ["images/mooncat-petals-for-a-narcissist/1.jpg", "images/mooncat-petals-for-a-narcissist/2.jpg", "images/mooncat-petals-for-a-narcissist/3.jpg", "images/mooncat-petals-for-a-narcissist/4.jpg"], // saved from the product page
-  },
-  {
     id: "mooncat-memento-mori",
     name: "Memento Mori",
     brand: "Mooncat",
@@ -336,18 +366,36 @@ const POLISHES = [
     photos: ["images/mooncat-memento-mori/1.jpg", "images/mooncat-memento-mori/2.jpg", "images/mooncat-memento-mori/3.jpg", "images/mooncat-memento-mori/4.jpg"], // saved from the product page
   },
   {
-    id: "mooncat-am-i-everything-you-fear",
-    name: "Am I Everything You Fear?",
+    id: "mooncat-petals-for-a-narcissist",
+    name: "Petals for a Narcissist",
     brand: "Mooncat",
     effect: "shimmer",
-    effects: ["shimmer", "multichrome", "glitter"],
-    // Dusty deep teal with color-shifting pink-to-orange-to-green shimmer and micro holographic glitter (from the product page and photos)
-    baseColor: "#1e4a4c",
-    colors: ["#f274b4", "#ea9264", "#b4c264", "#52a684"], // shimmer colors [facing, ..., sides]
-    shadow: "#0e2a2c",
-    chrome: { grain: 1.3, cover: .95, sheen: 1.3 },
-    url: "https://www.mooncat.com/products/am-i-everything-you-fear",
-    photos: ["images/mooncat-am-i-everything-you-fear/1.jpg", "images/mooncat-am-i-everything-you-fear/2.jpg", "images/mooncat-am-i-everything-you-fear/3.jpg", "images/mooncat-am-i-everything-you-fear/4.jpg"], // saved from the product page
+    effects: ["shimmer", "sheer"],
+    // Sheer white-gray with violet-pink shimmer (from the product page and photos)
+    baseColor: "#fbf9fa",      // white base (per your request)
+    colors: ["#ec62f2", "#b47af4", "#8a88e6"], // shimmer colors [facing, ..., sides]
+    shadow: "#d8d2da",
+    chrome: { grain: .9, cover: 1.15, sheen: 2.2, along: .1, smooth: .85 }, // a soft gleam, not glitter
+    url: "https://www.mooncat.com/products/petals-for-a-narcissist",
+    photos: ["images/mooncat-petals-for-a-narcissist/1.jpg", "images/mooncat-petals-for-a-narcissist/2.jpg", "images/mooncat-petals-for-a-narcissist/3.jpg", "images/mooncat-petals-for-a-narcissist/4.jpg"], // saved from the product page
+  },
+  {
+    id: "mooncat-moonjelly",
+    name: "Moonjelly",
+    brand: "Mooncat",
+    effect: "shimmer",
+    effects: ["sheer", "flakies"],
+    // Sheer white jelly with electric blue shimmer, blue-to-green-to-purple-to-pink flakies and micro holo glitter;
+    // on the nail it glows pinky-lilac with blue where the light hits (from the product page and photos)
+    glow: { shape: .1, rot: 0 }, // glowing-spot swatch, fixed shape
+    colors: ["#e8e2ee", "#f0b6e2", "#c8b0ff", "#9cc6ff", "#e2dcec"], // [base, glow core -> edge]: pink-lilac core, blue edges
+    shadow: "#c8c0d6",
+    bead: { r: [.44, .52], glow: .85, span: .95 },
+    flakes: ["#6ab4ff", "#52d6b2", "#a878ff", "#ff84cc"],
+    flakeShine: { size: .75, density: 1.6 }, // smaller, shinier foil flakes that glint as the light moves
+    sparkle: { density: 2.4, size: 1, floor: .4, mix: .8, colors: ["#ffffff", "#8cc8ff", "#c8a0ff", "#ffb0dc", "#a8f0d0"] },
+    url: "https://www.mooncat.com/products/moonjelly",
+    photos: ["images/mooncat-moonjelly/1.jpg", "images/mooncat-moonjelly/2.jpg", "images/mooncat-moonjelly/3.jpg", "images/mooncat-moonjelly/4.jpg"], // saved from the product page
   },
   {
     id: "mooncat-the-avatar-state",
@@ -451,51 +499,5 @@ const POLISHES = [
     sparkle: { density: 6, floor: .35, deep: .35, size: 1.4, dark: .1, colors: ["#ffffff", "#ffffff", "#ffffff", "#f2f2f6", "#ff9fd0", "#8fd0ff", "#b4ff9c"], mix: .8 },
     url: "https://www.ilnp.com/bubbly-silver-magnetic-topper-nail-polish/",
     photos: ["images/ilnp-bubbly/1.jpg", "images/ilnp-bubbly/2.jpg", "images/ilnp-bubbly/3.jpg", "images/ilnp-bubbly/4.jpg"], // saved from the product page
-  },
-  {
-    id: "mooncat-bottled-rage",
-    name: "Bottled Rage",
-    brand: "Mooncat",
-    effect: "shimmer",
-    effects: ["shimmer"],
-    // Dark burgundy red-black with fiery red-orange shimmer (from the product page and photos)
-    baseColor: "#360810",
-    colors: ["#ff5a2c", "#e2321e", "#a8141e", "#5c0a14"], // shimmer colors [facing, ..., sides]
-    shadow: "#1a0306",
-    chrome: { grain: 1.1, cover: .9, sheen: 1.8 },
-    url: "https://www.mooncat.com/products/bottled-rage",
-    photos: ["images/mooncat-bottled-rage/1.jpg", "images/mooncat-bottled-rage/2.jpg", "images/mooncat-bottled-rage/3.jpg", "images/mooncat-bottled-rage/4.jpg"], // saved from the product page
-  },
-  {
-    id: "mooncat-moonjelly",
-    name: "Moonjelly",
-    brand: "Mooncat",
-    effect: "shimmer",
-    effects: ["sheer", "flakies"],
-    // Sheer white jelly with electric blue shimmer, blue-to-green-to-purple-to-pink flakies and micro holo glitter;
-    // on the nail it glows pinky-lilac with blue where the light hits (from the product page and photos)
-    glow: { shape: .1, rot: 0 }, // glowing-spot swatch, fixed shape
-    colors: ["#e8e2ee", "#f0b6e2", "#c8b0ff", "#9cc6ff", "#e2dcec"], // [base, glow core -> edge]: pink-lilac core, blue edges
-    shadow: "#c8c0d6",
-    bead: { r: [.44, .52], glow: .85, span: .95 },
-    flakes: ["#6ab4ff", "#52d6b2", "#a878ff", "#ff84cc"],
-    flakeShine: { size: .75, density: 1.6 }, // smaller, shinier foil flakes that glint as the light moves
-    sparkle: { density: 2.4, size: 1, floor: .4, mix: .8, colors: ["#ffffff", "#8cc8ff", "#c8a0ff", "#ffb0dc", "#a8f0d0"] },
-    url: "https://www.mooncat.com/products/moonjelly",
-    photos: ["images/mooncat-moonjelly/1.jpg", "images/mooncat-moonjelly/2.jpg", "images/mooncat-moonjelly/3.jpg", "images/mooncat-moonjelly/4.jpg"], // saved from the product page
-  },
-  {
-    id: "mooncat-deadly-nightshade",
-    name: "Deadly Nightshade",
-    brand: "Mooncat",
-    effect: "multichrome",
-    effects: ["shimmer"],
-    // Ultra shifty shimmer over a reddish plum: a warm gold-orange glow where it faces you, fading through
-    // copper into red-purple, with teal and green flashing at the edges (from the product page and photos)
-    colors: ["#f2b04a", "#e08a34", "#c0603a", "#963a60", "#7a2a62", "#2a8a78", "#5cb24a"], // [facing, ..., edge]
-    chrome: { smooth: .55 },   // a smooth, oily shift rather than coarse grain
-    glimmer: { color: "#2af0e0", share: .06 }, // bright electric-teal glimmers throughout
-    url: "https://www.mooncat.com/products/deadly-nightshade",
-    photos: ["images/mooncat-deadly-nightshade/1.jpg", "images/mooncat-deadly-nightshade/2.jpg", "images/mooncat-deadly-nightshade/3.jpg", "images/mooncat-deadly-nightshade/4.jpg"], // saved from the product page
   },
 ];
