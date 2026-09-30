@@ -76,8 +76,12 @@ button, input, select { font: inherit; color: inherit; }
 }
 .swatch-btn:hover { background: rgba(17, 17, 17, .62); }
 .swatch-btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
-.swatch-btn svg { display: block; fill: none; }
-.swatch-btn.on svg { fill: currentColor; }
+.swatch-btn svg { display: block; overflow: visible; }
+.swatch-btn .plus { transform-origin: 10px 10px; transition: transform .35s cubic-bezier(.2,.8,.2,1), opacity .2s ease; }
+.swatch-btn .check { stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset .2s ease; }
+.swatch-btn.on .plus { transform: rotate(90deg) scale(0); opacity: 0; }
+.swatch-btn.on .check { stroke-dashoffset: 0; transition: stroke-dashoffset .35s cubic-bezier(.3,.7,.3,1) .12s; }
+@media (prefers-reduced-motion: reduce) { .swatch-btn .plus, .swatch-btn .check, .swatch-btn.on .check { transition: none; } }
 .card-text { display: flex; flex-direction: column; gap: 12px; width: 100%; }
 .card-title { display: flex; flex-direction: column; gap: 8px; }
 .card-title { min-width: 0; width: 100%; }

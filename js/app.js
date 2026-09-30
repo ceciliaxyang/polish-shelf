@@ -833,7 +833,8 @@ function toggleFx(k) {
 // A polish's rendering uses `effect`; `effects` (optional) lists everything it should be found under.
 function effectsOf(p) { return p.effects || [p.effect]; }
 
-const HEART = `<svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 17.92c4.48-3.06 8.96-6.8 8.96-11.32 0-1.16-.44-2.31-1.31-3.19a4.42 4.42 0 0 0-3.17-1.33c-1.15 0-2.3.44-3.17 1.33L10 4.73 8.69 3.41a4.42 4.42 0 0 0-3.17-1.33c-1.15 0-2.3.44-3.17 1.33a4.51 4.51 0 0 0-1.31 3.19c0 4.52 4.48 8.26 8.96 11.32Z" stroke="currentColor" stroke-width="1.25"/></svg>`;
+// Plus while the polish is off the bench; it spins away and a checkmark draws in once it's added.
+const PLUS_CHECK = `<svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><path class="plus" d="M10 3.5v13M3.5 10h13"/><path class="check" pathLength="1" d="M4.5 10.5l3.5 3.5 7.5-8"/></svg>`;
 
 function emptyMsg(title, body) { return `<div class="empty"><strong>${title}</strong>${body}</div>`; }
 
@@ -846,7 +847,7 @@ function renderShelf() {
     const card = document.createElement("article"); card.className = "card";
     const wrap = document.createElement("div"); wrap.className = "swatch-wrap";
     const sw = document.createElement("canvas"); sw.className = "swatch";
-    const add = document.createElement("button"); add.type = "button"; add.className = "swatch-btn"; add.innerHTML = HEART; add.dataset.pid = p.id;
+    const add = document.createElement("button"); add.type = "button"; add.className = "swatch-btn"; add.innerHTML = PLUS_CHECK; add.dataset.pid = p.id;
     add.setAttribute("aria-label", `Add ${p.name} to layers`); add.title = "Add to layers";
     add.classList.toggle("on", bench.layers.some(l => l.pid === p.id));
     add.onclick = () => addLayer(p);
@@ -952,7 +953,7 @@ function addLayer(p) {
 }
 function move(i, d) { const a = bench.layers; [a[i], a[i + d]] = [a[i + d], a[i]]; saveBench(); renderBench(); }
 
-// Swatch buttons show filled while that polish is on the bench.
+// Swatch buttons show a checkmark while that polish is on the bench.
 function syncSwatchButtons() {
   document.querySelectorAll(".swatch-btn").forEach(b => b.classList.toggle("on", bench.layers.some(l => l.pid === b.dataset.pid)));
 }
