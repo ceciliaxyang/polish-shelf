@@ -1080,9 +1080,9 @@ function stackCanvas(W, H) {
     // passes drawn on black: its magnetic glow as a white veil, then its glitter at full strength, packed
     // densely and gathered into the glass bead / cat eye shape, with the polish below showing around it.
     if (i && L.polish.clear) {
-      // Gathered into a tight, round glass bead in the middle of the nail.
+      // Gathered into a tight cat eye: a narrow diagonal stripe across the nail.
       const q = L.polish, blk = { ...q, colors: ["#000000", ...q.colors.slice(1)], shadow: "#000000",
-        glow: { shape: 0, rot: 0 }, bead: { ...q.bead, r: [.24, .26] } };
+        glow: { shape: .9 }, catEye: { ...q.catEye, width: .07 } };
       const sp = { density: 1, floor: .1, ...q.sparkle };
       renderSwatch(cv, { ...blk, sparkle: { ...sp, density: 0 }, flakes: null }, W, H);
       ctx.globalCompositeOperation = "screen"; ctx.globalAlpha = .6; ctx.drawImage(cv, 0, 0, out.width, out.height);
