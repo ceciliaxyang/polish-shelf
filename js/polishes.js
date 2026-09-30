@@ -545,9 +545,11 @@ const POLISHES = [
     effect: "powder",
     effects: ["powder"],
     tone: "bold",
-    // Aurora chrome powder: a mirror film that flashes gold and peach into pink-lilac and sky blue as it tilts.
+    // Aurora chrome powder (reference: the close-up nail photos): a pale, pearly ice-blue mirror film with warm
+    // gold and peach streaks that slide across as it tilts, and bright white highlights. Barely any purple.
     // Always layered on top. On the shelf it's shown over a milky white gel, like the product photos.
-    colors: ["#e8e4ea", "#f6aa3c", "#f08c5c", "#e08ccc", "#72b2f2", "#4cc4ea", "#9c88f0"], // [base shown over, ...bands]
+    colors: ["#e8e4ea", "#bddbea", "#a9d3e6", "#dce8ef", "#f7c585", "#f7c585", "#f4a97c", "#ecdcd0", "#c3dcec"], // [base shown over, ...bands]
+    powder: { spread: .6, light: [.74, .32] }, // few, broad bands; pastel and bright
     url: "https://www.amazon.com/dp/B0FNN6R827",
     photos: ["images/prettydiva-sunset-chrome-powder/1.jpg", "images/prettydiva-sunset-chrome-powder/2.jpg", "images/prettydiva-sunset-chrome-powder/3.jpg", "images/prettydiva-sunset-chrome-powder/4.jpg"], // saved from the product page
   },

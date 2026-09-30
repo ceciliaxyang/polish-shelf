@@ -784,14 +784,16 @@ function multichromeSwatch(cv, p, W, H) {
   smooth rather than glittery and very reflective: bright color bands run down the nail and shift a lot
   with the angle, and a sharp white highlight runs along the curve. Hovering tilts the nail: sideways
   moves the bands and highlight across, up and down slides through the colors.
-  colors = [base the powder is shown over on the shelf, ...band colors]. Optional powder: { spread, spec, cover }:
-  how many bands fit across the nail, how strong the highlight is, and how much of the base it covers (.8).
+  colors = [base the powder is shown over on the shelf, ...band colors]. Optional powder: { spread, spec, cover, light }:
+  how many bands fit across the nail, how strong the highlight is, how much of the base it covers (.8), and
+  [base, extra] brightness (pastel powders use a high base).
 */
 function powderSwatch(cv, p, W, H) {
   const dpr = swatchDpr(W), cw = Math.round(W * dpr), ch = Math.round(H * dpr);
   cv.width = cw; cv.height = ch;
   const ctx = cv.getContext("2d");
-  const opt = { spread: .8, spec: 1, cover: .8, ...p.powder };
+  const opt = { spread: .8, spec: 1, cover: .8, light: [.5, .55], ...p.powder };
+  const [L0, L1] = opt.light; // brightness away from / at the facing part of the curve
   const base = rgb(p.colors[0]), PL = 256, pal = new Float32Array(PL * 3);
   for (let i = 0; i < PL; i++) pal.set(rgb(palette(p.colors.slice(1), i / (PL - 1))), i * 3);
   // Computed at full resolution so the mirror bands and highlights stay crisp. While moving, every other
@@ -810,7 +812,7 @@ function powderSwatch(cv, p, W, H) {
         const nx = x / cw, u = (nx - axis) / .55, ang = Math.sqrt(u * u + dome);
         let t = ang * opt.spread + shift + along; t -= Math.floor(t); t = t < .5 ? t * 2 : (1 - t) * 2; // bands repeat and mirror
         t = t * t * (3 - 2 * t); t = t * t * (3 - 2 * t); // steeper transitions: crisp mirror bands rather than soft gradients
-        const k = ((t * (PL - 1)) | 0) * 3, light = .5 + .55 * Math.exp(-ang * ang * 2);
+        const k = ((t * (PL - 1)) | 0) * 3, light = L0 + L1 * Math.exp(-ang * ang * 2);
         // A sharp main highlight, a thin echo beside it, and a softer one on the far side of the curve.
         const d = (nx - hi) / .007, d1 = (nx - hi - .03) / .004, d2 = (nx - (axis - .3)) / .02;
         const fall = 1 - Math.abs(ny - .5) * .6;
