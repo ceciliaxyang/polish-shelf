@@ -1024,8 +1024,16 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") closeDetail(
 /* ---------- layering bench ---------- */
 function polishById(id) { return state.polishes.find(p => p.id === id); }
 function liveLayers(layers) { return layers.map(l => ({ ...l, polish: polishById(l.pid) })).filter(l => l.polish); }
+// On desktop the pane slides in from the right while the shelf column narrows to make room (both in
+// CSS); on close it slides out and is hidden once the slide is done.
+const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const benchIsOpen = () => $("#bench").classList.contains("open");
 function setBenchOpen(open) {
-  $("#bench").hidden = !open; $("#layout").classList.toggle("closed", !open);
+  const b = $("#bench");
+  clearTimeout(b._hideT);
+  if (open) { b.hidden = false; void b.offsetWidth; b.classList.add("open"); }
+  else { b.classList.remove("open"); b._hideT = setTimeout(() => { if (!benchIsOpen()) b.hidden = true; }, sheetMQ.matches || reduceMotion ? 0 : 450); }
+  $("#layout").classList.toggle("closed", !open);
   document.body.classList.toggle("bench-open", open);
   setSheet(false);
   if (open) renderBench();
@@ -1042,7 +1050,7 @@ function addLayer(p) {
   if (!isSheer(p)) { at = 0; bench.layers.forEach((l, i) => { const q = polishById(l.pid); if (q && !isSheer(q)) at = i + 1; }); }
   bench.layers.splice(at, 0, layer);
   saveBench();
-  if ($("#bench").hidden) setBenchOpen(true); else renderBench();
+  if (!benchIsOpen()) setBenchOpen(true); else renderBench();
   pulsePeek();
   toast(`Added ${p.name || "polish"} as layer ${at + 1}`);
 }
@@ -1247,7 +1255,7 @@ function pulsePeek() {
 
 function renderBench() {
   syncSwatchButtons();
-  if ($("#bench").hidden) return;
+  if (!benchIsOpen()) return;
   $("#bench").classList.toggle("no-layers", !liveLayers(bench.layers).length);
   renderStage();
   const ol = $("#layers"); ol.innerHTML = "";
