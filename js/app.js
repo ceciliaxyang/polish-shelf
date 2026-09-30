@@ -1077,15 +1077,15 @@ function stackCanvas(W, H) {
   live.slice(start).forEach((L, i) => {
     const cv = document.createElement("canvas");
     // A clear topper over another polish has no color of its own, so it's added as light (screen) in two
-    // passes drawn on black: its magnetic glow as a soft white veil, then its glitter at full strength,
-    // packed densely, so it reads as a concentrated, sparkly white layer with the polish below showing through.
+    // passes drawn on black: its magnetic glow as a white veil, then its glitter at full strength, packed
+    // densely and gathered into the glass bead / cat eye shape, with the polish below showing around it.
     if (i && L.polish.clear) {
       const q = L.polish, blk = { ...q, colors: ["#000000", ...q.colors.slice(1)], shadow: "#000000" };
       const sp = { density: 1, floor: .1, ...q.sparkle };
       renderSwatch(cv, { ...blk, sparkle: { ...sp, density: 0 }, flakes: null }, W, H);
-      ctx.globalCompositeOperation = "screen"; ctx.globalAlpha = .45; ctx.drawImage(cv, 0, 0, out.width, out.height);
+      ctx.globalCompositeOperation = "screen"; ctx.globalAlpha = .6; ctx.drawImage(cv, 0, 0, out.width, out.height);
       const cv2 = document.createElement("canvas");
-      renderSwatch(cv2, { ...blk, colors: q.colors.map(() => "#000000"), sparkle: { ...sp, density: sp.density * 1.8, floor: .75, mix: 1, dark: 0 } }, W, H);
+      renderSwatch(cv2, { ...blk, colors: q.colors.map(() => "#000000"), sparkle: { ...sp, density: sp.density * 2.2, floor: .04, mix: 1, dark: 0 } }, W, H);
       ctx.globalAlpha = 1; ctx.drawImage(cv2, 0, 0, out.width, out.height);
       return;
     }
