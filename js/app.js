@@ -791,43 +791,55 @@ function powderSwatch(cv, p, W, H) {
   const dpr = swatchDpr(W), cw = Math.round(W * dpr), ch = Math.round(H * dpr);
   cv.width = cw; cv.height = ch;
   const ctx = cv.getContext("2d");
-  const opt = { spread: .8, spec: .85, cover: .8, ...p.powder };
+  const opt = { spread: .8, spec: 1, cover: .8, ...p.powder };
   const base = rgb(p.colors[0]), PL = 256, pal = new Float32Array(PL * 3);
   for (let i = 0; i < PL; i++) pal.set(rgb(palette(p.colors.slice(1), i / (PL - 1))), i * 3);
-  // Mirror finishes are smooth, so the image is computed at half resolution and scaled up softly.
-  const hw = Math.ceil(cw / 2), hh = Math.ceil(ch / 2), buf = document.createElement("canvas");
-  buf.width = hw; buf.height = hh;
-  const bctx = buf.getContext("2d"), img = bctx.createImageData(hw, hh), px = img.data;
+  // Computed at full resolution so the mirror bands and highlights stay crisp. While moving, every other
+  // pixel is computed and doubled for speed; the resting frame is full detail.
+  const img = ctx.createImageData(cw, ch), px = img.data;
+  // Fixed micro-glints: the finest flecks of the powder catching the light.
+  const R = rng(p.id || "p"), glint = new Float32Array(cw * ch);
+  for (let i = 0; i < glint.length; i++) { const v = R(); glint[i] = v > .996 ? (v - .996) * 250 : 0; }
   const rest = { x: .5, y: .5 }, cur = { ...rest }, target = { ...rest };
   let raf = 0;
-  function draw() {
-    const axis = .5 + (cur.x - .5) * .9, shift = (cur.y - .5) * .9, hi = axis + .13;
-    for (let y = 0, o = 0; y < hh; y++) {
-      const ny = y / hh, dome = (ny - .5) * (ny - .5) * .08, along = (.5 - ny) * .15; // bands run down the nail
-      for (let x = 0; x < hw; x++, o += 4) {
-        const nx = x / hw, u = (nx - axis) / .55, ang = Math.sqrt(u * u + dome);
+  function draw(fast = false) {
+    const axis = .5 + (cur.x - .5) * .9, shift = (cur.y - .5) * .9, hi = axis + .13, st = fast ? 2 : 1;
+    for (let y = 0; y < ch; y += st) {
+      const ny = y / ch, dome = (ny - .5) * (ny - .5) * .08, along = (.5 - ny) * .15; // bands run down the nail
+      for (let x = 0; x < cw; x += st) {
+        const nx = x / cw, u = (nx - axis) / .55, ang = Math.sqrt(u * u + dome);
         let t = ang * opt.spread + shift + along; t -= Math.floor(t); t = t < .5 ? t * 2 : (1 - t) * 2; // bands repeat and mirror
-        const k = ((t * (PL - 1)) | 0) * 3, light = .55 + .45 * Math.exp(-ang * ang * 2);
-        const d = (nx - hi) / .018, d2 = (nx - (axis - .3)) / .04;
-        const spec = opt.spec * (Math.exp(-d * d) + .35 * Math.exp(-d2 * d2)) * (1 - Math.abs(ny - .5) * .6);
+        t = t * t * (3 - 2 * t); t = t * t * (3 - 2 * t); // steeper transitions: crisp mirror bands rather than soft gradients
+        const k = ((t * (PL - 1)) | 0) * 3, light = .5 + .55 * Math.exp(-ang * ang * 2);
+        // A sharp main highlight, a thin echo beside it, and a softer one on the far side of the curve.
+        const d = (nx - hi) / .007, d1 = (nx - hi - .03) / .004, d2 = (nx - (axis - .3)) / .02;
+        const fall = 1 - Math.abs(ny - .5) * .6;
+        let spec = opt.spec * (Math.exp(-d * d) + .45 * Math.exp(-d1 * d1) + .4 * Math.exp(-d2 * d2)) * fall;
+        const o = (y * cw + x) * 4, gl = glint[y * cw + x] * light;
+        spec = Math.min(1, spec + gl);
         const edge = Math.max(0, Math.abs(nx - .5) * 2 - .86) * 2.4;
         let r = pal[k] * light, g = pal[k + 1] * light, b = pal[k + 2] * light;
         r += (255 - r) * spec; g += (255 - g) * spec; b += (255 - b) * spec;
         r *= 1 - edge * .5; g *= 1 - edge * .5; b *= 1 - edge * .5;
         // The mirror film mostly covers its base, which shows through a little (cover).
-        px[o] = base[0] + (Math.min(255, r) - base[0]) * opt.cover;
-        px[o + 1] = base[1] + (Math.min(255, g) - base[1]) * opt.cover;
-        px[o + 2] = base[2] + (Math.min(255, b) - base[2]) * opt.cover;
-        px[o + 3] = 255;
+        r = base[0] + (Math.min(255, r) - base[0]) * opt.cover;
+        g = base[1] + (Math.min(255, g) - base[1]) * opt.cover;
+        b = base[2] + (Math.min(255, b) - base[2]) * opt.cover;
+        px[o] = r; px[o + 1] = g; px[o + 2] = b; px[o + 3] = 255;
+        if (st === 2) { // fill the skipped neighbours while animating
+          const o2 = o + 4, o3 = o + cw * 4, o4 = o3 + 4;
+          if (x + 1 < cw) { px[o2] = r; px[o2 + 1] = g; px[o2 + 2] = b; px[o2 + 3] = 255; }
+          if (y + 1 < ch) { px[o3] = r; px[o3 + 1] = g; px[o3 + 2] = b; px[o3 + 3] = 255; if (x + 1 < cw) { px[o4] = r; px[o4 + 1] = g; px[o4 + 2] = b; px[o4 + 3] = 255; } }
+        }
       }
     }
-    bctx.putImageData(img, 0, 0);
-    ctx.imageSmoothingQuality = "high"; ctx.drawImage(buf, 0, 0, cw, ch);
+    ctx.putImageData(img, 0, 0);
   }
   function tick() {
     cur.x += (target.x - cur.x) * .15; cur.y += (target.y - cur.y) * .15;
-    draw();
-    raf = Math.abs(target.x - cur.x) + Math.abs(target.y - cur.y) > .002 ? requestAnimationFrame(tick) : 0;
+    const moving = Math.abs(target.x - cur.x) + Math.abs(target.y - cur.y) > .002;
+    draw(moving);
+    raf = moving ? requestAnimationFrame(tick) : 0;
   }
   const aim = (x, y) => { target.x = x; target.y = y; if (!raf) raf = requestAnimationFrame(tick); };
   cv.onpointermove = e => { const r = cv.getBoundingClientRect(); aim((e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height); };
