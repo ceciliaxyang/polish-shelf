@@ -242,10 +242,10 @@ body.detail-open .page::after { opacity: 1; }
 .mh-title { padding: 2px 0; }
 /* Effect pills under the name: 12px below it, like the card's pills but not clickable here */
 .mh-pills { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
-/* Same translucent material as the dialog's buttons */
-.mh-pills .pill { cursor: default; border-color: transparent; background: rgba(242, 242, 242, .7);
-  -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .6); }
-.mh-pills .pill:hover { border-color: transparent; }
+/* The card pills' grey border, over the dialog buttons' translucent material */
+.mh-pills .pill { cursor: default; background: rgba(242, 242, 242, .7);
+  -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); }
+.mh-pills .pill:hover { border-color: var(--line); }
 .mh-brand, .mh-name { margin: 0; color: #000; overflow-wrap: anywhere; }
 .mh-brand { font-size: 14px; }
 .mh-name { font-size: 20px; font-weight: 500; }
