@@ -973,9 +973,13 @@ $("#closeBench").onclick = () => setLayering(false);
 
 function addLayer(p) {
   // Toppers look right with one coat; everything else defaults to two.
-  bench.layers.push({ pid: p.id, coats: ["glitter", "flakies", "chrome"].includes(p.effect) ? 1 : 2 });
+  const layer = { pid: p.id, coats: ["glitter", "flakies", "chrome"].includes(p.effect) ? 1 : 2 };
+  // Sheers always sit on top of non-sheers: a sheer goes on top; anything else goes just under the sheers.
+  let at = bench.layers.length;
+  if (!isSheer(p)) { at = 0; bench.layers.forEach((l, i) => { const q = polishById(l.pid); if (q && !isSheer(q)) at = i + 1; }); }
+  bench.layers.splice(at, 0, layer);
   saveBench(); renderBench();
-  toast(`Added ${p.name || "polish"} as layer ${bench.layers.length}`);
+  toast(`Added ${p.name || "polish"} as layer ${at + 1}`);
 }
 // Pressing a checked swatch button takes that polish back off the bench.
 function removePolish(p) {
