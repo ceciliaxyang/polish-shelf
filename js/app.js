@@ -421,9 +421,21 @@ function magneticSwatch(cv, p, W, H) {
   }
   // Hovering moves the glow with the pointer. With no finish picked it also tightens into a cat eye;
   // with Glass bead or Cat eye picked it keeps that shape.
-  cv.onpointermove = e => { const r = cv.getBoundingClientRect(); aim((e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height, fixedH ?? (state.finish ? restH : 1)); };
-  cv.onpointerleave = () => aim(.5, .5, restH);
-  if (fixedH === null) cv.setFinish = () => { restH = finishH(); aim(.5, .5, restH); };
+  let hovering = false;
+  cv.onpointermove = e => { hovering = true; const r = cv.getBoundingClientRect(); aim((e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height, fixedH ?? (state.finish ? restH : 1)); };
+  cv.onpointerleave = () => { hovering = false; aim(.5, .5, restH); };
+  if (fixedH === null) {
+    cv.setFinish = () => { restH = finishH(); aim(.5, .5, restH); };
+    // The shelf sets the resting shape from where the swatch sits on screen (see shapeForScroll): cat eye
+    // near the top and bottom of the window, glass bead in the middle. instant skips the ease.
+    cv.setRest = (hh, instant) => {
+      if (hovering && !cv.matches(":hover")) hovering = false; // the pointer left while the page scrolled under it
+      restH = hh; if (hovering) return;
+      if (instant) { cur.h = target.h = hh; draw(); } else aim(target.x, target.y, hh);
+    };
+    // The touch-screen drift moves the glow around without forcing it into a cat eye.
+    cv.drift = (x, y) => { if (!hovering) aim(x, y, restH); };
+  }
   cv.classList.add("interactive");
   draw();
 }
@@ -895,6 +907,7 @@ function renderShelf() {
     if (autoIO) autoIO.observe(sw);
   }
   syncSwatchButtons();
+  shapeForScroll(true);
 }
 
 /* ---------- detail view ---------- */
@@ -965,20 +978,15 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") closeDetail(
 /* ---------- layering bench ---------- */
 function polishById(id) { return state.polishes.find(p => p.id === id); }
 function liveLayers(layers) { return layers.map(l => ({ ...l, polish: polishById(l.pid) })).filter(l => l.polish); }
-function setBenchOpen(open) { $("#bench").hidden = !open; $("#layout").classList.toggle("closed", !open); }
-// Layering is off on every visit. Turning it on opens the layering pane on the right; closing the pane
-// turns layering off again (its layers are kept for next time).
-function setLayering(on) {
-  const t = $("#layeringToggle");
-  t.setAttribute("aria-checked", on);
-  t.querySelector(".layers-state").textContent = on ? "On" : "Off";
-  document.body.classList.toggle("layering", on);
-  setBenchOpen(on);
+function setBenchOpen(open) {
+  $("#bench").hidden = !open; $("#layout").classList.toggle("closed", !open);
+  document.body.classList.toggle("bench-open", open);
   setSheet(false);
-  if (on) renderBench();
+  if (open) renderBench();
 }
-$("#layeringToggle").onclick = () => setLayering($("#layeringToggle").getAttribute("aria-checked") !== "true");
-$("#closeBench").onclick = () => setLayering(false);
+// Layering is always available: every swatch has a + button, and adding a polish opens the Layers pane.
+// Closing the pane keeps the layers for next time.
+$("#closeBench").onclick = () => setBenchOpen(false);
 
 function addLayer(p) {
   // Toppers look right with one coat; everything else defaults to two.
@@ -987,7 +995,9 @@ function addLayer(p) {
   let at = bench.layers.length;
   if (!isSheer(p)) { at = 0; bench.layers.forEach((l, i) => { const q = polishById(l.pid); if (q && !isSheer(q)) at = i + 1; }); }
   bench.layers.splice(at, 0, layer);
-  saveBench(); renderBench(); pulsePeek();
+  saveBench();
+  if ($("#bench").hidden) setBenchOpen(true); else renderBench();
+  pulsePeek();
   toast(`Added ${p.name || "polish"} as layer ${at + 1}`);
 }
 // Pressing a checked swatch button takes that polish back off the bench.
@@ -1134,7 +1144,7 @@ function redrawCards() {
   clearTimeout(redrawTimer);
   redrawTimer = setTimeout(() => document.querySelectorAll("#grid .swatch").forEach(cv => {
     if (Math.abs(cv.parentElement.clientWidth - cv._w) > 2) drawCard(cv);
-  }), 150);
+  }) || shapeForScroll(true), 150);
 }
 
 function fitGrid() {
@@ -1181,11 +1191,28 @@ function drift(now) {
     const w = (f, ph, t) => Math.sin(t * f * 6.283 + ph);
     const x = .5 + p.ax * w(p.fx[0], p.px[0], p.t) + p.ax * .45 * w(p.fx[1], p.px[1], p.t);
     const y = .5 + p.ay * w(p.fy[0], p.py[0], p.t) + p.ay * .45 * w(p.fy[1], p.py[1], p.t);
-    cv.onpointermove && cv.onpointermove({ clientX: r.left + x * r.width, clientY: r.top + y * r.height });
+    if (cv.drift) cv.drift(x, y);
+    else cv.onpointermove && cv.onpointermove({ clientX: r.left + x * r.width, clientY: r.top + y * r.height });
   }
   requestAnimationFrame(drift);
 }
 if (noHover) requestAnimationFrame(drift);
+
+/* ---------- scroll: magnetic shapes ---------- */
+// As the shelf scrolls, each magnetic swatch shifts with its place on screen: a cat eye as it comes in at
+// the bottom, easing into a glass bead in the middle of the window, and back to a cat eye as it leaves.
+function shapeForScroll(instant) {
+  const vh = innerHeight;
+  document.querySelectorAll("#grid .swatch").forEach(cv => {
+    if (!cv.setRest) return;
+    const r = cv.getBoundingClientRect();
+    if (r.bottom < -40 || r.top > vh + 40) return;
+    const d = Math.min(1, Math.abs((r.top + r.bottom) / 2 - vh / 2) / (vh / 2));
+    cv.setRest(d * d * (3 - 2 * d), instant);
+  });
+}
+let shapeRaf = 0;
+addEventListener("scroll", () => { if (!shapeRaf) shapeRaf = requestAnimationFrame(() => { shapeRaf = 0; shapeForScroll(); }); }, { passive: true });
 
 /* ---------- boot ---------- */
 buildPills();

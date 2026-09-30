@@ -45,13 +45,6 @@ button, input, select { font: inherit; color: inherit; }
 .shelf-head { display: flex; flex-direction: column; gap: 24px; margin: 0 0 64px; padding: 0 8px; }
 .shelf-top { display: flex; align-items: flex-start; gap: 16px; }
 .shelf-title { flex: 1; min-width: 0; margin: 0; font-size: 40px; line-height: 40px; font-weight: 500; letter-spacing: -1.2px; color: #000; }
-/* Layering on/off (off by default): turning it on reveals the add-to-layers buttons on the swatches */
-/* Figma node 2180:88479: layers icon + On/Off label */
-.layers-btn { display: flex; align-items: center; justify-content: center; gap: 10px; flex-shrink: 0; height: 40px; padding: 12px; border: 0; border-radius: 100px; font-size: 12px; line-height: 16px; font-weight: 500; white-space: nowrap; background: #f2f2f2; color: var(--text); cursor: pointer; transition: background .2s ease, color .2s ease; }
-.layers-btn:hover { background: #e8e8e8; }
-.layers-btn[aria-checked="true"] { background: var(--text); color: #fff; }
-.layers-btn svg { flex-shrink: 0; }
-.layers-btn:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
 .scopes { display: flex; gap: 8px; padding: 8px 0; margin: -8px -8px; padding-inline: 8px; overflow-x: auto; scrollbar-width: none; }
 .scopes::-webkit-scrollbar { display: none; }
 .scope { flex-shrink: 0; min-width: 56px; padding: 12px 16px; border: 0; border-radius: 32px; background: #f2f2f2; color: var(--text); font-size: 12px; line-height: 16px; font-weight: 500; white-space: nowrap; cursor: pointer; transition: background .15s ease, color .15s ease; }
@@ -95,8 +88,6 @@ button, input, select { font: inherit; color: inherit; }
   .swatch-btn { top: 12px; right: 12px; width: 40px; height: 40px; padding: 10px; }
   .name { font-size: 17px; }
 }
-.swatch-btn { opacity: 0; transform: scale(.6); visibility: hidden; transition: opacity .2s ease, transform .3s cubic-bezier(.2,.8,.2,1), visibility 0s .3s; }
-body.layering .swatch-btn { opacity: 1; transform: none; visibility: visible; transition: opacity .2s ease, transform .3s cubic-bezier(.2,.8,.2,1); }
 .swatch-btn:hover { background: rgba(17, 17, 17, .62); }
 .swatch-btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 .swatch-btn svg { display: block; overflow: visible; }
@@ -174,7 +165,7 @@ body.layering .swatch-btn { opacity: 1; transform: none; visibility: visible; tr
   .peek-thumbs { transition: opacity .2s ease; }
   .stage { width: min(100%, 280px); border-radius: 40px; align-self: center; }
   .layers { margin-top: 8px; }
-  body.layering .page { padding-bottom: calc(40px + 84px + env(safe-area-inset-bottom)); }
+  body.bench-open .page { padding-bottom: calc(40px + 84px + env(safe-area-inset-bottom)); }
   @media (prefers-reduced-motion: reduce) { .bench, .peek-mini.pulse { transition: none; animation: none; } }
 }
 
