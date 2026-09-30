@@ -5,7 +5,7 @@
     id: "unique-id",           // any short unique text; saved combos refer to it
     name: "Name of polish",
     brand: "Brand name",
-    effect: "magnetic",        // how the swatch is drawn: magnetic, holo, thermal, multichrome, shimmer, glow
+    effect: "magnetic",        // how the swatch is drawn: magnetic, sheermag (sheer magnetic), holo, thermal, multichrome, shimmer, glow
     effects: ["magnetic", "shimmer"], // optional: effect pills on the card and filters it shows up under (adds multichrome)
     colors: ["#1b1030", "#b89cff"],
     url: "https://...",        // optional: product page the polish came from
@@ -17,7 +17,7 @@
   Colors per effect:
     sheer, creme, chrome, holo  -> [color]
     shimmer                     -> [base, shimmer]
-    magnetic                    -> [base, flash, ...]  (list several flash colors for a multichrome shift)
+    magnetic, sheermag          -> [base, flash, ...]  (list several flash colors for a multichrome shift)
     glitter, flakies            -> [base tint, particle, particle]
     duochrome                   -> [color A, color B]
 
@@ -383,5 +383,18 @@ const POLISHES = [
     glowCore: "#ffffff",
     url: "https://www.mooncat.com/products/moonlight-lullaby",
     photos: ["images/mooncat-moonlight-lullaby/1.jpg", "images/mooncat-moonlight-lullaby/2.jpg", "images/mooncat-moonlight-lullaby/3.jpg", "images/mooncat-moonlight-lullaby/4.jpg"], // saved from the product page
+  },
+  {
+    id: "ilnp-lily",
+    name: "Lily",
+    brand: "ILNP",
+    effect: "sheermag",
+    effects: ["sheermag", "holo"],
+    // Soft, see-through lilac with a silver magnetic sparkle, silver flakes and a holographic glint (from the product page and photos)
+    colors: ["#ad9bba", "#e4dcec", "#cfc3dc", "#b9a8c8"],
+    shadow: "#8e7b9c",         // edges only deepen a little, since the base is sheer
+    sparkle: { density: 3, floor: .5, size: 1.15, colors: ["#ffffff", "#ffd3ea", "#cfeaff", "#dfffd2", "#fff0c2"], mix: .3 },
+    url: "https://www.ilnp.com/lily-soft-lilac-magnetic-holographic-nail-polish/",
+    photos: ["images/ilnp-lily/1.jpg", "images/ilnp-lily/2.jpg", "images/ilnp-lily/3.jpg", "images/ilnp-lily/4.jpg"], // saved from the product page
   },
 ];

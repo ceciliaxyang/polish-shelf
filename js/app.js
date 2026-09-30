@@ -2,6 +2,7 @@
 const EFFECTS = {
   sheer:     "Sheer",
   magnetic:  "Magnetic",
+  sheermag:  "Sheer magnetic",
   holo:      "Holographic",
   shimmer:   "Shimmer",
   chrome:    "Chrome",
@@ -18,7 +19,7 @@ const EFFECTS = {
 const CATEGORY = { chrome: "multichrome", glitter: "shimmer" };
 const category = k => CATEGORY[k] || k;
 // Filter pills always shown, in this order; other effects get a pill once a polish uses them.
-const PILL_EFFECTS = ["sheer", "magnetic", "holo", "shimmer", "multichrome"];
+const PILL_EFFECTS = ["sheer", "magnetic", "sheermag", "holo", "shimmer", "multichrome"];
 const SKIN = "#f3d4c2";
 const NATURAL = "#f2d6cf";
 
@@ -110,9 +111,11 @@ function drawLayer(ctx, L, b, R) {
       [[0, l], [.16, c[0]], [.33, d], [.48, l], [.6, c[0]], [.78, d], [1, shade(c[0], .3)]].forEach(([o, col]) => g.addColorStop(o, col));
       ctx.globalAlpha = coat(.9, n); ctx.fillStyle = g; ctx.fillRect(x, y, w, H); ctx.globalAlpha = 1; break;
     }
+    case "sheermag":
     case "magnetic": {
       // colors = [base, ...flash]; several flash colors make a multichrome that shifts from the band's core to its edges.
-      fill(c[0], coat(.75, n));
+      // Sheer magnetic lets the layer underneath show through the base.
+      fill(c[0], coat(p.effect === "sheermag" ? .4 : .75, n));
       const flashes = c.length > 1 ? c.slice(1) : [shade(c[0], .65)], a = Math.PI / 2, cx = x + w / 2, cy = y + h * .5, dx = Math.cos(a), dy = Math.sin(a), nx = -dy, ny = dx, sig = w * .13;
       const g = ctx.createLinearGradient(cx - nx * w * .7, cy - ny * w * .7, cx + nx * w * .7, cy + ny * w * .7);
       g.addColorStop(0, rgba(palette(flashes, .6), 0)); g.addColorStop(.35, rgba(palette(flashes, .5), .35)); g.addColorStop(.5, rgba(palette(flashes, 0), .7));
@@ -184,7 +187,7 @@ function renderNail(cv, layers, o) {
 function swatchDpr(W) { return W > 400 ? 2 : Math.min(3, Math.max(2, window.devicePixelRatio || 1)); }
 
 function renderSwatch(cv, p, W, H) {
-  if (p.effect === "magnetic") return magneticSwatch(cv, p, W, H);
+  if (p.effect === "magnetic" || p.effect === "sheermag") return magneticSwatch(cv, p, W, H); // sheer magnetic: a pale, see-through base
   if (p.effect === "holo") return holoSwatch(cv, p, W, H);
   if (p.effect === "thermal") return thermalSwatch(cv, p, W, H);
   if (p.effect === "glow") return glowSwatch(cv, p, W, H);
