@@ -140,14 +140,39 @@ body.layering .swatch-btn { opacity: 1; transform: none; visibility: visible; tr
 .layout { position: relative; }
 .layout:not(.closed)::after { content: ""; position: absolute; top: calc(-64px - env(safe-area-inset-top)); bottom: -60px; right: calc(348px + 28px); width: 1px; background: #ebebeb; pointer-events: none; }
 @media (max-width: 760px) { .layout:not(.closed)::after { display: none; } }
-/* Phones: the pane becomes a sheet along the bottom of the screen so the shelf stays usable above it. */
+.bench-titles { flex: 1; min-width: 0; }
+.peek { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; }
+.sheet-handle, .peek-mini, .peek-sub, .peek-thumbs { display: none; }
+/* Phones: the pane is a bottom sheet. Collapsed, only the peek bar shows (combined swatch, layer count,
+   thumbnails); tap or drag it up to expand, drag down to tuck it away. */
 @media (max-width: 760px) {
-  .bench { position: fixed; z-index: 40; left: 0; right: 0; top: auto; bottom: 0; max-height: 62vh; margin: 0; gap: 16px;
-    padding: 16px 16px calc(16px + env(safe-area-inset-bottom)); background: var(--bg); border-radius: 32px 32px 0 0; box-shadow: 0 -8px 32px rgba(0, 0, 0, .12); }
-  .bench-title { font-size: 24px; line-height: 40px; letter-spacing: -.6px; padding: 0; }
-  .stage { width: 160px; border-radius: 28px; align-self: center; }
+  .bench { --peek: calc(84px + env(safe-area-inset-bottom)); position: fixed; z-index: 40; left: 0; right: 0; top: auto; bottom: 0;
+    max-height: 78vh; margin: 0; gap: 16px; padding: 0 16px calc(24px + env(safe-area-inset-bottom)); background: var(--bg);
+    border-radius: 24px 24px 0 0; box-shadow: 0 -4px 24px rgba(0, 0, 0, .12); overflow: hidden;
+    transform: translateY(calc(100% - var(--peek))); transition: transform .38s cubic-bezier(.2, .8, .2, 1); }
+  .bench.expanded { transform: none; overflow-y: auto; }
+  .bench-head { position: sticky; top: 0; z-index: 1; flex-direction: column; align-items: stretch; gap: 0; padding: 8px 0 12px; background: var(--bg); touch-action: none; cursor: grab; }
+  .sheet-handle { display: block; align-self: center; width: 36px; height: 5px; margin-bottom: 10px; border-radius: 3px; background: #d9d9d9; }
+  .bench-head { display: grid; grid-template-columns: 1fr auto; grid-template-rows: auto auto; column-gap: 12px; }
+  .sheet-handle { grid-column: 1 / -1; justify-self: center; }
+  .peek { outline: none; border-radius: 12px; }
+  .peek:focus-visible { outline: 2px solid var(--text); outline-offset: 4px; }
+  #closeBench { align-self: center; }
+  .peek-mini { display: block; flex-shrink: 0; width: 44px; height: 44px; border-radius: 12px; overflow: hidden; background: var(--swatch); }
+  .peek-mini canvas { display: block; width: 100%; height: 100%; }
+  .peek-mini.pulse { animation: peek-pulse .5s cubic-bezier(.2, .8, .2, 1); }
+  @keyframes peek-pulse { 40% { transform: scale(1.12); } }
+  .bench-title { font-size: 17px; line-height: 22px; letter-spacing: -.2px; padding: 0; }
+  .peek-sub { display: block; margin: 2px 0 0; font-size: 13px; line-height: 18px; color: #6c6c6c; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .peek-thumbs { display: flex; flex-shrink: 0; padding-left: 8px; }
+  .peek-thumbs canvas { width: 24px; height: 24px; margin-left: -8px; border-radius: 7px; box-shadow: 0 0 0 2px var(--bg); }
+  .bench.expanded .peek-thumbs { opacity: 0; }
+  .peek-thumbs { transition: opacity .2s ease; }
+  .stage { width: min(100%, 280px); border-radius: 40px; align-self: center; }
   .layers { margin-top: 8px; }
-  body.layering .page { padding-bottom: 62vh; }
+  body.layering .page { padding-bottom: calc(40px + 84px + env(safe-area-inset-bottom)); }
+  @media (prefers-reduced-motion: reduce) { .bench, .peek-mini.pulse { transition: none; animation: none; } }
+}
 }
 
 /* Detail view (Figma "Desktop - 2") */

@@ -966,6 +966,7 @@ function setLayering(on) {
   t.querySelector(".layers-state").textContent = on ? "On" : "Off";
   document.body.classList.toggle("layering", on);
   setBenchOpen(on);
+  setSheet(false);
   if (on) renderBench();
 }
 $("#layeringToggle").onclick = () => setLayering($("#layeringToggle").getAttribute("aria-checked") !== "true");
@@ -978,7 +979,7 @@ function addLayer(p) {
   let at = bench.layers.length;
   if (!isSheer(p)) { at = 0; bench.layers.forEach((l, i) => { const q = polishById(l.pid); if (q && !isSheer(q)) at = i + 1; }); }
   bench.layers.splice(at, 0, layer);
-  saveBench(); renderBench();
+  saveBench(); renderBench(); pulsePeek();
   toast(`Added ${p.name || "polish"} as layer ${at + 1}`);
 }
 // Pressing a checked swatch button takes that polish back off the bench.
@@ -1005,12 +1006,9 @@ const isSheer = p => p.effect === "sheer" || p.effect === "sheermag" || effectsO
 // The big preview. Each polish paints over everything below it, so the preview starts from the topmost
 // polish that isn't sheer. Sheer layers above it combine with it: they tint it (multiply) and add their
 // own shimmer and sparkle (screen).
-function renderStage() {
-  const box = $("#stage"), live = liveLayers(bench.layers);
-  box.innerHTML = "";
-  if (!live.length) return;
-  const W = Math.round(box.clientWidth), H = Math.round(box.clientHeight);
-  if (!W || !H) return;
+function stackCanvas(W, H) {
+  const live = liveLayers(bench.layers);
+  if (!live.length || !W || !H) return null;
   const out = document.createElement("canvas"), dpr = swatchDpr(W);
   out.width = Math.round(W * dpr); out.height = Math.round(H * dpr);
   const ctx = out.getContext("2d");
@@ -1024,7 +1022,65 @@ function renderStage() {
     ctx.globalCompositeOperation = "screen"; ctx.globalAlpha = .6; ctx.drawImage(cv, 0, 0, out.width, out.height);
   });
   ctx.globalCompositeOperation = "source-over"; ctx.globalAlpha = 1;
-  box.appendChild(out);
+  return out;
+}
+function renderStage() {
+  const box = $("#stage"); box.innerHTML = "";
+  const cv = stackCanvas(Math.round(box.clientWidth), Math.round(box.clientHeight));
+  if (cv) box.appendChild(cv);
+  renderPeek();
+}
+
+/* Phones: the Layers pane is a bottom sheet that rests collapsed as a peek bar (combined swatch, layer
+   count, small thumbnails) and expands to the full pane when tapped or dragged up. */
+const sheetMQ = matchMedia("(max-width: 760px)");
+function renderPeek() {
+  if (!sheetMQ.matches) return;
+  const n = bench.layers.length, mini = $("#peekMini"); mini.innerHTML = "";
+  $("#peekSub").textContent = n ? `${n} layer${n > 1 ? "s" : ""}` : "Tap + on a polish to add it";
+  const cv = stackCanvas(44, 44); if (cv) mini.appendChild(cv);
+  const th = $("#peekThumbs"); th.innerHTML = "";
+  [...bench.layers].reverse().slice(0, 4).forEach(l => {
+    const p = polishById(l.pid); if (!p) return;
+    const c = document.createElement("canvas"); renderSwatch(c, p, 24, 24); th.appendChild(c);
+  });
+}
+function setSheet(expanded) {
+  const b = $("#bench");
+  b.classList.toggle("expanded", expanded); b.style.transform = "";
+  $("#peek").setAttribute("aria-expanded", expanded);
+  if (!expanded) b.scrollTop = 0;
+}
+function pulsePeek() {
+  if (!sheetMQ.matches || $("#bench").classList.contains("expanded")) return;
+  const m = $("#peekMini"); m.classList.remove("pulse"); void m.offsetWidth; m.classList.add("pulse");
+}
+{
+  const peek = $("#peek"), head = $("#benchHead"), b = $("#bench");
+  const syncRole = () => { if (sheetMQ.matches) { peek.setAttribute("role", "button"); peek.tabIndex = 0; } else { peek.removeAttribute("role"); peek.removeAttribute("tabindex"); setSheet(false); } };
+  sheetMQ.addEventListener("change", () => { syncRole(); renderBench(); });
+  syncRole();
+  peek.onkeydown = e => { if (sheetMQ.matches && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); setSheet(!b.classList.contains("expanded")); } };
+  // Drag the header to move the sheet with your finger; a short tap toggles it.
+  let drag = null;
+  head.addEventListener("pointerdown", e => {
+    if (!sheetMQ.matches || e.target.closest("#closeBench")) return;
+    drag = { y: e.clientY, moved: 0, open: b.classList.contains("expanded"), rest: b.offsetHeight - head.offsetHeight - 24 };
+    head.setPointerCapture(e.pointerId); b.style.transition = "none";
+  });
+  head.addEventListener("pointermove", e => {
+    if (!drag) return;
+    const dy = e.clientY - drag.y; drag.moved = dy;
+    const base = drag.open ? 0 : drag.rest, y = Math.min(drag.rest, Math.max(0, base + dy));
+    b.style.transform = `translateY(${y}px)`;
+  });
+  const end = () => {
+    if (!drag) return;
+    const { moved, open } = drag; drag = null; b.style.transition = "";
+    if (Math.abs(moved) < 6) setSheet(!open);
+    else setSheet(moved < 0 ? (open || moved < -40) : (open && moved < 40));
+  };
+  head.addEventListener("pointerup", end); head.addEventListener("pointercancel", end);
 }
 
 function renderBench() {

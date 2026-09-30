@@ -21,8 +21,16 @@
       </main>
 
       <aside class="bench" id="bench" aria-label="Layers" hidden>
-        <div class="bench-head">
-          <h2 class="bench-title">Layers</h2>
+        <div class="bench-head" id="benchHead">
+          <span class="sheet-handle" aria-hidden="true"></span>
+          <div class="peek" id="peek">
+            <div class="peek-mini" id="peekMini"></div>
+            <div class="bench-titles">
+              <h2 class="bench-title">Layers</h2>
+              <p class="peek-sub" id="peekSub"></p>
+            </div>
+            <div class="peek-thumbs" id="peekThumbs" aria-hidden="true"></div>
+          </div>
           <button type="button" class="mh-btn" id="closeBench" aria-label="Close layering"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#222" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></svg></button>
         </div>
         <div class="stage" id="stage"></div>
