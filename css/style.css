@@ -242,9 +242,8 @@ body.detail-open .page::after { opacity: 1; }
 .mh-title { padding: 2px 0; }
 /* Effect pills under the name: 12px below it, like the card's pills but not clickable here */
 .mh-pills { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
-/* The card pills' grey border, over the dialog buttons' translucent material */
-.mh-pills .pill { cursor: default; background: rgba(242, 242, 242, .7);
-  -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); }
+/* Same look as the card pills (grey border), just not clickable here */
+.mh-pills .pill { cursor: default; }
 .mh-pills .pill:hover { border-color: var(--line); }
 .mh-brand, .mh-name { margin: 0; color: #000; overflow-wrap: anywhere; }
 .mh-brand { font-size: 14px; }
