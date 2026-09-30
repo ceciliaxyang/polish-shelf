@@ -13,9 +13,9 @@ const EFFECTS = {
   thermal:   "Thermal",
   glow:      "Glow in the dark",
 };
-// Chrome and multichrome share one category: one filter pill and one card label ("Multichrome").
-// Swatches still draw by the polish's own effect.
-const CATEGORY = { chrome: "multichrome" };
+// Some effects share a category (one filter pill and one card label): chrome counts as Multichrome,
+// glitter as Shimmer. Swatches still draw by the polish's own effect.
+const CATEGORY = { chrome: "multichrome", glitter: "shimmer" };
 const category = k => CATEGORY[k] || k;
 // Filter pills always shown, in this order; other effects get a pill once a polish uses them.
 const PILL_EFFECTS = ["sheer", "magnetic", "holo", "shimmer", "multichrome"];
