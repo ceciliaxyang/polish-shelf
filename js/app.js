@@ -781,7 +781,8 @@ function multichromeSwatch(cv, p, W, H) {
 
 /*
   Chrome powder swatch. Chrome powder is a fine mirror pigment rubbed over a finished manicure. Like a
-  mirror, it shows a broad, bright reflection running down the length of the nail with fairly crisp edges,
+  mirror, it shows a broad, bright reflection running diagonally across the nail with fairly crisp edges
+  (the same direction as the magnetic swatches' cat eye),
   one set of colors inside that reflection and another on the sides turning away from it, often with a
   thin, vivid rim of color where the two meet, plus a sharp white glint. Hovering tilts the nail: sideways
   moves the reflection across, up and down slides the colors.
@@ -790,6 +791,7 @@ function multichromeSwatch(cv, p, W, H) {
     rim:     colors of the thin band where the reflection meets the sides
     outside: colors from just outside the reflection to the nail's edges
     band:    half-width of the reflection (share of the nail's width), soft: softness of its edges,
+    tilt:    how diagonal it runs (-.5; 0 is straight up and down),
     rimStrength, rimSide (1 or -1: rim only on the right or left edge of the reflection), spec (glint
     strength), cover (how much of what's below it covers when layered, .8) }
 */
@@ -797,7 +799,7 @@ function powderSwatch(cv, p, W, H) {
   const dpr = swatchDpr(W), cw = Math.round(W * dpr), ch = Math.round(H * dpr);
   cv.width = cw; cv.height = ch;
   const ctx = cv.getContext("2d");
-  const opt = { band: .2, soft: .05, rimStrength: .8, spec: .9, cover: .8, ...p.powder };
+  const opt = { band: .2, soft: .05, rimStrength: .8, spec: .9, cover: .8, tilt: -.5, ...p.powder };
   const lut = cols => { const L = new Float32Array(256 * 3); for (let i = 0; i < 256; i++) L.set(rgb(palette(cols, i / 255)), i * 3); return L; };
   const fallback = p.colors.slice(1);
   const IN = lut(opt.inside || fallback), RIM = lut(opt.rim || fallback), OUT = lut(opt.outside || fallback);
@@ -813,8 +815,9 @@ function powderSwatch(cv, p, W, H) {
   const sstep = (e0, e1, x) => { const t = Math.min(1, Math.max(0, (x - e0) / (e1 - e0))); return t * t * (3 - 2 * t); };
   function draw(fast = false) {
     const hi = .46 + (cur.x - .5) * .8, shift = (cur.y - .5) * .35, st = fast ? 2 : 1, band = opt.band;
+    const tilt = -opt.tilt + (cur.x - .5) * .15; // the diagonal leans a little as the nail tilts
     for (let y = 0; y < ch; y += st) {
-      const ny = y / ch, bend = (ny - .5) * (ny - .5) * .12; // the reflection bows slightly with the nail's curve
+      const ny = y / ch, bend = (ny - .5) * tilt; // straight, running diagonally from upper left to lower right
       for (let x = 0; x < cw; x += st) {
         const nx = x / cw, dx = nx - hi - bend, ad = Math.abs(dx), a = ad / band;
         const inside = 1 - sstep(1 - opt.soft / band, 1 + opt.soft / band, a); // 1 in the reflection, 0 outside
