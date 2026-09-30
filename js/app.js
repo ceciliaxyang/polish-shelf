@@ -262,6 +262,18 @@ function magneticSwatch(cv, p, W, H) {
   const gw = Math.ceil(cw / 2), grain = new Float32Array(gw * Math.ceil(ch / 2));
   for (let i = 0; i < grain.length; i++) grain[i] = R();
   const clump = clumpField(R, cw, ch, 95 * dpr);
+  // Sheer magnetic: the polish is thin (lighter, more see-through) in the middle and pools at the sides
+  // and cuticle, so the color gathers toward the rim. pool is 0 in the thin middle and 1 at the edge.
+  const sheer = p.effect === "sheermag";
+  const pool = sheer ? new Float32Array(cw * ch) : null;
+  const thinC = sheer ? rgb(shade(p.colors[0], .2)) : null, poolC = sheer ? rgb(shade(p.colors[0], -.2)) : null;
+  if (sheer) for (let y = 0; y < ch; y++) {
+    const vy = Math.abs(y / ch - .5) * 2;
+    for (let x = 0; x < cw; x++) {
+      const vx = Math.abs(x / cw - .5) * 2, se = Math.sqrt(Math.sqrt(vx ** 4 + vy ** 4)); // rounded-square distance from the middle
+      const q = Math.min(1, Math.max(0, (se - .5) / .5)); pool[y * cw + x] = q * q * (3 - 2 * q);
+    }
+  }
 
   // Optional flakies (irregular iridescent flakes) and glitter (small hex pieces), suspended in the
   // polish rather than pulled by the magnet, so they stay put as the glow moves.
@@ -353,9 +365,10 @@ function magneticSwatch(cv, p, W, H) {
         let t = eT[ki] + dx * gx + dy * gy; t = t < 0 ? 0 : t > 1 ? 1 : t;
         const pi = ((t * (PLUT - 1)) | 0) * 3, n = grain[grow + (x >> 1)];
         // Deeper rim all around the edge for the domed bead look.
-        const vx = (x / cw - .5) * 2, r2 = vx * vx + vy * vy, rim = .75 * k * (r2 > .35 ? Math.min(1, (r2 - .35) / .9) : 0);
+        const vx = (x / cw - .5) * 2, r2 = vx * vx + vy * vy, rim = (sheer ? .3 : .75) * k * (r2 > .35 ? Math.min(1, (r2 - .35) / .9) : 0);
         const lum = 1 - grainAmt / 2 + n * grainAmt;
         let b0 = base[0], b1 = base[1], b2 = base[2];
+        if (sheer) { const q = pool[crow + x]; b0 = thinC[0] + (poolC[0] - thinC[0]) * q; b1 = thinC[1] + (poolC[1] - thinC[1]) * q; b2 = thinC[2] + (poolC[2] - thinC[2]) * q; }
         if (sh && n > .9) { const m = (n - .9) * 10; b0 += (sh[0] - b0) * m; b1 += (sh[1] - b1) * m; b2 += (sh[2] - b2) * m; }
         const c0 = (b0 + (pal[pi] - b0) * I) * lum, c1 = (b1 + (pal[pi + 1] - b1) * I) * lum, c2 = (b2 + (pal[pi + 2] - b2) * I) * lum;
         px8[o] = c0 + (shadow[0] - c0) * rim;
