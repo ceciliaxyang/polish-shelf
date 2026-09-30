@@ -1029,6 +1029,9 @@ function openDetail(p, card) {
   detail.p = p; detail.card = card;
   $("#mBrand").textContent = p.brand || "";
   $("#mName").textContent = p.name || "Untitled";
+  // Effect pills under the name (Figma "Action Header Web", node 2189:92047), same labels as on the card.
+  $("#mPills").innerHTML = "";
+  effectsOf(p).forEach(k => { const t = document.createElement("span"); t.className = "pill tiny"; t.textContent = EFFECTS[k] || k; $("#mPills").appendChild(t); });
   // The dialog's add button does what the swatch's + does, and shows the same + / check state.
   const addBtn = $("#mAdd");
   if (!addBtn.firstChild) addBtn.innerHTML = PLUS_CHECK;
