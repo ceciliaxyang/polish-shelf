@@ -124,9 +124,13 @@ body.detail-open .page { filter: blur(50px); }
    background-color of a fixed layer at the top of the screen, which turned it white. With no color to
    pick up, the blurred shelf shows through under the clock. */
 .modal-blur { position: absolute; inset: 0; background-image: linear-gradient(rgba(255, 255, 255, .4), rgba(255, 255, 255, .4)); opacity: 0; transition: opacity .35s ease; }
-.modal-head, .m-photos { opacity: 0; transition: opacity .3s ease; }
-.modal.open .modal-blur, .modal.open .modal-head, .modal.open .m-photos { opacity: 1; }
-.modal.open .m-photos { transition-delay: .15s; }
+.modal-head { opacity: 0; transition: opacity .3s ease; }
+.modal.open .modal-blur, .modal.open .modal-head { opacity: 1; }
+/* Photos drift up and fade in one after another; each gets its own slightly varied delay (--d, set in
+   app.js) so the entry feels organic rather than mechanical. On close they fade out together, quickly. */
+.m-photos img { opacity: 0; transform: translateY(18px); transition: opacity .2s ease, transform .2s ease; }
+.modal.open .m-photos img { opacity: 1; transform: none; transition: opacity .55s ease var(--d, .15s), transform .7s cubic-bezier(.2, .8, .2, 1) var(--d, .15s); }
+@media (prefers-reduced-motion: reduce) { .m-photos img { transform: none !important; } }
 .modal-head { position: absolute; top: 0; left: 0; right: 0; display: flex; gap: 16px; min-height: 88px; padding: calc(24px + env(safe-area-inset-top)) 48px 24px calc(48px + 97px + 4px); } /* left: past the swatch in the header's leading slot (12px closer than the Figma's 16px gap, per your ask) */
 .mh-trail { display: flex; align-items: flex-start; width: 97px; padding-top: 24px; flex-shrink: 0; }
 .mh-trail { justify-content: flex-end; gap: 8px; }

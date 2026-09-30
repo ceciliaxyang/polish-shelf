@@ -898,7 +898,9 @@ function openDetail(p, card) {
   // Photos: a plain row of the saved product photos (not interactive).
   const row = $("#mPhotos"); row.innerHTML = "";
   (p.photos || []).slice(0, 4).forEach((src, i) => {
-    const im = document.createElement("img"); im.src = src; im.alt = `${p.name} photo ${i + 1}`; im.loading = "lazy";
+    const im = document.createElement("img"); im.src = src; im.alt = `${p.name} photo ${i + 1}`;
+    // Staggered entry: each photo a beat after the last, with a little randomness so it feels organic.
+    im.style.setProperty("--d", (.18 + i * .08 + Math.random() * .05).toFixed(3) + "s");
     row.appendChild(im);
   });
 
