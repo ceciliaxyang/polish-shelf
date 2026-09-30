@@ -229,7 +229,7 @@ function magneticSwatch(cv, p, W, H) {
   // and cuticle, so the color gathers toward the rim. pool is 0 in the thin middle and 1 at the edge.
   const sheer = p.effect === "sheermag";
   const pool = sheer ? new Float32Array(cw * ch) : null;
-  const thinC = sheer ? rgb(shade(p.colors[0], .2)) : null, poolC = sheer ? rgb(shade(p.colors[0], -.2)) : null;
+  const thinC = sheer ? rgb(shade(p.colors[0], .1)) : null, poolC = sheer ? rgb(shade(p.colors[0], -.2)) : null;
   if (sheer) for (let y = 0; y < ch; y++) {
     const vy = Math.abs(y / ch - .5) * 2;
     for (let x = 0; x < cw; x++) {

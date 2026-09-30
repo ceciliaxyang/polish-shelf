@@ -395,12 +395,13 @@ const POLISHES = [
     effect: "sheermag",
     effects: ["sheer", "magnetic"],
     // Soft, see-through lilac with a silver magnetic sparkle, silver flakes and a holographic glint (from the product page and photos)
-    colors: ["#b09cb8", "#eee6f0", "#d6c6dc", "#c0aac8"],
-    shadow: "#8f7896",         // edges only deepen a little, since the base is sheer
+    colors: ["#a893b3", "#ffffff", "#f1ebf6", "#d2c3dc"],
+    shadow: "#806889",         // edges only deepen a little, since the base is sheer
     grain: .18,
+    bead: { glow: 1.35 }, catEye: { glow: 1.4 }, // a strong, easy-to-see magnetic flash
     // Packed with fine glitter everywhere, not just in the flash: mostly silver-white glints, some holographic
     // color, and some flakes turned away from the light as darker flecks, which gives it depth
-    sparkle: { density: 9, floor: .75, deep: .35, size: 1.4, dark: .25, colors: ["#ffffff", "#ffffff", "#ffffff", "#f4f0ff", "#ff8fcf", "#86ceff", "#a8ff8c", "#ffdc7a"], mix: .8 },
+    sparkle: { density: 9, floor: .4, deep: .35, size: 1.4, dark: .25, colors: ["#ffffff", "#ffffff", "#ffffff", "#f4f0ff", "#ff8fcf", "#86ceff", "#a8ff8c", "#ffdc7a"], mix: .8 },
     url: "https://www.ilnp.com/lily-soft-lilac-magnetic-holographic-nail-polish/",
     photos: ["images/ilnp-lily/1.jpg", "images/ilnp-lily/2.jpg", "images/ilnp-lily/3.jpg", "images/ilnp-lily/4.jpg"], // saved from the product page
   },
@@ -411,10 +412,11 @@ const POLISHES = [
     effect: "sheermag",
     effects: ["sheer", "magnetic"],
     // Soft, see-through teddy bear brown with dense silver magnetic sparkle and a few holographic glints (from the product page and photos)
-    colors: ["#c09f93", "#f6ebe4", "#e3cbc0", "#cdaea2"],
-    shadow: "#936d62",
+    colors: ["#b89588", "#ffffff", "#f8efe9", "#dcc4b8"],
+    shadow: "#855f53",
     grain: .18,
-    sparkle: { density: 9, floor: .75, deep: .35, size: 1.4, dark: .25, colors: ["#ffffff", "#ffffff", "#fff8f0", "#f6ece4", "#ff9fc8", "#8ccaff", "#b0f59a", "#ffd98a"], mix: .8 },
+    bead: { glow: 1.35 }, catEye: { glow: 1.4 }, // a strong, easy-to-see magnetic flash
+    sparkle: { density: 9, floor: .4, deep: .35, size: 1.4, dark: .25, colors: ["#ffffff", "#ffffff", "#fff8f0", "#f6ece4", "#ff9fc8", "#8ccaff", "#b0f59a", "#ffd98a"], mix: .8 },
     url: "https://www.ilnp.com/teddy-light-teddy-bear-brown-magnetic-holographic-nail-polish/",
     photos: ["images/ilnp-teddy/1.jpg", "images/ilnp-teddy/2.jpg", "images/ilnp-teddy/3.jpg", "images/ilnp-teddy/4.jpg"], // saved from the product page
   },
@@ -425,10 +427,11 @@ const POLISHES = [
     effect: "sheermag",
     effects: ["sheer", "magnetic"],
     // Sheer charcoal with a bright silver magnetic beam and scattered holographic flecks like stars (from the product page and photos)
-    colors: ["#48464c", "#e2e3e8", "#b1b0b8", "#7f7d87"],
+    colors: ["#48464c", "#f6f7fb", "#c4c3cb", "#85838d"],
     shadow: "#26252a",
     grain: .2,
-    sparkle: { density: 8, floor: .55, deep: .35, size: 1.4, dark: .2, colors: ["#ffffff", "#ffffff", "#eef0f6", "#ff6a5a", "#ffb347", "#6fe38a", "#5aa8ff", "#c77dff"], mix: .75 },
+    bead: { glow: 1.35 }, catEye: { glow: 1.4 }, // a strong, easy-to-see magnetic flash
+    sparkle: { density: 8, floor: .3, deep: .35, size: 1.4, dark: .2, colors: ["#ffffff", "#ffffff", "#eef0f6", "#ff6a5a", "#ffb347", "#6fe38a", "#5aa8ff", "#c77dff"], mix: .75 },
     url: "https://www.ilnp.com/moonlit-charcoal-magnetic-holographic-nail-polish/",
     photos: ["images/ilnp-moonlit/1.jpg", "images/ilnp-moonlit/2.jpg", "images/ilnp-moonlit/3.jpg", "images/ilnp-moonlit/4.jpg"], // saved from the product page
   },
@@ -440,12 +443,57 @@ const POLISHES = [
     effects: ["sheer", "magnetic"],
     clear: true,               // a clear topper: layered over another polish, only its shimmer and sparkle show
     // Clear topper with a bright silver magnetic shimmer, silver and holographic flakes: shown as cool, clear silver (from the product page and photos)
-    colors: ["#d5d8de", "#fcfcfe", "#eceef3", "#dde0e6"],
-    shadow: "#aeb2bc",
+    colors: ["#c6cad2", "#ffffff", "#f2f4f8", "#dfe2e8"],
+    shadow: "#98a0ac",
     grain: .12,
+    bead: { glow: 1.35 }, catEye: { glow: 1.4 }, // a strong, easy-to-see magnetic flash
     flakes: ["#ffffff", "#e8e8f0", "#ffd6ec", "#d4ecff", "#e6ffd8"],
-    sparkle: { density: 6, floor: .6, deep: .35, size: 1.4, dark: .1, colors: ["#ffffff", "#ffffff", "#ffffff", "#f2f2f6", "#ff9fd0", "#8fd0ff", "#b4ff9c"], mix: .8 },
+    sparkle: { density: 6, floor: .35, deep: .35, size: 1.4, dark: .1, colors: ["#ffffff", "#ffffff", "#ffffff", "#f2f2f6", "#ff9fd0", "#8fd0ff", "#b4ff9c"], mix: .8 },
     url: "https://www.ilnp.com/bubbly-silver-magnetic-topper-nail-polish/",
     photos: ["images/ilnp-bubbly/1.jpg", "images/ilnp-bubbly/2.jpg", "images/ilnp-bubbly/3.jpg", "images/ilnp-bubbly/4.jpg"], // saved from the product page
+  },
+  {
+    id: "mooncat-bottled-rage",
+    name: "Bottled Rage",
+    brand: "Mooncat",
+    effect: "shimmer",
+    effects: ["shimmer"],
+    // Dark burgundy red-black with fiery red-orange shimmer (from the product page and photos)
+    baseColor: "#360810",
+    colors: ["#ff5a2c", "#e2321e", "#a8141e", "#5c0a14"], // shimmer colors [facing, ..., sides]
+    shadow: "#1a0306",
+    chrome: { grain: 1.1, cover: .9, sheen: 1.8 },
+    url: "https://www.mooncat.com/products/bottled-rage",
+    photos: ["images/mooncat-bottled-rage/1.jpg", "images/mooncat-bottled-rage/2.jpg", "images/mooncat-bottled-rage/3.jpg", "images/mooncat-bottled-rage/4.jpg"], // saved from the product page
+  },
+  {
+    id: "mooncat-moonjelly",
+    name: "Moonjelly",
+    brand: "Mooncat",
+    effect: "shimmer",
+    effects: ["sheer", "flakies"],
+    // Sheer white jelly with electric blue shimmer, blue-to-green-to-purple-to-pink flakies and micro holo glitter;
+    // on the nail it glows pinky-lilac with blue where the light hits (from the product page and photos)
+    glow: { shape: .1, rot: 0 }, // glowing-spot swatch, fixed shape
+    colors: ["#e8e2ee", "#f0b6e2", "#c8b0ff", "#9cc6ff", "#e2dcec"], // [base, glow core -> edge]: pink-lilac core, blue edges
+    shadow: "#c8c0d6",
+    bead: { r: [.44, .52], glow: .85, span: .95 },
+    flakes: ["#6ab4ff", "#52d6b2", "#a878ff", "#ff84cc"],
+    sparkle: { density: 2.4, size: 1, floor: .4, mix: .8, colors: ["#ffffff", "#8cc8ff", "#c8a0ff", "#ffb0dc", "#a8f0d0"] },
+    url: "https://www.mooncat.com/products/moonjelly",
+    photos: ["images/mooncat-moonjelly/1.jpg", "images/mooncat-moonjelly/2.jpg", "images/mooncat-moonjelly/3.jpg", "images/mooncat-moonjelly/4.jpg"], // saved from the product page
+  },
+  {
+    id: "mooncat-deadly-nightshade",
+    name: "Deadly Nightshade",
+    brand: "Mooncat",
+    effect: "multichrome",
+    effects: ["shimmer"],
+    // Ultra shifty shimmer: purple where it faces you, through blue and teal to green and gold at the edges
+    // (from the product page and photos)
+    colors: ["#5c2a82", "#6c48b4", "#3a6cc8", "#2aa092", "#58b85a", "#d0a83c"], // [facing, ..., edge]
+    chrome: { smooth: .55 },   // a smooth, oily shift rather than coarse grain
+    url: "https://www.mooncat.com/products/deadly-nightshade",
+    photos: ["images/mooncat-deadly-nightshade/1.jpg", "images/mooncat-deadly-nightshade/2.jpg", "images/mooncat-deadly-nightshade/3.jpg", "images/mooncat-deadly-nightshade/4.jpg"], // saved from the product page
   },
 ];
