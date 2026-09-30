@@ -33,7 +33,8 @@
     holo     optional, holographic only: { strength, width, angle } how vivid the rainbow streak is, how wide, and its tilt
     sparkle  optional { density, floor, colors, mix, size }: more sparkles, how lit they stay outside the flash
              (defaults 1 and .1); colors gives each particle its own color, mixed in by mix (default .7); size scales them;
-             dark is the share of particles turned away from the light, shown as darker flecks (default 0)
+             dark is the share of particles turned away from the light, shown as darker flecks (default 0);
+             deep is the share suspended deeper inside a sheer polish, drawn softer and dimmer (default 0)
     grain    optional, magnetic: strength of the fine light/dark speckle in the body (default .06)
 */
 const POLISHES = [
@@ -398,7 +399,7 @@ const POLISHES = [
     grain: .18,
     // Packed with fine glitter everywhere, not just in the flash: mostly silver-white glints, some holographic
     // color, and some flakes turned away from the light as darker flecks, which gives it depth
-    sparkle: { density: 9, floor: .75, size: 1.4, dark: .25, colors: ["#ffffff", "#ffffff", "#ffffff", "#f4f0ff", "#ff8fcf", "#86ceff", "#a8ff8c", "#ffdc7a"], mix: .8 },
+    sparkle: { density: 9, floor: .75, deep: .35, size: 1.4, dark: .25, colors: ["#ffffff", "#ffffff", "#ffffff", "#f4f0ff", "#ff8fcf", "#86ceff", "#a8ff8c", "#ffdc7a"], mix: .8 },
     url: "https://www.ilnp.com/lily-soft-lilac-magnetic-holographic-nail-polish/",
     photos: ["images/ilnp-lily/1.jpg", "images/ilnp-lily/2.jpg", "images/ilnp-lily/3.jpg", "images/ilnp-lily/4.jpg"], // saved from the product page
   },
@@ -412,7 +413,7 @@ const POLISHES = [
     colors: ["#c09f93", "#f6ebe4", "#e3cbc0", "#cdaea2"],
     shadow: "#936d62",
     grain: .18,
-    sparkle: { density: 9, floor: .75, size: 1.4, dark: .25, colors: ["#ffffff", "#ffffff", "#fff8f0", "#f6ece4", "#ff9fc8", "#8ccaff", "#b0f59a", "#ffd98a"], mix: .8 },
+    sparkle: { density: 9, floor: .75, deep: .35, size: 1.4, dark: .25, colors: ["#ffffff", "#ffffff", "#fff8f0", "#f6ece4", "#ff9fc8", "#8ccaff", "#b0f59a", "#ffd98a"], mix: .8 },
     url: "https://www.ilnp.com/teddy-light-teddy-bear-brown-magnetic-holographic-nail-polish/",
     photos: ["images/ilnp-teddy/1.jpg", "images/ilnp-teddy/2.jpg", "images/ilnp-teddy/3.jpg", "images/ilnp-teddy/4.jpg"], // saved from the product page
   },
@@ -426,7 +427,7 @@ const POLISHES = [
     colors: ["#48464c", "#e2e3e8", "#b1b0b8", "#7f7d87"],
     shadow: "#26252a",
     grain: .2,
-    sparkle: { density: 8, floor: .55, size: 1.4, dark: .2, colors: ["#ffffff", "#ffffff", "#eef0f6", "#ff6a5a", "#ffb347", "#6fe38a", "#5aa8ff", "#c77dff"], mix: .75 },
+    sparkle: { density: 8, floor: .55, deep: .35, size: 1.4, dark: .2, colors: ["#ffffff", "#ffffff", "#eef0f6", "#ff6a5a", "#ffb347", "#6fe38a", "#5aa8ff", "#c77dff"], mix: .75 },
     url: "https://www.ilnp.com/moonlit-charcoal-magnetic-holographic-nail-polish/",
     photos: ["images/ilnp-moonlit/1.jpg", "images/ilnp-moonlit/2.jpg", "images/ilnp-moonlit/3.jpg", "images/ilnp-moonlit/4.jpg"], // saved from the product page
   },
@@ -441,7 +442,7 @@ const POLISHES = [
     shadow: "#cda89c",
     grain: .12,
     flakes: ["#ffffff", "#e8e8f0", "#ffd6ec", "#d4ecff", "#e6ffd8"],
-    sparkle: { density: 6, floor: .6, size: 1.4, dark: .1, colors: ["#ffffff", "#ffffff", "#ffffff", "#f2f2f6", "#ff9fd0", "#8fd0ff", "#b4ff9c"], mix: .8 },
+    sparkle: { density: 6, floor: .6, deep: .35, size: 1.4, dark: .1, colors: ["#ffffff", "#ffffff", "#ffffff", "#f2f2f6", "#ff9fd0", "#8fd0ff", "#b4ff9c"], mix: .8 },
     url: "https://www.ilnp.com/bubbly-silver-magnetic-topper-nail-polish/",
     photos: ["images/ilnp-bubbly/1.jpg", "images/ilnp-bubbly/2.jpg", "images/ilnp-bubbly/3.jpg", "images/ilnp-bubbly/4.jpg"], // saved from the product page
   },

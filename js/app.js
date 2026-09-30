@@ -277,7 +277,9 @@ function magneticSwatch(cv, p, W, H) {
   const sparkles = [];
   // Optional per polish: sparkle: { density, floor } (density multiplies the count; floor keeps them lit outside the flash).
   // sparkle.dark: this share of particles face away from the light and read as darker flecks (depth in dense glitter).
-  const spk = { density: 1, floor: .1, mix: .7, size: 1, dark: 0, ...p.sparkle };
+  // sparkle.deep: this share of particles sit deeper inside a sheer polish: drawn into the softened body, dimmer and larger.
+  const spk = { density: 1, floor: .1, mix: .7, size: 1, dark: 0, deep: 0, ...p.sparkle };
+  const hasDeep = spk.deep > 0;
   const packed = spk.density > 3; // densely packed glitter: tiny particles go into a pixel layer (see draw)
   const spkCanvas = packed ? document.createElement("canvas") : null, spkCtx = spkCanvas && spkCanvas.getContext("2d");
   if (packed) { spkCanvas.width = cw; spkCanvas.height = ch; }
@@ -288,7 +290,7 @@ function magneticSwatch(cv, p, W, H) {
     const x = R() * W, y = R() * H, c = clump[((y * dpr) | 0) * cw + ((x * dpr) | 0)];
     if (R() > .25 + c * .9) continue;
     const big = R() < .03;
-    sparkles.push([x, y, (big ? .5 + R() * .4 : .16 + Math.pow(R(), 2) * .3) * spk.size, big ? .85 + R() * .15 : .3 + R() * .6, R(), spk.dark > 0 && R() < spk.dark]);
+    sparkles.push([x, y, (big ? .5 + R() * .4 : .16 + Math.pow(R(), 2) * .3) * spk.size, big ? .85 + R() * .15 : .3 + R() * .6, R(), spk.dark > 0 && R() < spk.dark, spk.deep > 0 && R() < spk.deep]);
   }
 
   // h: 0 = glass bead, 1 = cat eye, in between blends the two. x/y: pointer, 0 to 1 across the swatch.
@@ -332,6 +334,16 @@ function magneticSwatch(cv, p, W, H) {
     // While animating, the body is computed at half resolution (it's softened anyway); the final
     // resting frame is computed at full resolution.
     const st = fast ? 2 : 1, img = fast ? imgHalf : imgFull, px8 = img.data;
+    // A sparkle's color and opacity: tinted by the flash around it, bright near the flash, faint in the base.
+    const sparkColor = (x, y, r, b, c) => {
+      const [I, t] = field(x * dpr, y * dpr), pi = ((t * (PLUT - 1)) | 0) * 3;
+      const a = b * (spk.floor + (1 - spk.floor) * I) * (1 - .5 * k * Math.max(0, Math.hypot(x / W - .5, y / H - .5) * 2 - .6));
+      if (a < .03) return null;
+      const w = r > .5 ? .6 : spkCols ? 0 : .2; // bigger glints burn toward white at their core; colored particles stay saturated
+      let s0 = pal[pi], s1 = pal[pi + 1], s2 = pal[pi + 2];
+      if (spkCols) { const q = spkCols[(c * spkCols.length) | 0], m = spk.mix; s0 += (q[0] - s0) * m; s1 += (q[1] - s1) * m; s2 += (q[2] - s2) * m; }
+      return [s0 + (255 - s0) * w, s1 + (255 - s1) * w, s2 + (255 - s2) * w, Math.min(1, spkCols ? a * 1.2 : a), a]; // colored particles read as distinct flecks
+    };
     const grainAmt = p.grain ?? .06 + .14 * h; // optional per polish: a stronger grain reads as dense, multidimensional glitter
     for (let y = 0, o = 0; y < ch; y += st) {
       const dy = y - cy, grow = (y >> 1) * gw, vy = (y / ch - .5) * 2, crow = y * cw;
@@ -350,6 +362,18 @@ function magneticSwatch(cv, p, W, H) {
         px8[o + 1] = c1 + (shadow[1] - c1) * rim;
         px8[o + 2] = c2 + (shadow[2] - c2) * rim;
         px8[o + 3] = 255;
+      }
+    }
+    // Deep particles go into the body before it's softened, so they read as suspended inside the polish.
+    if (hasDeep) for (const [x, y, r, b, c, dk, dp] of sparkles) {
+      if (!dp) continue;
+      const q = dk ? [shadow[0] * .8, shadow[1] * .8, shadow[2] * .8, .4 * b] : sparkColor(x, y, r, b, c);
+      if (!q) continue;
+      const A = q[3] * .5, iw = img.width, ih = img.height, rr = r * 1.6 * dpr / st;
+      const x0 = Math.max(0, (x * dpr / st - rr) | 0), x1 = Math.min(iw, Math.max(x0 + 1, Math.ceil(x * dpr / st + rr)));
+      const y0 = Math.max(0, (y * dpr / st - rr) | 0), y1 = Math.min(ih, Math.max(y0 + 1, Math.ceil(y * dpr / st + rr)));
+      for (let yy = y0; yy < y1; yy++) for (let xx = x0, o = (yy * iw + x0) * 4; xx < x1; xx++, o += 4) {
+        px8[o] += (q[0] - px8[o]) * A; px8[o + 1] += (q[1] - px8[o + 1]) * A; px8[o + 2] += (q[2] - px8[o + 2]) * A;
       }
     }
     bctx.putImageData(img, 0, 0);
@@ -386,20 +410,16 @@ function magneticSwatch(cv, p, W, H) {
       for (let yy = y0; yy < y1; yy++) for (let xx = x0, o = (yy * cw + x0) * 4; xx < x1; xx++, o += 4) { L[o] = c0; L[o + 1] = c1; L[o + 2] = c2; L[o + 3] = A; }
     };
     const dk0 = shadow[0] * .8, dk1 = shadow[1] * .8, dk2 = shadow[2] * .8;
-    for (const [x, y, r, b, c, dk] of sparkles) {
+    for (const [x, y, r, b, c, dk, dp] of sparkles) {
+      if (dp) continue; // already drawn inside the body
       if (dk) { // a flake turned away from the light: a dark speck of the shadow color
         if (L) { put(x, y, r, dk0, dk1, dk2, .4 * b); continue; }
         ctx.globalCompositeOperation = "source-over"; ctx.globalAlpha = .4 * b; ctx.fillStyle = `rgb(${dk0 | 0},${dk1 | 0},${dk2 | 0})`;
         ctx.fillRect(x - r, y - r, r * 2, r * 2); ctx.globalCompositeOperation = spkCols ? "source-over" : "lighter"; continue;
       }
-      const [I, t] = field(x * dpr, y * dpr), pi = ((t * (PLUT - 1)) | 0) * 3;
-      const a = b * (spk.floor + (1 - spk.floor) * I) * (1 - .5 * k * Math.max(0, Math.hypot(x / W - .5, y / H - .5) * 2 - .6));
-      if (a < .03) continue;
-      const w = r > .5 ? .6 : spkCols ? 0 : .2; // bigger glints burn toward white at their core; colored particles stay saturated
-      const al = Math.min(1, spkCols ? a * 1.2 : a); // colored particles read as distinct flecks
-      let s0 = pal[pi], s1 = pal[pi + 1], s2 = pal[pi + 2];
-      if (spkCols) { const q = spkCols[(c * spkCols.length) | 0], m = spk.mix; s0 += (q[0] - s0) * m; s1 += (q[1] - s1) * m; s2 += (q[2] - s2) * m; }
-      s0 += (255 - s0) * w; s1 += (255 - s1) * w; s2 += (255 - s2) * w;
+      const q = sparkColor(x, y, r, b, c);
+      if (!q) continue;
+      const [s0, s1, s2, al, a] = q;
       if (L && r <= .5) { put(x, y, r, s0, s1, s2, al); continue; }
       ctx.globalAlpha = al; ctx.fillStyle = `rgb(${s0 | 0},${s1 | 0},${s2 | 0})`;
       ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill();
