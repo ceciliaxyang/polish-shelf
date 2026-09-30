@@ -422,7 +422,14 @@ function magneticSwatch(cv, p, W, H) {
   // Hovering moves the glow with the pointer. With no finish picked it also tightens into a cat eye;
   // with Glass bead or Cat eye picked it keeps that shape.
   let hovering = false;
-  cv.onpointermove = e => { hovering = true; const r = cv.getBoundingClientRect(); aim((e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height, fixedH ?? (state.finish ? restH : 1)); };
+  // With a mouse, the shape follows the pointer's height on the swatch: cat eye near the top and bottom
+  // edges, glass bead through the middle, so sweeping across it plays cat eye > glass bead > cat eye
+  // (phones get the same sequence from scrolling instead; see shapeForScroll).
+  const shapeAt = y => { const d = Math.min(1, Math.abs(y - .5) * 2); return d * d * (3 - 2 * d); };
+  cv.onpointermove = e => {
+    hovering = true; const r = cv.getBoundingClientRect(), x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
+    aim(x, y, fixedH ?? (state.finish ? restH : e.pointerType === "mouse" ? shapeAt(y) : 1));
+  };
   cv.onpointerleave = () => { hovering = false; aim(.5, .5, restH); };
   if (fixedH === null) {
     cv.setFinish = () => { restH = finishH(); aim(.5, .5, restH); };
@@ -1199,9 +1206,10 @@ function drift(now) {
 if (noHover) requestAnimationFrame(drift);
 
 /* ---------- scroll: magnetic shapes ---------- */
-// As the shelf scrolls, each magnetic swatch shifts with its place on screen: a cat eye as it comes in at
+// On touch screens, as the shelf scrolls, each magnetic swatch shifts with its place on screen: a cat eye as it comes in at
 // the bottom, easing into a glass bead in the middle of the window, and back to a cat eye as it leaves.
 function shapeForScroll(instant) {
+  if (!noHover) return; // phones and tablets only; with a mouse, hovering plays it instead
   const vh = innerHeight;
   document.querySelectorAll("#grid .swatch").forEach(cv => {
     if (!cv.setRest) return;
