@@ -32,24 +32,25 @@
         <div class="grid" id="grid"></div>
       </main>
 
-      <aside class="bench" id="bench" aria-label="Layers" hidden>
-        <div class="bench-head" id="benchHead">
-          <span class="sheet-handle" aria-hidden="true"></span>
-          <div class="peek" id="peek">
-            <div class="peek-mini" id="peekMini"></div>
-            <div class="bench-titles">
-              <h2 class="bench-title">Layers</h2>
-              <p class="peek-sub" id="peekSub"></p>
-            </div>
-            <div class="peek-thumbs" id="peekThumbs" aria-hidden="true"></div>
-          </div>
-          <button type="button" class="mh-btn" id="closeBench" aria-label="Close layering"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#222" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></svg></button>
-        </div>
-        <div class="stage" id="stage"></div>
-        <ol class="layers" id="layers" aria-label="Layers, top first"></ol>
-      </aside>
     </div>
   </div>
+  <!-- The Layers pane lives outside the page so it stays sharp and on top, even over the detail dialog. -->
+  <aside class="bench" id="bench" aria-label="Layers" hidden>
+    <div class="bench-head" id="benchHead">
+      <span class="sheet-handle" aria-hidden="true"></span>
+      <div class="peek" id="peek">
+        <div class="peek-mini" id="peekMini"></div>
+        <div class="bench-titles">
+          <h2 class="bench-title">Layers</h2>
+          <p class="peek-sub" id="peekSub"></p>
+        </div>
+        <div class="peek-thumbs" id="peekThumbs" aria-hidden="true"></div>
+      </div>
+      <button type="button" class="mh-btn" id="closeBench" aria-label="Close layering"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#222" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></svg></button>
+    </div>
+    <div class="stage" id="stage"></div>
+    <ol class="layers" id="layers" aria-label="Layers, top first"></ol>
+  </aside>
   <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="mName" tabindex="-1" hidden>
     <div class="modal-blur"></div>
     <header class="modal-head">
@@ -58,6 +59,7 @@
         <p class="mh-name" id="mName"></p>
       </div>
       <div class="mh-trail">
+        <button type="button" class="mh-btn m-add" id="mAdd" aria-label="Add to layers" title="Add to layers"></button>
         <a class="mh-btn" id="mLink" target="_blank" rel="noopener" aria-label="Open product page"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#222" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 9.5a3 3 0 0 0 4.24 0l2.5-2.5a3 3 0 0 0-4.24-4.24l-.9.9M9.5 6.5a3 3 0 0 0-4.24 0l-2.5 2.5a3 3 0 0 0 4.24 4.24l.9-.9"/></svg></a>
         <button type="button" class="mh-btn" id="mClose" aria-label="Close"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#222" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></svg></button>
       </div>

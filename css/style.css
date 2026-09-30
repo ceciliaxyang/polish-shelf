@@ -91,11 +91,14 @@ button, input, select { font: inherit; color: inherit; }
 .swatch-btn:hover { background: rgba(17, 17, 17, .62); }
 .swatch-btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 .swatch-btn svg { display: block; overflow: visible; }
-.swatch-btn .plus { transform-origin: 10px 10px; transition: transform .35s cubic-bezier(.2,.8,.2,1), opacity .2s ease; }
-.swatch-btn .check { stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset .2s ease; }
-.swatch-btn.on .plus { transform: rotate(90deg) scale(0); opacity: 0; }
-.swatch-btn.on .check { stroke-dashoffset: 0; transition: stroke-dashoffset .35s cubic-bezier(.3,.7,.3,1) .12s; }
-@media (prefers-reduced-motion: reduce) { .swatch-btn .plus, .swatch-btn .check, .swatch-btn.on .check { transition: none; } }
+/* The + that turns into a check (swatch buttons and the dialog's add button) */
+.swatch-btn .plus, .m-add .plus { transform-origin: 10px 10px; transition: transform .35s cubic-bezier(.2,.8,.2,1), opacity .2s ease; }
+.swatch-btn .check, .m-add .check { stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset .2s ease; }
+.swatch-btn.on .plus, .m-add.on .plus { transform: rotate(90deg) scale(0); opacity: 0; }
+.swatch-btn.on .check, .m-add.on .check { stroke-dashoffset: 0; transition: stroke-dashoffset .35s cubic-bezier(.3,.7,.3,1) .12s; }
+.m-add { color: #222; }
+.m-add svg { display: block; width: 16px; height: 16px; overflow: visible; }
+@media (prefers-reduced-motion: reduce) { .swatch-btn .plus, .swatch-btn .check, .swatch-btn.on .check, .m-add .plus, .m-add .check, .m-add.on .check { transition: none; } }
 .card-text { display: flex; flex-direction: column; gap: 12px; width: 100%; }
 .card-title { display: flex; flex-direction: column; gap: 8px; }
 .card-title { min-width: 0; width: 100%; }
@@ -109,8 +112,16 @@ button, input, select { font: inherit; color: inherit; }
 
 /* Layering pane (Figma "Desktop - 7", node 2180:86749): opens on the right while layering is on and
    sticks to the top of the window as the shelf scrolls. */
-.bench { position: sticky; top: 0; align-self: start; max-height: 100vh; overflow-y: auto; overscroll-behavior: contain;
-  margin-top: -24px; padding: 24px 0 40px; display: flex; flex-direction: column; gap: 24px; scrollbar-width: none; }
+/* The pane is fixed to the right edge (outside the page, so it isn't blurred with it) and sits above
+   everything, the detail dialog included. Its box covers the right half of the gap and the page's right
+   padding; its left border is the divider between the panes. The layout keeps an empty column for it. */
+.bench { position: fixed; z-index: 60; top: 0; bottom: 0; right: 0; width: calc(28px + 348px + 40px + env(safe-area-inset-right));
+  overflow-y: auto; overscroll-behavior: contain; padding: calc(64px + env(safe-area-inset-top)) calc(40px + env(safe-area-inset-right)) 40px 28px;
+  display: flex; flex-direction: column; gap: 24px; background: var(--bg); border-left: 1px solid #ebebeb; scrollbar-width: none; }
+/* With the pane open, the detail dialog uses the space to its left. */
+@media (min-width: 761px) {
+  body.bench-open .modal, body.bench-open .modal-head { right: calc(28px + 348px + 40px + env(safe-area-inset-right)); }
+}
 .bench::-webkit-scrollbar { display: none; }
 .bench-head { display: flex; align-items: flex-start; gap: 16px; }
 .bench-title { flex: 1; min-width: 0; margin: 0; padding: 2px 0 12px; font-size: 40px; line-height: 40px; font-weight: 500; letter-spacing: -1.2px; color: #000; }
@@ -129,15 +140,13 @@ button, input, select { font: inherit; color: inherit; }
 .hint { margin: 0; }
 /* Vertical divider between the shelf and the pane, running the full height of the page */
 .layout { position: relative; }
-.layout:not(.closed)::after { content: ""; position: absolute; top: calc(-64px - env(safe-area-inset-top)); bottom: -60px; right: calc(348px + 28px); width: 1px; background: #ebebeb; pointer-events: none; }
-@media (max-width: 760px) { .layout:not(.closed)::after { display: none; } }
 .bench-titles { flex: 1; min-width: 0; }
 .peek { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; }
 .sheet-handle, .peek-mini, .peek-sub, .peek-thumbs { display: none; }
 /* Phones: the pane is a bottom sheet. Collapsed, only the peek bar shows (combined swatch, layer count,
    thumbnails); tap or drag it up to expand, drag down to tuck it away. */
 @media (max-width: 760px) {
-  .bench { --peek: calc(84px + env(safe-area-inset-bottom)); position: fixed; z-index: 40; left: 0; right: 0; top: auto; bottom: 0;
+  .bench { --peek: calc(84px + env(safe-area-inset-bottom)); position: fixed; z-index: 60; left: 0; right: 0; top: auto; bottom: 0; width: auto; border-left: 0;
     max-height: 78vh; margin: 0; gap: 16px; padding: 0 16px calc(24px + env(safe-area-inset-bottom)); background: var(--bg);
     border-radius: 24px 24px 0 0; box-shadow: 0 -4px 24px rgba(0, 0, 0, .12); overflow: hidden;
     transform: translateY(calc(100% - var(--peek))); transition: transform .38s cubic-bezier(.2, .8, .2, 1); }
@@ -165,6 +174,7 @@ button, input, select { font: inherit; color: inherit; }
   .peek-thumbs { transition: opacity .2s ease; }
   .stage { width: min(100%, 280px); border-radius: 40px; align-self: center; }
   .layers { margin-top: 8px; }
+  body.bench-open .modal-body { padding-bottom: calc(24px + 84px + env(safe-area-inset-bottom)); } /* photos scroll clear of the sheet */
   body.bench-open .page { padding-bottom: calc(40px + 84px + env(safe-area-inset-bottom)); }
   @media (prefers-reduced-motion: reduce) { .bench, .peek-mini.pulse { transition: none; animation: none; } }
 }

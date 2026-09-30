@@ -956,6 +956,12 @@ function openDetail(p, card) {
   detail.p = p; detail.card = card;
   $("#mBrand").textContent = p.brand || "";
   $("#mName").textContent = p.name || "Untitled";
+  // The dialog's add button does what the swatch's + does, and shows the same + / check state.
+  const addBtn = $("#mAdd");
+  if (!addBtn.firstChild) addBtn.innerHTML = PLUS_CHECK;
+  addBtn.dataset.pid = p.id; addBtn.dataset.name = p.name;
+  addBtn.onclick = () => bench.layers.some(l => l.pid === p.id) ? removePolish(p) : addLayer(p);
+  syncSwatchButtons();
   const link = $("#mLink");
   link.hidden = !p.url; if (p.url) link.href = p.url;
 
@@ -1045,7 +1051,7 @@ function removePolish(p) {
 
 // Swatch buttons show a checkmark while that polish is on the bench.
 function syncSwatchButtons() {
-  document.querySelectorAll(".swatch-btn").forEach(b => {
+  document.querySelectorAll(".swatch-btn, #mAdd").forEach(b => {
     const on = bench.layers.some(l => l.pid === b.dataset.pid);
     b.classList.toggle("on", on);
     b.title = on ? "Remove from layers" : "Add to layers";
