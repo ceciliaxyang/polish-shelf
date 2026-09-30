@@ -97,7 +97,10 @@ button, input, select { font: inherit; color: inherit; }
 .swatch-btn.on .plus, .m-add.on .plus { transform: rotate(90deg) scale(0); opacity: 0; }
 .swatch-btn.on .check, .m-add.on .check { stroke-dashoffset: 0; transition: stroke-dashoffset .35s cubic-bezier(.3,.7,.3,1) .12s; }
 .m-add { color: #222; }
-.m-add svg { display: block; width: 22px; height: 22px; margin: -3px; overflow: visible; } /* the plus/check sits inside a 20px box, so it draws larger to match the 16px link and close icons */
+/* The plus/check sits inside a 20px box, so it draws a bit larger than the 16px link and close icons to
+   match them; the plus is scaled down to about the same visual size as the check. */
+.m-add svg { display: block; width: 20px; height: 20px; margin: -2px; overflow: visible; }
+.m-add .plus { transform: scale(.8); }
 @media (prefers-reduced-motion: reduce) { .swatch-btn .plus, .swatch-btn .check, .swatch-btn.on .check, .m-add .plus, .m-add .check, .m-add.on .check { transition: none; } }
 .card-text { display: flex; flex-direction: column; gap: 12px; width: 100%; }
 .card-title { display: flex; flex-direction: column; gap: 8px; }
