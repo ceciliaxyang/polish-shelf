@@ -995,11 +995,12 @@ function syncSwatchButtons() {
 }
 
 const TRASH = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 4h11M6.25 4V2.5h3.5V4M4 4l.6 9.1a1 1 0 0 0 1 .9h4.8a1 1 0 0 0 1-.9L12 4M6.75 6.75v4.5M9.25 6.75v4.5"/></svg>`;
-// Layers sitting on top of the base: effects and toppers add light (screen), so the base color shows
-// through; anything else is painted over at its coverage.
-const TOPPER = new Set(["magnetic", "sheermag", "holo", "shimmer", "multichrome", "glitter", "flakies", "chrome", "duochrome", "glow"]);
+// A sheer polish lets what's underneath show through; anything else covers it completely.
+const isSheer = p => p.effect === "sheer" || p.effect === "sheermag" || effectsOf(p).includes("sheer");
 
-// The big preview: each layer's own swatch, stacked in order (base first).
+// The big preview. Each polish paints over everything below it, so the preview starts from the topmost
+// polish that isn't sheer. Sheer layers above it combine with it: they tint it (multiply) and add their
+// own shimmer and sparkle (screen).
 function renderStage() {
   const box = $("#stage"), live = liveLayers(bench.layers);
   box.innerHTML = "";
@@ -1009,12 +1010,14 @@ function renderStage() {
   const out = document.createElement("canvas"), dpr = swatchDpr(W);
   out.width = Math.round(W * dpr); out.height = Math.round(H * dpr);
   const ctx = out.getContext("2d");
-  live.forEach((L, i) => {
+  let start = 0;
+  live.forEach((L, i) => { if (!isSheer(L.polish)) start = i; });
+  live.slice(start).forEach((L, i) => {
     const cv = document.createElement("canvas");
     renderSwatch(cv, L.polish, W, H);
-    ctx.globalCompositeOperation = i && TOPPER.has(L.polish.effect) ? "screen" : "source-over";
-    ctx.globalAlpha = i && !TOPPER.has(L.polish.effect) ? .85 : 1;
-    ctx.drawImage(cv, 0, 0, out.width, out.height);
+    if (!i) { ctx.drawImage(cv, 0, 0, out.width, out.height); return; }
+    ctx.globalCompositeOperation = "multiply"; ctx.globalAlpha = .45; ctx.drawImage(cv, 0, 0, out.width, out.height);
+    ctx.globalCompositeOperation = "screen"; ctx.globalAlpha = .6; ctx.drawImage(cv, 0, 0, out.width, out.height);
   });
   ctx.globalCompositeOperation = "source-over"; ctx.globalAlpha = 1;
   box.appendChild(out);
