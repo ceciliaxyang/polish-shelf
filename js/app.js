@@ -1037,7 +1037,7 @@ const sheetMQ = matchMedia("(max-width: 760px)");
 function renderPeek() {
   if (!sheetMQ.matches) return;
   const n = bench.layers.length, mini = $("#peekMini"); mini.innerHTML = "";
-  $("#peekSub").textContent = n ? `${n} layer${n > 1 ? "s" : ""}` : "Tap + on a polish to add it";
+  $("#peekSub").textContent = n ? `${n} layer${n > 1 ? "s" : ""}` : "Add polishes to start seeing how they layer together.";
   const cv = stackCanvas(44, 44); if (cv) mini.appendChild(cv);
   const th = $("#peekThumbs"); th.innerHTML = "";
   [...bench.layers].reverse().slice(0, 4).forEach(l => {
@@ -1086,10 +1086,10 @@ function pulsePeek() {
 function renderBench() {
   syncSwatchButtons();
   if ($("#bench").hidden) return;
-  $("#bench").classList.toggle("empty", !liveLayers(bench.layers).length);
+  $("#bench").classList.toggle("no-layers", !liveLayers(bench.layers).length);
   renderStage();
   const ol = $("#layers"); ol.innerHTML = "";
-  if (!bench.layers.length) { ol.innerHTML = `<li class="hint">Press + on a polish to start with a base color, then add effects on top.</li>`; return; }
+  if (!bench.layers.length) { ol.innerHTML = `<li class="hint">Add polishes to start seeing how they layer together.</li>`; return; }
   // Listed top layer first, like a stack seen from above.
   bench.layers.map((l, i) => [l, i]).reverse().forEach(([l, i]) => {
     const p = polishById(l.pid);

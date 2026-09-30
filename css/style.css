@@ -160,7 +160,10 @@ body.layering .swatch-btn { opacity: 1; transform: none; visibility: visible; tr
   #closeBench { align-self: center; }
   .peek-mini { display: block; flex-shrink: 0; width: 44px; height: 44px; border-radius: 12px; overflow: hidden; background: var(--swatch); }
   .peek-mini canvas { display: block; width: 100%; height: 100%; }
-  .bench.empty .peek-mini, .bench.empty .stage { display: none; } /* no swatch until a polish is picked */
+  .bench.no-layers .peek-mini, .bench.no-layers .stage { display: none; } /* no swatch until a polish is picked */
+  .bench.no-layers { --peek: calc(100px + env(safe-area-inset-bottom)); }
+  .bench.no-layers .peek-sub { white-space: normal; }
+  .bench.no-layers .layers .hint { display: none; } /* the peek bar already says it */
   .peek-mini.pulse { animation: peek-pulse .5s cubic-bezier(.2, .8, .2, 1); }
   @keyframes peek-pulse { 40% { transform: scale(1.12); } }
   .bench-title { font-size: 17px; line-height: 22px; letter-spacing: -.2px; padding: 0; }
