@@ -131,10 +131,12 @@ body.detail-open .page { filter: blur(50px); }
 .m-photos img { opacity: 0; transform: translateY(18px); transition: opacity .2s ease, transform .2s ease; }
 .modal.open .m-photos img { opacity: 1; transform: none; transition: opacity .55s ease var(--d, .15s), transform .7s cubic-bezier(.2, .8, .2, 1) var(--d, .15s); }
 @media (prefers-reduced-motion: reduce) { .m-photos img { transform: none !important; } }
-.modal-head { position: absolute; top: 0; left: 0; right: 0; display: flex; gap: 16px; min-height: 88px; padding: calc(24px + env(safe-area-inset-top)) 48px 24px calc(36px + 72px + 29px); } /* left: 29px past the 72px swatch (same gap as before it shrank) */
-.mh-trail { display: flex; align-items: flex-start; width: 97px; padding-top: 24px; flex-shrink: 0; }
-.mh-trail { justify-content: flex-end; gap: 8px; }
-.mh-content { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; padding: 24px 0 12px; }
+/* The header row is exactly as tall as the swatch (72px, starting 32px down), with the title and the
+   buttons centered in it, so swatch, title and buttons all share one vertical center.
+   Left: 29px past the swatch. */
+.modal-head { position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: center; gap: 16px; box-sizing: content-box; height: 72px; padding: calc(32px + env(safe-area-inset-top)) 48px 0 calc(36px + 72px + 29px); }
+.mh-trail { display: flex; align-items: center; justify-content: flex-end; gap: 8px; width: 97px; flex-shrink: 0; }
+.mh-content { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
 .mh-title { padding: 2px 0; }
 .mh-brand, .mh-name { margin: 0; color: #000; overflow-wrap: anywhere; }
 .mh-brand { font-size: 14px; }
@@ -157,9 +159,11 @@ body.detail-open .page { filter: blur(50px); }
   .m-photos img { border-radius: 32px; }
 }
 @media (max-width: 600px) {
-  .modal-head { padding: calc(12px + env(safe-area-inset-top)) 16px 12px calc(16px + 64px); }
-  .mh-trail { width: auto; padding-top: 12px; }
-  .mh-content { padding: 12px 0 8px; }
+  /* Phones: the swatch and the buttons share the top row (centered on each other), and the brand and
+     name stack underneath the swatch. */
+  .modal-head { display: grid; grid-template-columns: 1fr auto; grid-template-rows: 64px auto; align-items: center; height: auto; padding: calc(16px + env(safe-area-inset-top)) 16px 4px; gap: 0; }
+  .mh-trail { grid-row: 1; grid-column: 2; width: auto; }
+  .mh-content { grid-row: 2; grid-column: 1 / -1; padding-top: 12px; }
   .m-swatch { top: calc(16px + env(safe-area-inset-top)); left: 16px; width: 64px; height: 64px; border-radius: 14px; }
   .modal-body { left: 16px; right: 16px; top: calc(var(--head, 110px) + 16px); padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
   .m-photos { grid-template-columns: 1fr; gap: 12px; }
