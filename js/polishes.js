@@ -553,4 +553,32 @@ const POLISHES = [
     url: "https://www.amazon.com/dp/B0FNN6R827",
     photos: ["images/prettydiva-sunset-chrome-powder/1.jpg", "images/prettydiva-sunset-chrome-powder/2.jpg", "images/prettydiva-sunset-chrome-powder/3.jpg", "images/prettydiva-sunset-chrome-powder/4.jpg"], // saved from the product page
   },
+  {
+    id: "prettydiva-mermaid-pink-chrome-powder",
+    name: "Mermaid Pink",
+    brand: "Pretty Diva",
+    effect: "powder",
+    effects: ["powder"],
+    tone: "bold",
+    // Mermaid aurora chrome powder: a pearly pink mirror film with mint-green and lemon-yellow streaks and a
+    // lilac edge, shifting as it tilts (from the product photos). Shown over a milky white gel on the shelf.
+    colors: ["#ece6ea", "#f2b2d0", "#e89cc2", "#f4e6ee", "#aef0cc", "#eef2a4", "#f2b2d0", "#cdb6ee"], // [base shown over, ...bands]
+    powder: { spread: .6, light: [.74, .32] },
+    url: "https://www.amazon.com/dp/B0DZXNC5S2",
+    photos: ["images/prettydiva-mermaid-pink-chrome-powder/1.jpg", "images/prettydiva-mermaid-pink-chrome-powder/2.jpg", "images/prettydiva-mermaid-pink-chrome-powder/3.jpg", "images/prettydiva-mermaid-pink-chrome-powder/4.jpg"], // saved from the product page
+  },
+  {
+    id: "prettydiva-aurora-pink-chrome-powder",
+    name: "Aurora Pink",
+    brand: "Pretty Diva",
+    effect: "powder",
+    effects: ["powder"],
+    tone: "bold",
+    // Aurora chrome powder: a pink-lavender mirror film with bright golden-yellow and peach streaks, shifting as it
+    // tilts (from the product photos). Shown over a milky white gel on the shelf.
+    colors: ["#ece6ea", "#eeaad6", "#d2b0f2", "#f4e4f0", "#f8e07e", "#f8b88e", "#eeaad6", "#c6a8ee"], // [base shown over, ...bands]
+    powder: { spread: .6, light: [.72, .34] },
+    url: "https://www.amazon.com/dp/B0DZXP9NBQ",
+    photos: ["images/prettydiva-aurora-pink-chrome-powder/1.jpg", "images/prettydiva-aurora-pink-chrome-powder/2.jpg", "images/prettydiva-aurora-pink-chrome-powder/3.jpg", "images/prettydiva-aurora-pink-chrome-powder/4.jpg"], // saved from the product page
+  },
 ];
