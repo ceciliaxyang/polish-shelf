@@ -12,6 +12,7 @@
     photos: ["images/<id>/1.jpg"], // optional: photos saved from that page (kept in images/<id>/)
     shimmer: "#b0308a",        // optional: shimmer color suspended in the base
     shadow: "#2a1232",         // optional, magnetic: the deep color the edges fall into (default: darker base)
+    clear: true,               // optional: a clear topper; on top of other layers only its shimmer and sparkle show
   },
 
   Colors per effect:
@@ -437,6 +438,7 @@ const POLISHES = [
     brand: "ILNP",
     effect: "sheermag",
     effects: ["sheer", "magnetic"],
+    clear: true,               // a clear topper: layered over another polish, only its shimmer and sparkle show
     // Clear topper with a bright silver magnetic shimmer, silver and holographic flakes: shown as cool, clear silver (from the product page and photos)
     colors: ["#d5d8de", "#fcfcfe", "#eceef3", "#dde0e6"],
     shadow: "#aeb2bc",

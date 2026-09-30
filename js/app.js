@@ -1024,8 +1024,12 @@ function stackCanvas(W, H) {
   live.forEach((L, i) => { if (!isSheer(L.polish)) start = i; });
   live.slice(start).forEach((L, i) => {
     const cv = document.createElement("canvas");
-    renderSwatch(cv, L.polish, W, H);
+    // A clear topper over another polish has no color of its own: it's drawn on black and added as
+    // light (screen), so only its shimmer, glow and sparkle land on the layer below.
+    const clear = i && L.polish.clear;
+    renderSwatch(cv, clear ? { ...L.polish, colors: ["#000000", ...L.polish.colors.slice(1)], shadow: "#000000" } : L.polish, W, H);
     if (!i) { ctx.drawImage(cv, 0, 0, out.width, out.height); return; }
+    if (clear) { ctx.globalCompositeOperation = "screen"; ctx.globalAlpha = .5; ctx.drawImage(cv, 0, 0, out.width, out.height); return; }
     ctx.globalCompositeOperation = "multiply"; ctx.globalAlpha = .45; ctx.drawImage(cv, 0, 0, out.width, out.height);
     ctx.globalCompositeOperation = "screen"; ctx.globalAlpha = .6; ctx.drawImage(cv, 0, 0, out.width, out.height);
   });
