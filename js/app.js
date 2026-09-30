@@ -13,8 +13,12 @@ const EFFECTS = {
   thermal:   "Thermal",
   glow:      "Glow in the dark",
 };
+// Chrome and multichrome share one category: one filter pill and one card label ("Multichrome").
+// Swatches still draw by the polish's own effect.
+const CATEGORY = { chrome: "multichrome" };
+const category = k => CATEGORY[k] || k;
 // Filter pills always shown, in this order; other effects get a pill once a polish uses them.
-const PILL_EFFECTS = ["sheer", "magnetic", "holo", "shimmer", "chrome"];
+const PILL_EFFECTS = ["sheer", "magnetic", "holo", "shimmer", "multichrome"];
 const SKIN = "#f3d4c2";
 const NATURAL = "#f2d6cf";
 
@@ -831,7 +835,7 @@ function toggleFx(k) {
   renderShelf();
 }
 // A polish's rendering uses `effect`; `effects` (optional) lists everything it should be found under.
-function effectsOf(p) { return p.effects || [p.effect]; }
+function effectsOf(p) { return [...new Set((p.effects || [p.effect]).map(category))]; }
 
 // Plus while the polish is off the bench; it spins away and a checkmark draws in once it's added.
 const PLUS_CHECK = `<svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><path class="plus" d="M10 3.5v13M3.5 10h13"/><path class="check" pathLength="1" d="M4.5 10.5l3.5 3.5 7.5-8"/></svg>`;
@@ -986,7 +990,7 @@ function renderBench() {
     const li = document.createElement("li"); li.className = "layer";
     const num = document.createElement("span"); num.className = "n"; num.textContent = String(i + 1).padStart(2, "0");
     const nm = document.createElement("div"); nm.className = "nm"; nm.textContent = p ? (p.name || "Untitled") : "Removed polish";
-    const sm = document.createElement("small"); sm.textContent = p ? (EFFECTS[p.effect] || "Creme") : "No longer on your shelf"; nm.appendChild(sm);
+    const sm = document.createElement("small"); sm.textContent = p ? (EFFECTS[category(p.effect)] || "Creme") : "No longer on your shelf"; nm.appendChild(sm);
     const acts = document.createElement("div"); acts.className = "acts";
     const mk = (txt, label, fn, dis) => { const b = document.createElement("button"); b.type = "button"; b.className = "icon"; b.textContent = txt; b.setAttribute("aria-label", label); b.disabled = !!dis; b.onclick = fn; return b; };
     acts.append(
