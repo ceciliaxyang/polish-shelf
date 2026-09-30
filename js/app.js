@@ -216,8 +216,10 @@ function renderSwatch(cv, p, W, H) {
     bead     overrides for the glass bead look: { r: [w, h], span, glow }
     catEye   overrides for the cat eye look: { width, span, glow }
     flakes   colors of iridescent flakies suspended in the polish (they shift through the list on hover)
-    sparkle  { density, floor }: more sparkles, and how lit they stay outside the flash (defaults 1 and .1)
+    sparkle  { density, floor, dark }: more sparkles, how lit they stay outside the flash (defaults 1 and .1),
+             and the share of them that face away and show as dark flecks (default 0)
     glitter  color of small hex glitter suspended in the polish
+    grain    how strong the fine light/dark speckle in the body is (default .06, up to .2 as a cat eye)
 */
 // Smooth random field (value noise, two octaves), 0 to 1, fixed per seed. Used to make the flash
 // gather into uneven patches the way magnetic particles clump.
@@ -274,14 +276,19 @@ function magneticSwatch(cv, p, W, H) {
   // Each is [x, y, radius, brightness] in CSS pixels.
   const sparkles = [];
   // Optional per polish: sparkle: { density, floor } (density multiplies the count; floor keeps them lit outside the flash).
-  const spk = { density: 1, floor: .1, mix: .7, size: 1, ...p.sparkle };
+  // sparkle.dark: this share of particles face away from the light and read as darker flecks (depth in dense glitter).
+  const spk = { density: 1, floor: .1, mix: .7, size: 1, dark: 0, ...p.sparkle };
+  const packed = spk.density > 3; // densely packed glitter: tiny particles go into a pixel layer (see draw)
+  const spkCanvas = packed ? document.createElement("canvas") : null, spkCtx = spkCanvas && spkCanvas.getContext("2d");
+  if (packed) { spkCanvas.width = cw; spkCanvas.height = ch; }
+  const spkLayer = packed ? spkCtx.createImageData(cw, ch) : null;
   // Optional sparkle.colors: each particle gets its own color from this list (a multichrome that flashes many colors).
   const spkCols = spk.colors ? spk.colors.map(rgb) : null;
   for (let tries = 0; sparkles.length < W * H / 28 * spk.density && tries < W * H * 3; tries++) {
     const x = R() * W, y = R() * H, c = clump[((y * dpr) | 0) * cw + ((x * dpr) | 0)];
     if (R() > .25 + c * .9) continue;
     const big = R() < .03;
-    sparkles.push([x, y, (big ? .5 + R() * .4 : .16 + Math.pow(R(), 2) * .3) * spk.size, big ? .85 + R() * .15 : .3 + R() * .6, R()]);
+    sparkles.push([x, y, (big ? .5 + R() * .4 : .16 + Math.pow(R(), 2) * .3) * spk.size, big ? .85 + R() * .15 : .3 + R() * .6, R(), spk.dark > 0 && R() < spk.dark]);
   }
 
   // h: 0 = glass bead, 1 = cat eye, in between blends the two. x/y: pointer, 0 to 1 across the swatch.
@@ -325,7 +332,7 @@ function magneticSwatch(cv, p, W, H) {
     // While animating, the body is computed at half resolution (it's softened anyway); the final
     // resting frame is computed at full resolution.
     const st = fast ? 2 : 1, img = fast ? imgHalf : imgFull, px8 = img.data;
-    const grainAmt = .06 + .14 * h;
+    const grainAmt = p.grain ?? .06 + .14 * h; // optional per polish: a stronger grain reads as dense, multidimensional glitter
     for (let y = 0, o = 0; y < ch; y += st) {
       const dy = y - cy, grow = (y >> 1) * gw, vy = (y / ch - .5) * 2, crow = y * cw;
       for (let x = 0; x < cw; x += st, o += 4) {
@@ -369,17 +376,39 @@ function magneticSwatch(cv, p, W, H) {
     // Sparkles on top, crisp, tinted by the flash around them; bright near the flash, faint in the base.
     // Multicolored particles are painted over (not added) so each keeps its own hue instead of washing to white.
     ctx.globalCompositeOperation = spkCols ? "source-over" : "lighter";
-    for (const [x, y, r, b, c] of sparkles) {
+    // Packed glitter writes its tiny particles straight into a pixel layer (tens of thousands of
+    // canvas calls per frame would be too slow); larger glints are still drawn as soft circles.
+    const L = packed ? spkLayer.data : null;
+    if (L) L.fill(0);
+    const put = (x, y, r, c0, c1, c2, a) => {
+      const x0 = Math.max(0, ((x - r) * dpr) | 0), x1 = Math.min(cw, Math.max(x0 + 1, Math.ceil((x + r) * dpr)));
+      const y0 = Math.max(0, ((y - r) * dpr) | 0), y1 = Math.min(ch, Math.max(y0 + 1, Math.ceil((y + r) * dpr))), A = Math.min(255, a * 255);
+      for (let yy = y0; yy < y1; yy++) for (let xx = x0, o = (yy * cw + x0) * 4; xx < x1; xx++, o += 4) { L[o] = c0; L[o + 1] = c1; L[o + 2] = c2; L[o + 3] = A; }
+    };
+    const dk0 = shadow[0] * .8, dk1 = shadow[1] * .8, dk2 = shadow[2] * .8;
+    for (const [x, y, r, b, c, dk] of sparkles) {
+      if (dk) { // a flake turned away from the light: a dark speck of the shadow color
+        if (L) { put(x, y, r, dk0, dk1, dk2, .4 * b); continue; }
+        ctx.globalCompositeOperation = "source-over"; ctx.globalAlpha = .4 * b; ctx.fillStyle = `rgb(${dk0 | 0},${dk1 | 0},${dk2 | 0})`;
+        ctx.fillRect(x - r, y - r, r * 2, r * 2); ctx.globalCompositeOperation = spkCols ? "source-over" : "lighter"; continue;
+      }
       const [I, t] = field(x * dpr, y * dpr), pi = ((t * (PLUT - 1)) | 0) * 3;
       const a = b * (spk.floor + (1 - spk.floor) * I) * (1 - .5 * k * Math.max(0, Math.hypot(x / W - .5, y / H - .5) * 2 - .6));
       if (a < .03) continue;
       const w = r > .5 ? .6 : spkCols ? 0 : .2; // bigger glints burn toward white at their core; colored particles stay saturated
-      ctx.globalAlpha = Math.min(1, spkCols ? a * 1.2 : a); // colored particles read as distinct flecks
+      const al = Math.min(1, spkCols ? a * 1.2 : a); // colored particles read as distinct flecks
       let s0 = pal[pi], s1 = pal[pi + 1], s2 = pal[pi + 2];
       if (spkCols) { const q = spkCols[(c * spkCols.length) | 0], m = spk.mix; s0 += (q[0] - s0) * m; s1 += (q[1] - s1) * m; s2 += (q[2] - s2) * m; }
-      ctx.fillStyle = `rgb(${s0 + (255 - s0) * w | 0},${s1 + (255 - s1) * w | 0},${s2 + (255 - s2) * w | 0})`;
+      s0 += (255 - s0) * w; s1 += (255 - s1) * w; s2 += (255 - s2) * w;
+      if (L && r <= .5) { put(x, y, r, s0, s1, s2, al); continue; }
+      ctx.globalAlpha = al; ctx.fillStyle = `rgb(${s0 | 0},${s1 | 0},${s2 | 0})`;
       ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill();
       if (r > .5) { ctx.globalAlpha = a * .12; ctx.beginPath(); ctx.arc(x, y, r * 2.2, 0, 7); ctx.fill(); } // faint halo
+    }
+    if (L) {
+      spkCtx.putImageData(spkLayer, 0, 0);
+      ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalCompositeOperation = "source-over"; ctx.globalAlpha = 1;
+      ctx.drawImage(spkCanvas, 0, 0);
     }
     ctx.globalCompositeOperation = "source-over"; ctx.globalAlpha = 1;
   }

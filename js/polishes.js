@@ -32,7 +32,9 @@
     glitter  optional color of small hex glitter
     holo     optional, holographic only: { strength, width, angle } how vivid the rainbow streak is, how wide, and its tilt
     sparkle  optional { density, floor, colors, mix, size }: more sparkles, how lit they stay outside the flash
-             (defaults 1 and .1); colors gives each particle its own color, mixed in by mix (default .7); size scales them
+             (defaults 1 and .1); colors gives each particle its own color, mixed in by mix (default .7); size scales them;
+             dark is the share of particles turned away from the light, shown as darker flecks (default 0)
+    grain    optional, magnetic: strength of the fine light/dark speckle in the body (default .06)
 */
 const POLISHES = [
   {
@@ -391,9 +393,12 @@ const POLISHES = [
     effect: "sheermag",
     effects: ["sheer", "magnetic", "holo"],
     // Soft, see-through lilac with a silver magnetic sparkle, silver flakes and a holographic glint (from the product page and photos)
-    colors: ["#ad9bba", "#e4dcec", "#cfc3dc", "#b9a8c8"],
-    shadow: "#8e7b9c",         // edges only deepen a little, since the base is sheer
-    sparkle: { density: 3, floor: .5, size: 1.15, colors: ["#ffffff", "#ffd3ea", "#cfeaff", "#dfffd2", "#fff0c2"], mix: .3 },
+    colors: ["#b09cb8", "#eee6f0", "#d6c6dc", "#c0aac8"],
+    shadow: "#8f7896",         // edges only deepen a little, since the base is sheer
+    grain: .18,
+    // Packed with fine glitter everywhere, not just in the flash: mostly silver-white glints, some holographic
+    // color, and some flakes turned away from the light as darker flecks, which gives it depth
+    sparkle: { density: 9, floor: .75, size: 1.4, dark: .25, colors: ["#ffffff", "#ffffff", "#ffffff", "#f4f0ff", "#ff8fcf", "#86ceff", "#a8ff8c", "#ffdc7a"], mix: .8 },
     url: "https://www.ilnp.com/lily-soft-lilac-magnetic-holographic-nail-polish/",
     photos: ["images/ilnp-lily/1.jpg", "images/ilnp-lily/2.jpg", "images/ilnp-lily/3.jpg", "images/ilnp-lily/4.jpg"], // saved from the product page
   },
