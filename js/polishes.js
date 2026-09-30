@@ -324,10 +324,10 @@ const POLISHES = [
     effect: "shimmer",
     effects: ["shimmer"],
     // Ivory with orange shimmer; reads as a soft lilac-grey ivory with a peach-orange flash in the photos
-    baseColor: "#fbf9fa",      // white base (per your request)
-    colors: ["#f69a5e", "#f2b286"], // shimmer colors [facing, ..., sides]
-    shadow: "#dcd4d2",
-    chrome: { grain: .9, cover: 1, sheen: 2.4, along: .1, smooth: .85 }, // a soft gleam, not glitter
+    baseColor: "#e2dfea",      // pale white with a cool blue-grey / lilac cast, as in your reference photos
+    colors: ["#ff8a3e", "#f6a472"], // shimmer colors [facing, ..., sides]
+    shadow: "#b9b5c6",
+    chrome: { grain: .9, cover: .75, sheen: 4, along: .1, smooth: .4 }, // a narrow orange flash down the middle, soft with a little sparkle
     url: "https://www.mooncat.com/products/memento-mori",
     photos: ["images/mooncat-memento-mori/1.jpg", "images/mooncat-memento-mori/2.jpg", "images/mooncat-memento-mori/3.jpg", "images/mooncat-memento-mori/4.jpg"], // saved from the product page
   },
