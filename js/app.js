@@ -1001,6 +1001,7 @@ $("#closeBench").onclick = () => setBenchOpen(false);
 $("#layeringToggle").onclick = e => {
   const on = e.currentTarget.getAttribute("aria-checked") !== "true";
   e.currentTarget.setAttribute("aria-checked", on);
+  e.currentTarget.querySelector(".layers-state").textContent = on ? "On" : "Off";
   document.body.classList.toggle("layering", on);
   if (!on) setBenchOpen(false);
 };
