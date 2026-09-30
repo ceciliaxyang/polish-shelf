@@ -848,9 +848,8 @@ function renderShelf() {
     const wrap = document.createElement("div"); wrap.className = "swatch-wrap";
     const sw = document.createElement("canvas"); sw.className = "swatch";
     const add = document.createElement("button"); add.type = "button"; add.className = "swatch-btn"; add.innerHTML = PLUS_CHECK; add.dataset.pid = p.id;
-    add.setAttribute("aria-label", `Add ${p.name} to layers`); add.title = "Add to layers";
-    add.classList.toggle("on", bench.layers.some(l => l.pid === p.id));
-    add.onclick = () => addLayer(p);
+    add.dataset.name = p.name;
+    add.onclick = () => bench.layers.some(l => l.pid === p.id) ? removePolish(p) : addLayer(p);
     wrap.append(sw, add);
     sw.tabIndex = 0; sw.setAttribute("role", "button"); sw.setAttribute("aria-label", `View ${p.name}`);
     sw.onclick = () => openDetail(p, wrap);
@@ -871,6 +870,7 @@ function renderShelf() {
     sw._p = p; drawCard(sw);
     if (autoIO) autoIO.observe(sw);
   }
+  syncSwatchButtons();
 }
 
 /* ---------- detail view ---------- */
@@ -958,11 +958,22 @@ function addLayer(p) {
   saveBench(); renderBench();
   toast(`Added ${p.name || "polish"} as layer ${bench.layers.length}`);
 }
+// Pressing a checked swatch button takes that polish back off the bench.
+function removePolish(p) {
+  bench.layers = bench.layers.filter(l => l.pid !== p.id);
+  saveBench(); renderBench();
+  toast(`Removed ${p.name || "polish"} from layers`);
+}
 function move(i, d) { const a = bench.layers; [a[i], a[i + d]] = [a[i + d], a[i]]; saveBench(); renderBench(); }
 
 // Swatch buttons show a checkmark while that polish is on the bench.
 function syncSwatchButtons() {
-  document.querySelectorAll(".swatch-btn").forEach(b => b.classList.toggle("on", bench.layers.some(l => l.pid === b.dataset.pid)));
+  document.querySelectorAll(".swatch-btn").forEach(b => {
+    const on = bench.layers.some(l => l.pid === b.dataset.pid);
+    b.classList.toggle("on", on);
+    b.title = on ? "Remove from layers" : "Add to layers";
+    b.setAttribute("aria-label", `${on ? "Remove" : "Add"} ${b.dataset.name} ${on ? "from" : "to"} layers`);
+  });
 }
 
 function renderBench() {
