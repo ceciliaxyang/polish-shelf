@@ -38,8 +38,8 @@
              deep is the share suspended deeper inside a sheer polish, drawn softer and dimmer (default 0)
     grain    optional, magnetic: strength of the fine light/dark speckle in the body (default .06)
 */
-// Shelf order: Mooncat magnetics, Bee's Knees magnetics, bold Mooncat shimmers, holographic, thermals,
-// neutral shimmers, sheers, glow in the dark, then ILNP magnetics. The shelf shows polishes in this order.
+// Shelf order (the shelf shows polishes in this order): Mooncat magnetics, Bee's Knees magnetics, bold
+// Mooncat shimmers, holographic, thermals and neutral shimmers, sheers, glow in the dark, then ILNP magnetics.
 const POLISHES = [
   {
     id: "mooncat-404-soul-not-found",
@@ -266,6 +266,33 @@ const POLISHES = [
     photos: ["images/mooncat-bottled-rage/1.jpg", "images/mooncat-bottled-rage/2.jpg", "images/mooncat-bottled-rage/3.jpg", "images/mooncat-bottled-rage/4.jpg"], // saved from the product page
   },
   {
+    id: "mooncat-banished-prince",
+    name: "Banished Prince",
+    brand: "Mooncat",
+    effect: "thermal",
+    effects: ["thermal", "flakies"],
+    // Thermal: dark red when cold, bright red when warm, with iridescent orange-to-yellow-to-green flakies (sampled from the swatch grid)
+    colors: ["#3a0a08", "#c41c0e"], // [cold, warm]
+    thermal: { rest: .42 },
+    flakes: ["#ff8a2a", "#ffb640", "#f0d848", "#a8d040"],
+    url: "https://www.mooncat.com/products/banished-prince",
+    photos: ["images/mooncat-banished-prince/1.jpg", "images/mooncat-banished-prince/2.jpg", "images/mooncat-banished-prince/3.jpg", "images/mooncat-banished-prince/4.jpg"], // saved from the product page
+  },
+  {
+    id: "mooncat-dark-horse",
+    name: "Dark Horse",
+    brand: "Mooncat",
+    effect: "shimmer",
+    effects: ["shimmer"],
+    // Dark brown with warm light brown shimmer (from the product page and photos)
+    baseColor: "#351a0c",
+    colors: ["#e8aa64", "#c67e42", "#8a522a"], // shimmer colors [facing, ..., sides]
+    shadow: "#1e0e06",
+    chrome: { grain: .9, cover: .95, sheen: 1.4, along: .1, smooth: .85 }, // a soft gleam, not glitter
+    url: "https://www.mooncat.com/products/dark-horse",
+    photos: ["images/mooncat-dark-horse/1.jpg", "images/mooncat-dark-horse/2.jpg", "images/mooncat-dark-horse/3.jpg", "images/mooncat-dark-horse/4.jpg"], // saved from the product page
+  },
+  {
     id: "mooncat-fake-halo",
     name: "Fake Halo",
     brand: "Mooncat",
@@ -276,6 +303,20 @@ const POLISHES = [
     shadow: "#5e3c30",         // deeper bronze toward the edges
     url: "https://www.mooncat.com/products/fake-halo",
     photos: ["images/mooncat-fake-halo/1.jpg", "images/mooncat-fake-halo/2.jpg", "images/mooncat-fake-halo/3.jpg", "images/mooncat-fake-halo/4.jpg"], // saved from the product page
+  },
+  {
+    id: "mooncat-sand-viper",
+    name: "Sand Viper",
+    brand: "Mooncat",
+    effect: "shimmer",
+    effects: ["shimmer", "sheer"],
+    // Sheer light pink-beige jelly with orange-red shimmer (from the product page and photos)
+    baseColor: "#cc8e8c",
+    colors: ["#f4907a", "#e4705e"], // shimmer colors [facing, ..., sides]
+    shadow: "#9e6a6a",
+    chrome: { grain: 1.1, cover: .5, sheen: 2.2, along: .1 },
+    url: "https://www.mooncat.com/products/sand-viper",
+    photos: ["images/mooncat-sand-viper/1.jpg", "images/mooncat-sand-viper/2.jpg", "images/mooncat-sand-viper/3.jpg", "images/mooncat-sand-viper/4.jpg"], // saved from the product page
   },
   {
     id: "mooncat-dark-omens",
@@ -302,19 +343,6 @@ const POLISHES = [
     photos: ["images/mooncat-queen-of-the-dead/1.jpg", "images/mooncat-queen-of-the-dead/2.jpg", "images/mooncat-queen-of-the-dead/3.jpg", "images/mooncat-queen-of-the-dead/4.jpg"], // saved from the product page
   },
   {
-    id: "mooncat-banished-prince",
-    name: "Banished Prince",
-    brand: "Mooncat",
-    effect: "thermal",
-    effects: ["thermal", "flakies"],
-    // Thermal: dark red when cold, bright red when warm, with iridescent orange-to-yellow-to-green flakies (sampled from the swatch grid)
-    colors: ["#3a0a08", "#c41c0e"], // [cold, warm]
-    thermal: { rest: .42 },
-    flakes: ["#ff8a2a", "#ffb640", "#f0d848", "#a8d040"],
-    url: "https://www.mooncat.com/products/banished-prince",
-    photos: ["images/mooncat-banished-prince/1.jpg", "images/mooncat-banished-prince/2.jpg", "images/mooncat-banished-prince/3.jpg", "images/mooncat-banished-prince/4.jpg"], // saved from the product page
-  },
-  {
     id: "mooncat-koi-whiskers",
     name: "Koi Whiskers",
     brand: "Mooncat",
@@ -326,34 +354,6 @@ const POLISHES = [
     shimmer: "#ffc4d8",
     url: "https://www.mooncat.com/products/koi-whiskers",
     photos: ["images/mooncat-koi-whiskers/1.jpg", "images/mooncat-koi-whiskers/2.jpg", "images/mooncat-koi-whiskers/3.jpg", "images/mooncat-koi-whiskers/4.jpg"], // saved from the product page
-  },
-  {
-    id: "mooncat-sand-viper",
-    name: "Sand Viper",
-    brand: "Mooncat",
-    effect: "shimmer",
-    effects: ["shimmer", "sheer"],
-    // Sheer light pink-beige jelly with orange-red shimmer (from the product page and photos)
-    baseColor: "#cc8e8c",
-    colors: ["#f4907a", "#e4705e"], // shimmer colors [facing, ..., sides]
-    shadow: "#9e6a6a",
-    chrome: { grain: 1.1, cover: .5, sheen: 2.2, along: .1 },
-    url: "https://www.mooncat.com/products/sand-viper",
-    photos: ["images/mooncat-sand-viper/1.jpg", "images/mooncat-sand-viper/2.jpg", "images/mooncat-sand-viper/3.jpg", "images/mooncat-sand-viper/4.jpg"], // saved from the product page
-  },
-  {
-    id: "mooncat-dark-horse",
-    name: "Dark Horse",
-    brand: "Mooncat",
-    effect: "shimmer",
-    effects: ["shimmer"],
-    // Dark brown with warm light brown shimmer (from the product page and photos)
-    baseColor: "#351a0c",
-    colors: ["#e8aa64", "#c67e42", "#8a522a"], // shimmer colors [facing, ..., sides]
-    shadow: "#1e0e06",
-    chrome: { grain: .9, cover: .95, sheen: 1.4, along: .1, smooth: .85 }, // a soft gleam, not glitter
-    url: "https://www.mooncat.com/products/dark-horse",
-    photos: ["images/mooncat-dark-horse/1.jpg", "images/mooncat-dark-horse/2.jpg", "images/mooncat-dark-horse/3.jpg", "images/mooncat-dark-horse/4.jpg"], // saved from the product page
   },
   {
     id: "mooncat-memento-mori",
