@@ -131,7 +131,7 @@ body.detail-open .page { filter: blur(50px); }
 .m-photos img { opacity: 0; transform: translateY(18px); transition: opacity .2s ease, transform .2s ease; }
 .modal.open .m-photos img { opacity: 1; transform: none; transition: opacity .55s ease var(--d, .15s), transform .7s cubic-bezier(.2, .8, .2, 1) var(--d, .15s); }
 @media (prefers-reduced-motion: reduce) { .m-photos img { transform: none !important; } }
-.modal-head { position: absolute; top: 0; left: 0; right: 0; display: flex; gap: 16px; min-height: 88px; padding: calc(24px + env(safe-area-inset-top)) 48px 24px calc(48px + 97px + 4px); } /* left: past the swatch in the header's leading slot (12px closer than the Figma's 16px gap, per your ask) */
+.modal-head { position: absolute; top: 0; left: 0; right: 0; display: flex; gap: 16px; min-height: 88px; padding: calc(24px + env(safe-area-inset-top)) 48px 24px calc(36px + 72px + 29px); } /* left: 29px past the 72px swatch (same gap as before it shrank) */
 .mh-trail { display: flex; align-items: flex-start; width: 97px; padding-top: 24px; flex-shrink: 0; }
 .mh-trail { justify-content: flex-end; gap: 8px; }
 .mh-content { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; padding: 24px 0 12px; }
@@ -147,7 +147,7 @@ body.detail-open .page { filter: blur(50px); }
    slot. Below the header the product photos are a 2 x 2 grid of squares (bigger than the Figma's single
    row, per your ask), lined up with the swatch on the left (36px) and the close button on the right
    (48px); the dialog scrolls if they run past the screen. Phones get a single column. */
-.m-swatch { position: absolute; z-index: 1; top: calc(32px + env(safe-area-inset-top)); left: 36px; width: 84px; height: 84px; border-radius: 16px; overflow: hidden; background: var(--swatch); }
+.m-swatch { position: absolute; z-index: 1; top: calc(32px + env(safe-area-inset-top)); left: 36px; width: 72px; height: 72px; border-radius: 16px; overflow: hidden; background: var(--swatch); }
 .m-swatch canvas { display: block; width: 100%; height: 100%; }
 .modal-body { position: absolute; left: 36px; right: 48px; top: calc(var(--head, 140px) + 24px); padding-bottom: calc(48px + env(safe-area-inset-bottom)); }
 .m-photos { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
