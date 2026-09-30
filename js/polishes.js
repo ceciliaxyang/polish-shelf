@@ -479,6 +479,7 @@ const POLISHES = [
     shadow: "#c8c0d6",
     bead: { r: [.44, .52], glow: .85, span: .95 },
     flakes: ["#6ab4ff", "#52d6b2", "#a878ff", "#ff84cc"],
+    flakeShine: { size: .75, density: 1.6 }, // smaller, shinier foil flakes that glint as the light moves
     sparkle: { density: 2.4, size: 1, floor: .4, mix: .8, colors: ["#ffffff", "#8cc8ff", "#c8a0ff", "#ffb0dc", "#a8f0d0"] },
     url: "https://www.mooncat.com/products/moonjelly",
     photos: ["images/mooncat-moonjelly/1.jpg", "images/mooncat-moonjelly/2.jpg", "images/mooncat-moonjelly/3.jpg", "images/mooncat-moonjelly/4.jpg"], // saved from the product page

@@ -240,9 +240,12 @@ function magneticSwatch(cv, p, W, H) {
 
   // Optional flakies (irregular iridescent flakes) and glitter (small hex pieces), suspended in the
   // polish rather than pulled by the magnet, so they stay put as the glow moves.
-  const flakes = (p.flakes ? Array.from({ length: Math.round(W * H / 1500) }, () => {
-    const r = 2 + Math.pow(R(), 2) * 5, n = 5 + ((R() * 3) | 0), rot = R() * 6.3;
-    return { x: R() * W, y: R() * H, phase: R(), pts: Array.from({ length: n }, (_, i) => {
+  // Optional flakeShine { size, density }: foil flakes that catch the light, with a bright edge-to-edge
+  // gradient and a white glint that flashes on as the angle (pointer or drift) changes.
+  const shine = p.flakeShine ? { size: 1, density: 1, ...p.flakeShine } : null;
+  const flakes = (p.flakes ? Array.from({ length: Math.round(W * H / 1500 * (shine ? shine.density : 1)) }, () => {
+    const r = (2 + Math.pow(R(), 2) * 5) * (shine ? shine.size : 1), n = 5 + ((R() * 3) | 0), rot = R() * 6.3;
+    return { x: R() * W, y: R() * H, phase: R(), r, pts: Array.from({ length: n }, (_, i) => {
       const a = rot + i / n * 6.283, rr = r * (.55 + R() * .6); return [Math.cos(a) * rr, Math.sin(a) * rr]; }) };
   }) : []);
   const glitter = (p.glitter ? Array.from({ length: Math.round(W * H / 450) }, () => ({ x: R() * W, y: R() * H, r: 1 + R() * 1.1, rot: R(), b: R() })) : []);
@@ -362,6 +365,20 @@ function magneticSwatch(cv, p, W, H) {
     // Flakes shift color with the viewing angle (the pointer), like iridescent foil.
     for (const f of flakes) {
       let t = (f.phase + cur.x * .5 + cur.y * .3) % 2; if (t > 1) t = 2 - t;
+      if (shine) {
+        const col = palette(p.flakes, t), lit = Math.sin(f.phase * 23 + cur.x * 7 - cur.y * 5);
+        const g = ctx.createLinearGradient(f.x - f.r, f.y - f.r, f.x + f.r, f.y + f.r);
+        g.addColorStop(0, shade(col, .6)); g.addColorStop(.45, col); g.addColorStop(1, shade(col, .2));
+        ctx.globalAlpha = .7 + .3 * lit; ctx.fillStyle = g;
+        ctx.beginPath(); f.pts.forEach(([dx, dy], i) => i ? ctx.lineTo(f.x + dx, f.y + dy) : ctx.moveTo(f.x + dx, f.y + dy)); ctx.closePath(); ctx.fill();
+        if (lit > .35) { // the flake faces the light: a white glint with a soft halo
+          const k2 = (lit - .35) / .65; ctx.globalCompositeOperation = "lighter";
+          ctx.globalAlpha = k2 * .2; ctx.fillStyle = "#ffffff"; ctx.beginPath(); ctx.arc(f.x, f.y, f.r * 1.1, 0, 7); ctx.fill();
+          ctx.globalAlpha = k2; ctx.beginPath(); ctx.arc(f.x, f.y, Math.max(.5, f.r * .28), 0, 7); ctx.fill();
+          ctx.globalCompositeOperation = "source-over";
+        }
+        continue;
+      }
       const a = .42 + .38 * Math.sin(f.phase * 12 + cur.x * 5 + cur.y * 3);
       ctx.globalAlpha = a; ctx.fillStyle = palette(p.flakes, t);
       ctx.beginPath(); f.pts.forEach(([dx, dy], i) => i ? ctx.lineTo(f.x + dx, f.y + dy) : ctx.moveTo(f.x + dx, f.y + dy)); ctx.closePath(); ctx.fill();
