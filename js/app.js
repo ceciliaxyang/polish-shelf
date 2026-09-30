@@ -711,7 +711,7 @@ function glowSwatch(cv, p, W, H) {
   const day = rgb(p.colors[0]), shim = (p.colors.length > 1 ? p.colors.slice(1) : [shade(p.colors[0], -.2)]).map(rgb);
   const glowC = rgb(p.glowColor || "#3cf0dc"), core = rgb(p.glowCore || shade(p.glowColor || "#3cf0dc", .6));
   const dark = [8, 14, 18];
-  const opt = { fade: 3.2, ...p.glowOpts };
+  const opt = { fade: 3.2, sparkle: .14, ...p.glowOpts }; // sparkle: share of particles that glint
   const R = rng(p.id || "p");
   const CELL = Math.max(2, Math.round(dpr)), gx = Math.ceil(cw / CELL), gy = Math.ceil(ch / CELL), N = gx * gy;
   const pb = new Float32Array(N), pc = new Uint8Array(N);
@@ -734,6 +734,14 @@ function glowSwatch(cv, p, W, H) {
         let r = (day[0] + (c[0] - day[0]) * sa) * lit, g = (day[1] + (c[1] - day[1]) * sa) * lit, bl = (day[2] + (c[2] - day[2]) * sa) * lit;
         const rim = Math.max(0, Math.abs(nx - .5) * 2 - .8) * 1.2;
         r *= 1 - rim * .12; g *= 1 - rim * .12; bl *= 1 - rim * .1;
+        // Sparkles: the brightest particles glint in a deeper, more saturated version of their shimmer
+        // color, so they show up against the pale base instead of disappearing into it.
+        const sp = b > 1 - opt.sparkle ? (b - (1 - opt.sparkle)) / opt.sparkle : 0;
+        if (sp) {
+          // More saturated, not darker: push the color away from grey while keeping its lightness.
+          const k = sp * .85 * (.5 + .5 * sheen), avg = (c[0] + c[1] + c[2]) / 3;
+          r += (c[0] + (c[0] - avg) * 1.4 - r) * k; g += (c[1] + (c[1] - avg) * 1.4 - g) * k; bl += (c[2] + (c[2] - avg) * 1.4 - bl) * k;
+        }
         if (n > .002) {
           // Hand shade: darkest around the cup, falling off toward the far edges.
           const dx = nx - st.cx, dy = (ny - st.cy) * .8, cup = Math.exp(-(dx * dx + dy * dy) * 2.2);
@@ -743,7 +751,7 @@ function glowSwatch(cv, p, W, H) {
           // Fades toward the edges so the nail reads as a light source glowing in the dark.
           const ex = (nx - .5) * 2, ey = (ny - .5) * 2, e = Math.sqrt(ex * ex + ey * ey) / 1.3; // smooth, rounded falloff
           const ff = Math.min(1, Math.max(0, (e - .35) / .65)), falloff = 1 - .55 * ff * ff * (3 - 2 * ff);
-          const gl = Math.min(1, (.82 + .3 * center + (b - .5) * .1) * Math.pow(n, .6)) * falloff;
+          const gl = Math.min(1, (.82 + .3 * center + (b - .5) * .1 + sp * .25) * Math.pow(n, .6)) * falloff; // glints glow a touch brighter
           const hot = Math.pow(center, 2) * gl * .75;
           const gr = dark[0] + (glowC[0] - dark[0]) * gl + (core[0] - glowC[0]) * hot;
           const gg2 = dark[1] + (glowC[1] - dark[1]) * gl + (core[1] - glowC[1]) * hot;
