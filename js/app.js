@@ -1068,8 +1068,8 @@ const isSheer = p => p.effect === "sheer" || p.effect === "sheermag" || effectsO
 // own shimmer and sparkle (screen).
 const GRIP = `<svg width="10" height="16" viewBox="0 0 10 16" fill="currentColor" aria-hidden="true"><circle cx="2.5" cy="3" r="1.4"/><circle cx="7.5" cy="3" r="1.4"/><circle cx="2.5" cy="8" r="1.4"/><circle cx="7.5" cy="8" r="1.4"/><circle cx="2.5" cy="13" r="1.4"/><circle cx="7.5" cy="13" r="1.4"/></svg>`;
 
-// Drag to reorder the layer rows. With a mouse, any part of a row can be dragged (a grip appears on
-// hover); on touch screens, drag by the grip so the list still scrolls normally. The row follows the
+// Drag to reorder the layer rows. With a mouse, any part of a row can be dragged (the cursor shows a
+// grab hand); on touch screens, drag by the grip so the list still scrolls normally. The row follows the
 // pointer and the others slide aside to show where it will land.
 {
   const ol = $("#layers");

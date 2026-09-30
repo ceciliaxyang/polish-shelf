@@ -132,12 +132,12 @@ button, input, select { font: inherit; color: inherit; }
 .stage-layers canvas { position: absolute; inset: 0; }
 .layers { list-style: none; margin: 0; padding: 0; }
 .layer { position: relative; display: flex; align-items: center; gap: 16px; height: 72px; border-bottom: 1px solid #ebebeb; background: var(--bg); transition: transform .2s cubic-bezier(.2, .8, .2, 1); user-select: none; -webkit-user-select: none; }
-/* Drag to reorder: a grip in the left margin shows on hover (desktop); on touch screens it's always there
-   and is the handle to drag by. */
+/* Drag to reorder: on touch screens a grip is the handle to drag by; with a mouse there's no grip, just
+   the grab cursor. */
 .layer-grip { position: absolute; left: -20px; top: 50%; display: flex; padding: 6px 4px; margin-top: -14px; color: #b5b5b5; opacity: 0; transition: opacity .15s ease; touch-action: none; }
 @media (hover: hover) {
-  .layer { cursor: grab; }
-  .layer:hover .layer-grip { opacity: 1; }
+  .layer { cursor: grab; } /* with a mouse, the grab cursor alone signals dragging; no grip */
+  .layer-grip { display: none; }
 }
 @media (hover: none) { .layer-grip { position: static; margin: 0 -8px 0 -4px; opacity: 1; } }
 .layer.dragging { z-index: 2; transition: none; cursor: grabbing; border-radius: 12px; border-bottom-color: transparent; box-shadow: 0 12px 28px rgba(0, 0, 0, .14), 0 2px 6px rgba(0, 0, 0, .08); }
