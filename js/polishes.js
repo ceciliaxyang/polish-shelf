@@ -5,7 +5,7 @@
     id: "unique-id",           // any short unique text; saved combos refer to it
     name: "Name of polish",
     brand: "Brand name",
-    effect: "magnetic",        // how the swatch is drawn: magnetic, sheermag (sheer magnetic), holo, thermal, multichrome, shimmer, glow
+    effect: "magnetic",        // how the swatch is drawn: magnetic, sheermag (sheer magnetic), holo, thermal, multichrome, shimmer, glow, powder (chrome powder)
     effects: ["magnetic", "shimmer"], // optional: effect pills on the card and filters it shows up under (adds multichrome)
     tone: "bold",              // "bold" or "neutral", by taste: bolder, multi-color or darker tones are bold
     colors: ["#1b1030", "#b89cff"],
@@ -40,7 +40,8 @@
     grain    optional, magnetic: strength of the fine light/dark speckle in the body (default .06)
 */
 // Shelf order (the shelf shows polishes in this order): Mooncat magnetics, Bee's Knees magnetics, bold
-// Mooncat shimmers, holographic, thermals and neutral shimmers, sheers, glow in the dark, then ILNP magnetics.
+// Mooncat shimmers, holographic, thermals and neutral shimmers, sheers, glow in the dark, ILNP magnetics, then
+// chrome powders.
 const POLISHES = [
   {
     id: "mooncat-404-soul-not-found",
@@ -536,5 +537,18 @@ const POLISHES = [
     sparkle: { density: 6, floor: .35, deep: .35, size: 1.4, dark: .1, colors: ["#ffffff", "#ffffff", "#ffffff", "#f2f2f6", "#ff9fd0", "#8fd0ff", "#b4ff9c"], mix: .8 },
     url: "https://www.ilnp.com/bubbly-silver-magnetic-topper-nail-polish/",
     photos: ["images/ilnp-bubbly/1.jpg", "images/ilnp-bubbly/2.jpg", "images/ilnp-bubbly/3.jpg", "images/ilnp-bubbly/4.jpg"], // saved from the product page
+  },
+  {
+    id: "prettydiva-sunset-chrome-powder",
+    name: "Sunset",
+    brand: "Pretty Diva",
+    effect: "powder",
+    effects: ["powder"],
+    tone: "bold",
+    // Aurora chrome powder: a mirror film that flashes gold and peach into pink-lilac and sky blue as it tilts.
+    // Always layered on top. On the shelf it's shown over a milky white gel, like the product photos.
+    colors: ["#e8e4ea", "#f6aa3c", "#f08c5c", "#e08ccc", "#72b2f2", "#4cc4ea", "#9c88f0"], // [base shown over, ...bands]
+    url: "https://www.amazon.com/dp/B0FNN6R827",
+    photos: ["images/prettydiva-sunset-chrome-powder/1.jpg", "images/prettydiva-sunset-chrome-powder/2.jpg", "images/prettydiva-sunset-chrome-powder/3.jpg", "images/prettydiva-sunset-chrome-powder/4.jpg"], // saved from the product page
   },
 ];

@@ -12,6 +12,7 @@ const EFFECTS = {
   multichrome: "Multichrome",
   thermal:   "Thermal",
   glow:      "Glow in the dark",
+  powder:    "Chrome powder",
 };
 // Some effects share a category (one filter pill and one card label): chrome counts as multichrome
 // (which has no category of its own; see effectsOf), glitter as Shimmer, and sheer magnetic as Magnetic
@@ -150,6 +151,7 @@ function drawLayer(ctx, L, b, R) {
 function swatchDpr(W) { return W > 400 ? 2 : Math.min(3, Math.max(2, window.devicePixelRatio || 1)); }
 
 function renderSwatch(cv, p, W, H) {
+  if (p.effect === "powder") return powderSwatch(cv, p, W, H);
   if (p.effect === "magnetic" || p.effect === "sheermag") return magneticSwatch(cv, p, W, H); // sheer magnetic: a pale, see-through base
   if (p.effect === "holo") return holoSwatch(cv, p, W, H);
   if (p.effect === "thermal") return thermalSwatch(cv, p, W, H);
@@ -778,6 +780,63 @@ function multichromeSwatch(cv, p, W, H) {
 }
 
 /*
+  Chrome powder swatch. Chrome powder is a fine mirror pigment rubbed over a finished manicure. It's
+  smooth rather than glittery and very reflective: bright color bands run down the nail and shift a lot
+  with the angle, and a sharp white highlight runs along the curve. Hovering tilts the nail: sideways
+  moves the bands and highlight across, up and down slides through the colors.
+  colors = [base the powder is shown over on the shelf, ...band colors]. Optional powder: { spread, spec, cover }:
+  how many bands fit across the nail, how strong the highlight is, and how much of the base it covers (.8).
+*/
+function powderSwatch(cv, p, W, H) {
+  const dpr = swatchDpr(W), cw = Math.round(W * dpr), ch = Math.round(H * dpr);
+  cv.width = cw; cv.height = ch;
+  const ctx = cv.getContext("2d");
+  const opt = { spread: .8, spec: .85, cover: .8, ...p.powder };
+  const base = rgb(p.colors[0]), PL = 256, pal = new Float32Array(PL * 3);
+  for (let i = 0; i < PL; i++) pal.set(rgb(palette(p.colors.slice(1), i / (PL - 1))), i * 3);
+  // Mirror finishes are smooth, so the image is computed at half resolution and scaled up softly.
+  const hw = Math.ceil(cw / 2), hh = Math.ceil(ch / 2), buf = document.createElement("canvas");
+  buf.width = hw; buf.height = hh;
+  const bctx = buf.getContext("2d"), img = bctx.createImageData(hw, hh), px = img.data;
+  const rest = { x: .5, y: .5 }, cur = { ...rest }, target = { ...rest };
+  let raf = 0;
+  function draw() {
+    const axis = .5 + (cur.x - .5) * .9, shift = (cur.y - .5) * .9, hi = axis + .13;
+    for (let y = 0, o = 0; y < hh; y++) {
+      const ny = y / hh, dome = (ny - .5) * (ny - .5) * .08, along = (.5 - ny) * .15; // bands run down the nail
+      for (let x = 0; x < hw; x++, o += 4) {
+        const nx = x / hw, u = (nx - axis) / .55, ang = Math.sqrt(u * u + dome);
+        let t = ang * opt.spread + shift + along; t -= Math.floor(t); t = t < .5 ? t * 2 : (1 - t) * 2; // bands repeat and mirror
+        const k = ((t * (PL - 1)) | 0) * 3, light = .55 + .45 * Math.exp(-ang * ang * 2);
+        const d = (nx - hi) / .018, d2 = (nx - (axis - .3)) / .04;
+        const spec = opt.spec * (Math.exp(-d * d) + .35 * Math.exp(-d2 * d2)) * (1 - Math.abs(ny - .5) * .6);
+        const edge = Math.max(0, Math.abs(nx - .5) * 2 - .86) * 2.4;
+        let r = pal[k] * light, g = pal[k + 1] * light, b = pal[k + 2] * light;
+        r += (255 - r) * spec; g += (255 - g) * spec; b += (255 - b) * spec;
+        r *= 1 - edge * .5; g *= 1 - edge * .5; b *= 1 - edge * .5;
+        // The mirror film mostly covers its base, which shows through a little (cover).
+        px[o] = base[0] + (Math.min(255, r) - base[0]) * opt.cover;
+        px[o + 1] = base[1] + (Math.min(255, g) - base[1]) * opt.cover;
+        px[o + 2] = base[2] + (Math.min(255, b) - base[2]) * opt.cover;
+        px[o + 3] = 255;
+      }
+    }
+    bctx.putImageData(img, 0, 0);
+    ctx.imageSmoothingQuality = "high"; ctx.drawImage(buf, 0, 0, cw, ch);
+  }
+  function tick() {
+    cur.x += (target.x - cur.x) * .15; cur.y += (target.y - cur.y) * .15;
+    draw();
+    raf = Math.abs(target.x - cur.x) + Math.abs(target.y - cur.y) > .002 ? requestAnimationFrame(tick) : 0;
+  }
+  const aim = (x, y) => { target.x = x; target.y = y; if (!raf) raf = requestAnimationFrame(tick); };
+  cv.onpointermove = e => { const r = cv.getBoundingClientRect(); aim((e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height); };
+  cv.onpointerleave = () => aim(rest.x, rest.y);
+  cv.classList.add("interactive");
+  draw();
+}
+
+/*
   Glow-in-the-dark swatch. At rest it shows the daylight look: colors[0] is the base, the rest are its
   shimmer. Hovering is like cupping your hands around the nail: it goes dark around the cursor and the
   glow (glowColor) comes up. When you move away the glow lingers and fades over a few seconds, the way
@@ -1045,9 +1104,13 @@ $("#closeBench").onclick = () => { bench.layers = []; saveBench(); setBenchOpen(
 function addLayer(p) {
   // Toppers look right with one coat; everything else defaults to two.
   const layer = { pid: p.id, coats: ["glitter", "flakies", "chrome"].includes(p.effect) ? 1 : 2 };
-  // Sheers always sit on top of non-sheers: a sheer goes on top; anything else goes just under the sheers.
+  // Order from the top: chrome powders always on top, then sheers, then everything else. A powder goes on
+  // the very top; a sheer goes just under the powders; anything else just under the sheers and powders.
+  const kinds = bench.layers.map(l => polishById(l.pid));
   let at = bench.layers.length;
-  if (!isSheer(p)) { at = 0; bench.layers.forEach((l, i) => { const q = polishById(l.pid); if (q && !isSheer(q)) at = i + 1; }); }
+  if (isPowder(p)) at = bench.layers.length;
+  else if (isSheer(p)) { const k = kinds.findIndex(q => q && isPowder(q)); if (k >= 0) at = k; }
+  else { at = 0; kinds.forEach((q, i) => { if (q && !isOverlay(q)) at = i + 1; }); }
   bench.layers.splice(at, 0, layer);
   saveBench();
   if (!benchIsOpen()) setBenchOpen(true); else renderBench();
@@ -1074,6 +1137,9 @@ function syncSwatchButtons() {
 const TRASH = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 4h11M6.25 4V2.5h3.5V4M4 4l.6 9.1a1 1 0 0 0 1 .9h4.8a1 1 0 0 0 1-.9L12 4M6.75 6.75v4.5M9.25 6.75v4.5"/></svg>`;
 // A sheer polish lets what's underneath show through; anything else covers it completely.
 const isSheer = p => p.effect === "sheer" || p.effect === "sheermag" || effectsOf(p).includes("sheer");
+// Chrome powders are rubbed onto the top of a manicure: always the topmost layer, over whatever is below.
+const isPowder = p => p.effect === "powder";
+const isOverlay = p => isSheer(p) || isPowder(p);
 
 // The big preview. Each polish paints over everything below it, so the preview starts from the topmost
 // polish that isn't sheer. Sheer layers above it combine with it: they tint it (multiply) and add their
@@ -1131,6 +1197,8 @@ const GRIP = `<svg width="10" height="16" viewBox="0 0 10 16" fill="currentColor
 // fills a flat color. The swatch canvases stay live, so the stack can be redrawn as they animate.
 function sheerOps(q, W, H) {
   const ops = [], draw = (p, op, alpha) => { const cv = document.createElement("canvas"); renderSwatch(cv, p, W, H); ops.push({ cv, op, alpha }); };
+  // A chrome powder is a mirror film that mostly covers what's below (its cover share), letting a little show through.
+  if (isPowder(q)) { draw({ ...q, powder: { ...q.powder, cover: 1 } }, "source-over", (q.powder && q.powder.cover) || .8); return ops; }
   const magnetic = q.effect === "magnetic" || q.effect === "sheermag" || !!q.glow; // drawn by the magnetic swatch
   if (!q.clear) ops.push({ fill: q.baseColor || q.colors[0], op: "multiply", alpha: .6 });
   if (magnetic) {
@@ -1151,7 +1219,7 @@ function stackOps(W, H) {
   const live = liveLayers(bench.layers);
   if (!live.length || !W || !H) return null;
   let start = 0;
-  live.forEach((L, i) => { if (!isSheer(L.polish)) start = i; });
+  live.forEach((L, i) => { if (!isOverlay(L.polish)) start = i; });
   const ops = [];
   live.slice(start).forEach((L, i) => {
     if (!i) { const cv = document.createElement("canvas"); renderSwatch(cv, L.polish, W, H); ops.push({ cv, op: "source-over", alpha: 1 }); }
