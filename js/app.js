@@ -780,53 +780,58 @@ function multichromeSwatch(cv, p, W, H) {
 }
 
 /*
-  Chrome powder swatch. Chrome powder is a fine mirror pigment rubbed over a finished manicure. It's
-  smooth rather than glittery and very reflective: bright color bands run down the nail and shift a lot
-  with the angle, and a sharp white highlight runs along the curve. Hovering tilts the nail: sideways
-  moves the bands and highlight across, up and down slides through the colors.
-  colors = [base the powder is shown over on the shelf, ...band colors]. Optional powder: { spread, spec, cover, light }:
-  how many bands fit across the nail, how strong the highlight is, how much of the base it covers (.8), and
-  [base, extra] brightness (pastel powders use a high base).
+  Chrome powder swatch. Chrome powder is a fine mirror pigment rubbed over a finished manicure. Like a
+  mirror, it shows a broad, bright reflection running down the length of the nail with fairly crisp edges,
+  one set of colors inside that reflection and another on the sides turning away from it, often with a
+  thin, vivid rim of color where the two meet, plus a sharp white glint. Hovering tilts the nail: sideways
+  moves the reflection across, up and down slides the colors.
+  colors = [base the powder is shown over on the shelf, ...summary colors]. powder: {
+    inside:  colors from the middle of the reflection out to its edge
+    rim:     colors of the thin band where the reflection meets the sides
+    outside: colors from just outside the reflection to the nail's edges
+    band:    half-width of the reflection (share of the nail's width), soft: softness of its edges,
+    rimStrength, rimSide (1 or -1: rim only on the right or left edge of the reflection), spec (glint
+    strength), cover (how much of what's below it covers when layered, .8) }
 */
 function powderSwatch(cv, p, W, H) {
   const dpr = swatchDpr(W), cw = Math.round(W * dpr), ch = Math.round(H * dpr);
   cv.width = cw; cv.height = ch;
   const ctx = cv.getContext("2d");
-  const opt = { spread: .8, spec: 1, cover: .8, light: [.5, .55], ...p.powder };
-  const [L0, L1] = opt.light; // brightness away from / at the facing part of the curve
-  const base = rgb(p.colors[0]), PL = 256, pal = new Float32Array(PL * 3);
-  for (let i = 0; i < PL; i++) pal.set(rgb(palette(p.colors.slice(1), i / (PL - 1))), i * 3);
-  // Computed at full resolution so the mirror bands and highlights stay crisp. While moving, every other
+  const opt = { band: .2, soft: .05, rimStrength: .8, spec: .9, cover: .8, ...p.powder };
+  const lut = cols => { const L = new Float32Array(256 * 3); for (let i = 0; i < 256; i++) L.set(rgb(palette(cols, i / 255)), i * 3); return L; };
+  const fallback = p.colors.slice(1);
+  const IN = lut(opt.inside || fallback), RIM = lut(opt.rim || fallback), OUT = lut(opt.outside || fallback);
+  const base = rgb(p.colors[0]);
+  // Computed at full resolution so the reflection and glints stay crisp. While moving, every other
   // pixel is computed and doubled for speed; the resting frame is full detail.
   const img = ctx.createImageData(cw, ch), px = img.data;
   // Fixed micro-glints: the finest flecks of the powder catching the light.
   const R = rng(p.id || "p"), glint = new Float32Array(cw * ch);
-  for (let i = 0; i < glint.length; i++) { const v = R(); glint[i] = v > .996 ? (v - .996) * 250 : 0; }
+  for (let i = 0; i < glint.length; i++) { const v = R(); glint[i] = v > .997 ? (v - .997) * 330 : 0; }
   const rest = { x: .5, y: .5 }, cur = { ...rest }, target = { ...rest };
   let raf = 0;
+  const sstep = (e0, e1, x) => { const t = Math.min(1, Math.max(0, (x - e0) / (e1 - e0))); return t * t * (3 - 2 * t); };
   function draw(fast = false) {
-    const axis = .5 + (cur.x - .5) * .9, shift = (cur.y - .5) * .9, hi = axis + .13, st = fast ? 2 : 1;
+    const hi = .46 + (cur.x - .5) * .8, shift = (cur.y - .5) * .35, st = fast ? 2 : 1, band = opt.band;
     for (let y = 0; y < ch; y += st) {
-      const ny = y / ch, dome = (ny - .5) * (ny - .5) * .08, along = (.5 - ny) * .15; // bands run down the nail
+      const ny = y / ch, bend = (ny - .5) * (ny - .5) * .12; // the reflection bows slightly with the nail's curve
       for (let x = 0; x < cw; x += st) {
-        const nx = x / cw, u = (nx - axis) / .55, ang = Math.sqrt(u * u + dome);
-        let t = ang * opt.spread + shift + along; t -= Math.floor(t); t = t < .5 ? t * 2 : (1 - t) * 2; // bands repeat and mirror
-        t = t * t * (3 - 2 * t); t = t * t * (3 - 2 * t); // steeper transitions: crisp mirror bands rather than soft gradients
-        const k = ((t * (PL - 1)) | 0) * 3, light = L0 + L1 * Math.exp(-ang * ang * 2);
-        // A sharp main highlight, a thin echo beside it, and a softer one on the far side of the curve.
-        const d = (nx - hi) / .007, d1 = (nx - hi - .03) / .004, d2 = (nx - (axis - .3)) / .02;
-        const fall = 1 - Math.abs(ny - .5) * .6;
-        let spec = opt.spec * (Math.exp(-d * d) + .45 * Math.exp(-d1 * d1) + .4 * Math.exp(-d2 * d2)) * fall;
-        const o = (y * cw + x) * 4, gl = glint[y * cw + x] * light;
-        spec = Math.min(1, spec + gl);
-        const edge = Math.max(0, Math.abs(nx - .5) * 2 - .86) * 2.4;
-        let r = pal[k] * light, g = pal[k + 1] * light, b = pal[k + 2] * light;
+        const nx = x / cw, dx = nx - hi - bend, ad = Math.abs(dx), a = ad / band;
+        const inside = 1 - sstep(1 - opt.soft / band, 1 + opt.soft / band, a); // 1 in the reflection, 0 outside
+        let ti = Math.min(1, Math.max(0, a + shift)), to = Math.min(1, Math.max(0, (ad - band) / (.55 - band) + shift));
+        const ki = ((ti * 255) | 0) * 3, ko = ((to * 255) | 0) * 3, kr = ((Math.min(1, Math.max(0, .5 + dx * 2 + shift)) * 255) | 0) * 3;
+        let r = OUT[ko] + (IN[ki] - OUT[ko]) * inside, g = OUT[ko + 1] + (IN[ki + 1] - OUT[ko + 1]) * inside, b = OUT[ko + 2] + (IN[ki + 2] - OUT[ko + 2]) * inside;
+        // A thin, vivid rim of color where the reflection meets the sides.
+        const rim = opt.rimStrength * Math.exp(-((a - 1) / (.14 + opt.soft)) * ((a - 1) / (.14 + opt.soft))) * (opt.rimSide ? (Math.sign(dx) === opt.rimSide ? 1 : 0) : 1);
+        r += (RIM[kr] - r) * rim; g += (RIM[kr + 1] - g) * rim; b += (RIM[kr + 2] - b) * rim;
+        // Brighter in the reflection, a little darker toward the nail's edges; a sharp glint inside the reflection.
+        const edge = Math.max(0, Math.abs(nx - .5) * 2 - .8) * 1.6, light = (.9 + .14 * inside) * (1 - edge * .35);
+        const dg = (dx - band * .45) / .006, spec = Math.min(1, opt.spec * Math.exp(-dg * dg) * (1 - Math.abs(ny - .5) * .5) + glint[y * cw + x]);
+        r = Math.min(255, r * light); g = Math.min(255, g * light); b = Math.min(255, b * light);
         r += (255 - r) * spec; g += (255 - g) * spec; b += (255 - b) * spec;
-        r *= 1 - edge * .5; g *= 1 - edge * .5; b *= 1 - edge * .5;
-        // The mirror film mostly covers its base, which shows through a little (cover).
-        r = base[0] + (Math.min(255, r) - base[0]) * opt.cover;
-        g = base[1] + (Math.min(255, g) - base[1]) * opt.cover;
-        b = base[2] + (Math.min(255, b) - base[2]) * opt.cover;
+        // The film mostly covers its base, which shows through a little (cover).
+        r = base[0] + (r - base[0]) * opt.cover; g = base[1] + (g - base[1]) * opt.cover; b = base[2] + (b - base[2]) * opt.cover;
+        const o = (y * cw + x) * 4;
         px[o] = r; px[o + 1] = g; px[o + 2] = b; px[o + 3] = 255;
         if (st === 2) { // fill the skipped neighbours while animating
           const o2 = o + 4, o3 = o + cw * 4, o4 = o3 + 4;

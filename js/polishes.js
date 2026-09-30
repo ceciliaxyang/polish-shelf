@@ -549,7 +549,8 @@ const POLISHES = [
     // gold and peach streaks that slide across as it tilts, and bright white highlights. Barely any purple.
     // Always layered on top. On the shelf it's shown over a milky white gel, like the product photos.
     colors: ["#e8e4ea", "#bddbea", "#a9d3e6", "#dce8ef", "#f7c585", "#f7c585", "#f4a97c", "#ecdcd0", "#c3dcec"], // [base shown over, ...bands]
-    powder: { spread: .6, light: [.74, .32] }, // few, broad bands; pastel and bright
+    // A pale-blue mirror reflection with a gold-and-peach streak along one side, over ice-blue sides.
+    powder: { band: .17, inside: ["#e8f4fa", "#c0ddec", "#a8cee3"], rim: ["#f7c585", "#f4a97c"], rimSide: -1, rimStrength: 1, outside: ["#a2c4da", "#b6d0e1", "#d8d2d2"] },
     url: "https://www.amazon.com/dp/B0FNN6R827",
     photos: ["images/prettydiva-sunset-chrome-powder/1.jpg", "images/prettydiva-sunset-chrome-powder/2.jpg", "images/prettydiva-sunset-chrome-powder/3.jpg", "images/prettydiva-sunset-chrome-powder/4.jpg"], // saved from the product page
   },
@@ -563,7 +564,9 @@ const POLISHES = [
     // Mermaid aurora chrome powder: a pearly pink mirror film with mint-green and lemon-yellow streaks and a
     // lilac edge, shifting as it tilts (from the product photos). Shown over a milky white gel on the shelf.
     colors: ["#ece6ea", "#f2b2d0", "#e89cc2", "#f4e6ee", "#aef0cc", "#eef2a4", "#f2b2d0", "#cdb6ee"], // [base shown over, ...bands]
-    powder: { spread: .6, light: [.74, .32] },
+    // A broad mint-to-lemon reflection, nearly white at its core, over pink sides that go lilac and then
+    // warm nude at the very edges (like the product's nail photos).
+    powder: { band: .22, inside: ["#fbfff2", "#e4fbc6", "#bff3cc"], rim: ["#f0f2a2", "#e8f4b8", "#f0f2a2"], outside: ["#f0aed0", "#e8b4da", "#f0c2b2"] },
     url: "https://www.amazon.com/dp/B0DZXNC5S2",
     photos: ["images/prettydiva-mermaid-pink-chrome-powder/1.jpg", "images/prettydiva-mermaid-pink-chrome-powder/2.jpg", "images/prettydiva-mermaid-pink-chrome-powder/3.jpg", "images/prettydiva-mermaid-pink-chrome-powder/4.jpg"], // saved from the product page
   },
@@ -577,7 +580,8 @@ const POLISHES = [
     // Aurora chrome powder: a pink-lavender mirror film with bright golden-yellow and peach streaks, shifting as it
     // tilts (from the product photos). Shown over a milky white gel on the shelf.
     colors: ["#ece6ea", "#eeaad6", "#d2b0f2", "#f4e4f0", "#f8e07e", "#f8b88e", "#eeaad6", "#c6a8ee"], // [base shown over, ...bands]
-    powder: { spread: .6, light: [.72, .34] },
+    // A broad golden-yellow reflection with a peach rim, over pink-lavender sides.
+    powder: { band: .17, inside: ["#fff8e6", "#fbe99a", "#f6cf78"], rim: ["#f8b88e", "#f8c898"], rimSide: 1, rimStrength: .9, outside: ["#f0b0d4", "#e4b2e4", "#efc6d8"] },
     url: "https://www.amazon.com/dp/B0DZXP9NBQ",
     photos: ["images/prettydiva-aurora-pink-chrome-powder/1.jpg", "images/prettydiva-aurora-pink-chrome-powder/2.jpg", "images/prettydiva-aurora-pink-chrome-powder/3.jpg", "images/prettydiva-aurora-pink-chrome-powder/4.jpg"], // saved from the product page
   },
