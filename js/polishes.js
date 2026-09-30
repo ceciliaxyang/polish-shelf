@@ -192,13 +192,17 @@ const POLISHES = [
     id: "mooncat-deadly-nightshade",
     name: "Deadly Nightshade",
     brand: "Mooncat",
-    effect: "multichrome",
+    effect: "shimmer",
     effects: ["shimmer"],
-    // Ultra shifty shimmer over a reddish plum: a warm gold-orange glow where it faces you, fading through
-    // copper into red-purple, with teal and green flashing at the edges (from the product page and photos)
-    colors: ["#f2b04a", "#e08a34", "#c0603a", "#963a60", "#7a2a62", "#2a8a78", "#5cb24a"], // [facing, ..., edge]
-    chrome: { smooth: .55 },   // a smooth, oily shift rather than coarse grain
-    glimmer: { color: "#2af0e0", share: .06 }, // bright electric-teal glimmers throughout
+    // Ultra shifty shimmer (reference: the close-up nail photo): a tall glow down the nail that runs gold and
+    // copper toward the bottom and electric green-teal toward the top, over a reddish violet that shows at the
+    // sides, packed with fine glimmers (from the product page and photos)
+    glow: { shape: .12, rot: 0 }, // fixed, upright glow (no glass bead / cat eye)
+    colors: ["#5c2468", "#f0b24e", "#d98a40", "#a8ae48", "#4ec89a", "#2ec4c0", "#7248a8"], // [base, glow core -> edge]
+    shadow: "#3c1448",
+    grad: [0, -1.7],           // colors slide along the length: gold below, green-teal above
+    bead: { r: [.3, .78], glow: 1.15, span: .45 }, // a tall band down the middle; violet shows at the sides
+    sparkle: { density: 4, size: .6, floor: .3, mix: .85, colors: ["#2af0e0", "#2af0e0", "#6af8e8", "#ffd070", "#9dff8a", "#ffffff"] },
     url: "https://www.mooncat.com/products/deadly-nightshade",
     photos: ["images/mooncat-deadly-nightshade/1.jpg", "images/mooncat-deadly-nightshade/2.jpg", "images/mooncat-deadly-nightshade/3.jpg", "images/mooncat-deadly-nightshade/4.jpg"], // saved from the product page
   },
