@@ -127,7 +127,7 @@ body.detail-open .page { filter: blur(50px); }
 .modal-head, .m-photos { opacity: 0; transition: opacity .3s ease; }
 .modal.open .modal-blur, .modal.open .modal-head, .modal.open .m-photos { opacity: 1; }
 .modal.open .m-photos { transition-delay: .15s; }
-.modal-head { position: absolute; top: 0; left: 0; right: 0; display: flex; gap: 16px; min-height: 88px; padding: calc(24px + env(safe-area-inset-top)) 48px 24px calc(48px + 97px + 16px); } /* left: the header's leading slot, where the swatch sits */
+.modal-head { position: absolute; top: 0; left: 0; right: 0; display: flex; gap: 16px; min-height: 88px; padding: calc(24px + env(safe-area-inset-top)) 48px 24px calc(48px + 97px + 4px); } /* left: past the swatch in the header's leading slot (12px closer than the Figma's 16px gap, per your ask) */
 .mh-trail { display: flex; align-items: flex-start; width: 97px; padding-top: 24px; flex-shrink: 0; }
 .mh-trail { justify-content: flex-end; gap: 8px; }
 .mh-content { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; padding: 24px 0 12px; }
@@ -143,7 +143,8 @@ body.detail-open .page { filter: blur(50px); }
    slot, and the product photos run in one row across the middle of the screen. */
 .m-swatch { position: absolute; z-index: 1; top: calc(32px + env(safe-area-inset-top)); left: 36px; width: 84px; height: 84px; border-radius: 16px; overflow: hidden; background: var(--swatch); }
 .m-swatch canvas { display: block; width: 100%; height: 100%; }
-.modal-body { position: absolute; left: 42px; right: 42px; top: max(calc(50% + 13px - 160px), calc(var(--head, 140px) + 24px)); }
+/* The photo row lines up with the swatch on the left (36px) and the close button on the right (48px). */
+.modal-body { position: absolute; left: 36px; right: 48px; top: max(calc(50% + 13px - 160px), calc(var(--head, 140px) + 24px)); }
 .m-photos { display: flex; gap: 24px; height: 320px; }
 .m-photos img { flex: 1 1 0; min-width: 0; height: 100%; object-fit: cover; border-radius: 48px; background: var(--swatch); display: block; }
 @media (max-width: 1000px) {
@@ -152,7 +153,7 @@ body.detail-open .page { filter: blur(50px); }
 }
 @media (max-width: 600px) {
   .modal { overflow-y: auto; }
-  .modal-head { padding: calc(12px + env(safe-area-inset-top)) 16px 12px calc(16px + 64px + 12px); }
+  .modal-head { padding: calc(12px + env(safe-area-inset-top)) 16px 12px calc(16px + 64px); }
   .mh-trail { width: auto; padding-top: 12px; }
   .mh-content { padding: 12px 0 8px; }
   .m-swatch { top: calc(16px + env(safe-area-inset-top)); left: 16px; width: 64px; height: 64px; border-radius: 14px; }
