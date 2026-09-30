@@ -13,13 +13,14 @@ const EFFECTS = {
   thermal:   "Thermal",
   glow:      "Glow in the dark",
 };
-// Some effects share a category (one filter pill and one card label): chrome counts as Multichrome,
-// glitter as Shimmer, and sheer magnetic as Magnetic (sheer magnetic polishes list both Sheer and
-// Magnetic in their effects). Swatches still draw by the polish's own effect.
+// Some effects share a category (one filter pill and one card label): chrome counts as multichrome
+// (which has no category of its own; see effectsOf), glitter as Shimmer, and sheer magnetic as Magnetic
+// (sheer magnetic polishes list both Sheer and Magnetic in their effects). Swatches still draw by the
+// polish's own effect.
 const CATEGORY = { chrome: "multichrome", glitter: "shimmer", sheermag: "magnetic" };
 const category = k => CATEGORY[k] || k;
 // Filter pills always shown, in this order; other effects get a pill once a polish uses them.
-const PILL_EFFECTS = ["sheer", "magnetic", "holo", "shimmer", "multichrome"];
+const PILL_EFFECTS = ["sheer", "magnetic", "holo", "shimmer"];
 const NATURAL = "#f2d6cf";
 
 /* ---------- color helpers ---------- */
@@ -849,7 +850,12 @@ function toggleFx(k) {
   renderShelf();
 }
 // A polish's rendering uses `effect`; `effects` (optional) lists everything it should be found under.
-function effectsOf(p) { return [...new Set((p.effects || [p.effect]).map(category))]; }
+// There's no Multichrome category (chrome counts as multichrome): those labels are dropped, and a polish
+// left with no label is filed under Shimmer.
+function effectsOf(p) {
+  const fx = [...new Set((p.effects || [p.effect]).map(category))].filter(k => k !== "multichrome");
+  return fx.length ? fx : ["shimmer"];
+}
 
 // Plus while the polish is off the bench; it spins away and a checkmark draws in once it's added.
 const PLUS_CHECK = `<svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><path class="plus" d="M10 3.5v13M3.5 10h13"/><path class="check" pathLength="1" d="M4.5 10.5l3.5 3.5 7.5-8"/></svg>`;
@@ -1037,7 +1043,7 @@ const sheetMQ = matchMedia("(max-width: 760px)");
 function renderPeek() {
   if (!sheetMQ.matches) return;
   const n = bench.layers.length, mini = $("#peekMini"); mini.innerHTML = "";
-  $("#peekSub").textContent = n ? `${n} layer${n > 1 ? "s" : ""}` : "Add polishes to start seeing how they layer together.";
+  $("#peekSub").textContent = n ? `${n} layer${n > 1 ? "s" : ""}` : "Start adding polishes to see how they layer together.";
   const cv = stackCanvas(44, 44); if (cv) mini.appendChild(cv);
   const th = $("#peekThumbs"); th.innerHTML = "";
   [...bench.layers].reverse().slice(0, 4).forEach(l => {
@@ -1089,7 +1095,7 @@ function renderBench() {
   $("#bench").classList.toggle("no-layers", !liveLayers(bench.layers).length);
   renderStage();
   const ol = $("#layers"); ol.innerHTML = "";
-  if (!bench.layers.length) { ol.innerHTML = `<li class="hint">Add polishes to start seeing how they layer together.</li>`; return; }
+  if (!bench.layers.length) { ol.innerHTML = `<li class="hint">Start adding polishes to see how they layer together.</li>`; return; }
   // Listed top layer first, like a stack seen from above.
   bench.layers.map((l, i) => [l, i]).reverse().forEach(([l, i]) => {
     const p = polishById(l.pid);
