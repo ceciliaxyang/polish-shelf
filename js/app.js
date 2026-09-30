@@ -875,7 +875,7 @@ function buildPills() {
   const used = state.polishes.flatMap(effectsOf).filter(k => EFFECTS[k] && !PILL_EFFECTS.includes(k));
   const box = $("#fxPills");
   [...new Set([...PILL_EFFECTS, ...used])].forEach(k => {
-    const b = document.createElement("button"); b.type = "button"; b.className = "pill"; b.textContent = EFFECTS[k]; b.setAttribute("aria-pressed", "false");
+    const b = document.createElement("button"); b.type = "button"; b.className = "scope"; b.textContent = EFFECTS[k]; b.setAttribute("aria-pressed", "false");
     b.dataset.fx = k; b.onclick = () => toggleFx(k);
     box.appendChild(b);
   });
@@ -883,7 +883,7 @@ function buildPills() {
 
 function toggleFx(k) {
   state.fx.has(k) ? state.fx.delete(k) : state.fx.add(k);
-  document.querySelectorAll("#fxPills .pill").forEach(b => b.setAttribute("aria-pressed", state.fx.has(b.dataset.fx)));
+  document.querySelectorAll("#fxPills .scope").forEach(b => b.setAttribute("aria-pressed", state.fx.has(b.dataset.fx)));
   renderShelf();
 }
 // A polish's rendering uses `effect`; `effects` (optional) lists everything it should be found under.
