@@ -490,9 +490,9 @@ const POLISHES = [
     brand: "Mooncat",
     effect: "multichrome",
     effects: ["shimmer"],
-    // Ultra shifty shimmer: purple where it faces you, through blue and teal to green and gold at the edges
-    // (from the product page and photos)
-    colors: ["#5c2a82", "#6c48b4", "#3a6cc8", "#2aa092", "#58b85a", "#d0a83c"], // [facing, ..., edge]
+    // Ultra shifty shimmer over a reddish plum: a warm gold-orange glow where it faces you, fading through
+    // copper into red-purple, with teal and green flashing at the edges (from the product page and photos)
+    colors: ["#f2b04a", "#e08a34", "#c0603a", "#963a60", "#7a2a62", "#2a8a78", "#5cb24a"], // [facing, ..., edge]
     chrome: { smooth: .55 },   // a smooth, oily shift rather than coarse grain
     url: "https://www.mooncat.com/products/deadly-nightshade",
     photos: ["images/mooncat-deadly-nightshade/1.jpg", "images/mooncat-deadly-nightshade/2.jpg", "images/mooncat-deadly-nightshade/3.jpg", "images/mooncat-deadly-nightshade/4.jpg"], // saved from the product page
