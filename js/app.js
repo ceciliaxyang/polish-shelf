@@ -985,8 +985,8 @@ function setBenchOpen(open) {
   if (open) renderBench();
 }
 // Layering is always available: every swatch has a + button, and adding a polish opens the Layers pane.
-// Closing the pane keeps the layers for next time.
-$("#closeBench").onclick = () => setBenchOpen(false);
+// Closing the pane clears the layers, so every swatch goes back to its + button.
+$("#closeBench").onclick = () => { bench.layers = []; saveBench(); setBenchOpen(false); syncSwatchButtons(); };
 
 function addLayer(p) {
   // Toppers look right with one coat; everything else defaults to two.
