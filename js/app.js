@@ -865,8 +865,8 @@ function renderShelf() {
 }
 
 /* ---------- detail view ---------- */
-// Tapping a swatch opens it large over a blurred shelf, with a gallery of the product photos below.
-// The first gallery item is the swatch itself; the link button opens the product page.
+// Tapping a swatch opens the detail view over a blurred shelf: the live swatch moves into the header's
+// upper-left slot and the product photos run in a row across the page; the link button opens the product page.
 const detail = { p: null, card: null, cv: null };
 const EASE = "cubic-bezier(.2, .8, .2, 1)";
 
@@ -887,18 +887,11 @@ function openDetail(p, card) {
   renderSwatch(cv, p, Math.round(sr.width), Math.round(sr.height));
   if (autoIO) autoIO.observe(cv);
 
-  // Gallery: the swatch first, then the saved photos.
-  const car = $("#mCarousel"); car.innerHTML = "";
-  const thumb = document.createElement("button"); thumb.type = "button"; thumb.className = "m-thumb"; thumb.setAttribute("aria-label", "Swatch");
-  const tc = document.createElement("canvas"); tc.width = 167; tc.height = 160;
-  // Cover-crop the swatch into the thumbnail.
-  const sx = cv.width * .04, sw = cv.width * .92, sh = sw * 160 / 167, sy = (cv.height - sh) / 2;
-  tc.getContext("2d").drawImage(cv, sx, sy, sw, sh, 0, 0, 167, 160);
-  thumb.appendChild(tc); thumb.onclick = () => show(null); car.appendChild(thumb);
+  // Photos: a plain row of the saved product photos (not interactive).
+  const row = $("#mPhotos"); row.innerHTML = "";
   (p.photos || []).slice(0, 4).forEach((src, i) => {
-    const b = document.createElement("button"); b.type = "button"; b.className = "m-thumb"; b.setAttribute("aria-label", `Photo ${i + 1}`);
-    const im = document.createElement("img"); im.src = src; im.alt = ""; im.loading = "lazy";
-    b.appendChild(im); b.onclick = () => show(src); car.appendChild(b);
+    const im = document.createElement("img"); im.src = src; im.alt = `${p.name} photo ${i + 1}`; im.loading = "lazy";
+    row.appendChild(im);
   });
 
   // Grow the swatch out of its card.
@@ -906,23 +899,17 @@ function openDetail(p, card) {
   stage.style.transition = "none";
   stage.style.transformOrigin = "0 0";
   stage.style.transform = `translate(${from.left - to.left}px, ${from.top - to.top}px) scale(${from.width / to.width}, ${from.height / to.height})`;
-  stage.style.borderRadius = `${48 * to.width / from.width}px`;
   m.classList.remove("open"); void m.offsetWidth;
-  stage.style.transition = `transform .45s ${EASE}, border-radius .45s ${EASE}`;
-  stage.style.transform = ""; stage.style.borderRadius = "";
+  stage.style.transition = `transform .45s ${EASE}`;
+  stage.style.transform = "";
   m.classList.add("open");
   card.style.visibility = "hidden";
   m.focus({ preventScroll: true }); // keyboard focus moves into the dialog (Tab reaches the buttons)
 }
 
-// The gallery area starts below the header, whose height depends on the text; measure it.
+// The photo row must stay below the header, whose height depends on the text; measure it.
 function sizeDetail() { $("#modal").style.setProperty("--head", $(".modal-head").offsetHeight + "px"); }
 addEventListener("resize", () => { if (!$("#modal").hidden) sizeDetail(); });
-
-function show(src) {
-  const stage = $("#mStage"); stage.querySelector("img")?.remove();
-  if (src) { const im = document.createElement("img"); im.src = src; im.alt = `${detail.p.name} photo`; stage.appendChild(im); }
-}
 
 function closeDetail() {
   const m = $("#modal"); if (m.hidden) return;
@@ -930,10 +917,8 @@ function closeDetail() {
   const done = () => { m.hidden = true; m.classList.remove("open"); stage.style.transform = ""; document.body.style.overflow = ""; if (card) card.style.visibility = ""; };
   m.classList.remove("open"); document.body.classList.remove("detail-open");
   if (card && card.isConnected) {
-    show(null);
     const from = stage.getBoundingClientRect(), to = card.getBoundingClientRect();
     stage.style.transform = `translate(${to.left - from.left}px, ${to.top - from.top}px) scale(${to.width / from.width}, ${to.height / from.height})`;
-    stage.style.borderRadius = `${48 * from.width / to.width}px`;
     setTimeout(done, 450);
   } else done();
 }
