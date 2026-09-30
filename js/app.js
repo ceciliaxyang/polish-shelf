@@ -20,7 +20,6 @@ const CATEGORY = { chrome: "multichrome", glitter: "shimmer", sheermag: "magneti
 const category = k => CATEGORY[k] || k;
 // Filter pills always shown, in this order; other effects get a pill once a polish uses them.
 const PILL_EFFECTS = ["sheer", "magnetic", "holo", "shimmer", "multichrome"];
-const SKIN = "#f3d4c2";
 const NATURAL = "#f2d6cf";
 
 /* ---------- color helpers ---------- */
@@ -47,13 +46,6 @@ function rng(seed) {
 function gauss(R) { return Math.sqrt(-2 * Math.log(R() + 1e-9)) * Math.cos(2 * Math.PI * R()); }
 // Opacity after n coats of a polish with single-coat opacity a.
 function coat(a, n) { return 1 - Math.pow(1 - a, n); }
-
-function nailPath(ctx, x, y, w, h) {
-  const X = v => x + v * w / 100, Y = v => y + v * h / 150;
-  ctx.beginPath(); ctx.moveTo(X(0), Y(128));
-  ctx.lineTo(X(0), Y(60)); ctx.bezierCurveTo(X(0), Y(24), X(38), Y(0), X(50), Y(0)); ctx.bezierCurveTo(X(62), Y(0), X(100), Y(24), X(100), Y(60));
-  ctx.lineTo(X(100), Y(128)); ctx.bezierCurveTo(X(100), Y(154), X(0), Y(154), X(0), Y(128)); ctx.closePath();
-}
 
 function sprinkle(ctx, R, b, count, cols, rmin, rmax, amin, amax) {
   for (let i = 0; i < count; i++) {
@@ -149,36 +141,6 @@ function drawLayer(ctx, L, b, R) {
   }
   ctx.globalCompositeOperation = "source-over"; ctx.globalAlpha = 1;
 }
-
-function renderNail(cv, layers, o) {
-  o = Object.assign({ W: 80, H: 120, finger: false }, o);
-  const dpr = Math.min(2, window.devicePixelRatio || 1);
-  cv.width = Math.round(o.W * dpr); cv.height = Math.round(o.H * dpr); cv.style.width = o.W + "px"; cv.style.height = o.H + "px";
-  const ctx = cv.getContext("2d"); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, o.W, o.H);
-  let w, h, x, y;
-  if (o.finger) {
-    w = o.W * .46; h = w * 1.5; x = (o.W - w) / 2; y = o.H * .07;
-    const fx = x - w * .24, fw = w * 1.48, fy = y + h * .3;
-    const fg = ctx.createLinearGradient(fx, 0, fx + fw, 0);
-    fg.addColorStop(0, shade(SKIN, -.18)); fg.addColorStop(.3, SKIN); fg.addColorStop(.7, SKIN); fg.addColorStop(1, shade(SKIN, -.2));
-    ctx.fillStyle = fg; ctx.beginPath(); ctx.roundRect(fx, fy, fw, o.H - fy + 40, [fw / 2, fw / 2, 0, 0]); ctx.fill();
-    ctx.fillStyle = rgba(shade(SKIN, -.3), .25); nailPath(ctx, x - 2, y + 2, w + 4, h + 4); ctx.fill();
-  } else { h = Math.min(o.H * .9, o.W * .8 * 1.5); w = h / 1.5; x = (o.W - w) / 2; y = (o.H - h) / 2; }
-  const b = { x, y, w, h, H: h * 1.05, s: w / 100 };
-  ctx.save(); nailPath(ctx, x, y, w, h); ctx.clip();
-  ctx.fillStyle = NATURAL; ctx.fillRect(x, y, w, b.H);
-  layers.forEach((L, i) => drawLayer(ctx, L, b, rng((L.polish.id || "p") + ":" + i)));
-  // Cuticle shadow and gloss highlight
-  const cut = ctx.createLinearGradient(0, y + h * .82, 0, y + h); cut.addColorStop(0, "rgba(0,0,0,0)"); cut.addColorStop(1, "rgba(0,0,0,.14)");
-  ctx.fillStyle = cut; ctx.fillRect(x, y + h * .8, w, h * .3);
-  const g = ctx.createLinearGradient(x, 0, x + w, 0);
-  g.addColorStop(0, "rgba(255,255,255,0)"); g.addColorStop(.14, "rgba(255,255,255,.42)"); g.addColorStop(.26, "rgba(255,255,255,0)");
-  g.addColorStop(.85, "rgba(255,255,255,0)"); g.addColorStop(.92, "rgba(255,255,255,.12)"); g.addColorStop(1, "rgba(255,255,255,0)");
-  ctx.fillStyle = g; ctx.fillRect(x, y, w, b.H);
-  ctx.restore();
-  ctx.lineWidth = 1; ctx.strokeStyle = "rgba(0,0,0,.16)"; nailPath(ctx, x, y, w, h); ctx.stroke();
-}
-
 
 // Close-up of one polish filling the whole card, like a zoomed-in photo of a painted nail.
 // Drawn at 3x pixel density so it stays sharp on retina screens.
@@ -860,10 +822,10 @@ function save(key, value) {
 }
 function newId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
 
-// Polishes come from js/polishes.js; combos and the bench are saved in this browser.
-const state = { polishes: typeof POLISHES !== "undefined" ? POLISHES : [], combos: load(KEY.combos, []), fx: new Set(), finish: null };
+// Polishes come from js/polishes.js; the bench is saved in this browser. (Saved combos were removed for now;
+// any saved earlier stay in this browser's storage under KEY.combos.)
+const state = { polishes: typeof POLISHES !== "undefined" ? POLISHES : [], fx: new Set(), finish: null };
 const bench = { layers: load(KEY.bench, []) };
-const saveCombos = () => save(KEY.combos, state.combos);
 const saveBench = () => save(KEY.bench, bench.layers);
 
 function toast(msg) { const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => t.hidden = true, 2600); }
@@ -996,20 +958,20 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") closeDetail(
 function polishById(id) { return state.polishes.find(p => p.id === id); }
 function liveLayers(layers) { return layers.map(l => ({ ...l, polish: polishById(l.pid) })).filter(l => l.polish); }
 function setBenchOpen(open) { $("#bench").hidden = !open; $("#layout").classList.toggle("closed", !open); }
-$("#closeBench").onclick = () => setBenchOpen(false);
-// Layering is off on every visit; turning it off also puts the bench away (its layers are kept).
-$("#layeringToggle").onclick = e => {
-  const on = e.currentTarget.getAttribute("aria-checked") !== "true";
-  e.currentTarget.setAttribute("aria-checked", on);
-  e.currentTarget.querySelector(".layers-state").textContent = on ? "On" : "Off";
+// Layering is off on every visit. Turning it on opens the layering pane on the right; closing the pane
+// turns layering off again (its layers are kept for next time).
+function setLayering(on) {
+  const t = $("#layeringToggle");
+  t.setAttribute("aria-checked", on);
+  t.querySelector(".layers-state").textContent = on ? "On" : "Off";
   document.body.classList.toggle("layering", on);
-  if (!on) setBenchOpen(false);
-};
+  setBenchOpen(on);
+  if (on) renderBench();
+}
+$("#layeringToggle").onclick = () => setLayering($("#layeringToggle").getAttribute("aria-checked") !== "true");
+$("#closeBench").onclick = () => setLayering(false);
 
 function addLayer(p) {
-  const wasHidden = $("#bench").hidden;
-  setBenchOpen(true);
-  if (wasHidden && innerWidth <= 760) setTimeout(() => $("#bench").scrollIntoView({ block: "start" }), 0);
   // Toppers look right with one coat; everything else defaults to two.
   bench.layers.push({ pid: p.id, coats: ["glitter", "flakies", "chrome"].includes(p.effect) ? 1 : 2 });
   saveBench(); renderBench();
@@ -1021,7 +983,6 @@ function removePolish(p) {
   saveBench(); renderBench();
   toast(`Removed ${p.name || "polish"} from layers`);
 }
-function move(i, d) { const a = bench.layers; [a[i], a[i + d]] = [a[i + d], a[i]]; saveBench(); renderBench(); }
 
 // Swatch buttons show a checkmark while that polish is on the bench.
 function syncSwatchButtons() {
@@ -1033,67 +994,53 @@ function syncSwatchButtons() {
   });
 }
 
+const TRASH = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 4h11M6.25 4V2.5h3.5V4M4 4l.6 9.1a1 1 0 0 0 1 .9h4.8a1 1 0 0 0 1-.9L12 4M6.75 6.75v4.5M9.25 6.75v4.5"/></svg>`;
+// Layers sitting on top of the base: effects and toppers add light (screen), so the base color shows
+// through; anything else is painted over at its coverage.
+const TOPPER = new Set(["magnetic", "sheermag", "holo", "shimmer", "multichrome", "glitter", "flakies", "chrome", "duochrome", "glow"]);
+
+// The big preview: each layer's own swatch, stacked in order (base first).
+function renderStage() {
+  const box = $("#stage"), live = liveLayers(bench.layers);
+  box.innerHTML = "";
+  if (!live.length) return;
+  const W = Math.round(box.clientWidth), H = Math.round(box.clientHeight);
+  if (!W || !H) return;
+  const out = document.createElement("canvas"), dpr = swatchDpr(W);
+  out.width = Math.round(W * dpr); out.height = Math.round(H * dpr);
+  const ctx = out.getContext("2d");
+  live.forEach((L, i) => {
+    const cv = document.createElement("canvas");
+    renderSwatch(cv, L.polish, W, H);
+    ctx.globalCompositeOperation = i && TOPPER.has(L.polish.effect) ? "screen" : "source-over";
+    ctx.globalAlpha = i && !TOPPER.has(L.polish.effect) ? .85 : 1;
+    ctx.drawImage(cv, 0, 0, out.width, out.height);
+  });
+  ctx.globalCompositeOperation = "source-over"; ctx.globalAlpha = 1;
+  box.appendChild(out);
+}
+
 function renderBench() {
   syncSwatchButtons();
-  renderNail($("#bigNail"), liveLayers(bench.layers), { W: 240, H: 320, finger: true });
+  if ($("#bench").hidden) return;
+  renderStage();
   const ol = $("#layers"); ol.innerHTML = "";
-  if (!bench.layers.length) { ol.innerHTML = `<li class="hint">Nothing layered yet. Press “Add to layers” on a polish to start with a base color, then add effects on top.</li>`; return; }
+  if (!bench.layers.length) { ol.innerHTML = `<li class="hint">Press + on a polish to start with a base color, then add effects on top.</li>`; return; }
   bench.layers.forEach((l, i) => {
     const p = polishById(l.pid);
     const li = document.createElement("li"); li.className = "layer";
-    const num = document.createElement("span"); num.className = "n"; num.textContent = String(i + 1).padStart(2, "0");
-    const nm = document.createElement("div"); nm.className = "nm"; nm.textContent = p ? (p.name || "Untitled") : "Removed polish";
-    const sm = document.createElement("small"); sm.textContent = p ? (EFFECTS[category(p.effect)] || "Creme") : "No longer on your shelf"; nm.appendChild(sm);
-    const acts = document.createElement("div"); acts.className = "acts";
-    const mk = (txt, label, fn, dis) => { const b = document.createElement("button"); b.type = "button"; b.className = "icon"; b.textContent = txt; b.setAttribute("aria-label", label); b.disabled = !!dis; b.onclick = fn; return b; };
-    acts.append(
-      mk("↑", "Move earlier", () => move(i, -1), i === 0),
-      mk("↓", "Move later", () => move(i, 1), i === bench.layers.length - 1),
-      mk("×", "Remove layer", () => { bench.layers.splice(i, 1); saveBench(); renderBench(); })
-    );
-    li.append(num, nm, acts);
-    if (p) {
-      const ctl = document.createElement("div"); ctl.className = "ctl";
-      const cl = document.createElement("label"); cl.textContent = "Coats ";
-      const cs = document.createElement("select");
-      [1, 2, 3].forEach(v => { const o = document.createElement("option"); o.value = v; o.textContent = v; if (v === (l.coats || 2)) o.selected = true; cs.appendChild(o); });
-      cs.onchange = () => { l.coats = +cs.value; saveBench(); renderBench(); };
-      cl.appendChild(cs); ctl.appendChild(cl); li.appendChild(ctl);
-    }
-    ol.appendChild(li);
+    const th = document.createElement("canvas"); th.className = "layer-thumb";
+    const mid = document.createElement("div"); mid.className = "layer-text";
+    const nm = document.createElement("p"); nm.className = "layer-name"; nm.textContent = p ? (p.name || "Untitled") : "Removed polish";
+    const fx = document.createElement("p"); fx.className = "layer-fx"; fx.textContent = p ? effectsOf(p).map(k => EFFECTS[k] || k).join(" · ") : "No longer on your shelf";
+    mid.append(nm, fx);
+    const del = document.createElement("button"); del.type = "button"; del.className = "layer-del"; del.innerHTML = TRASH;
+    del.setAttribute("aria-label", `Remove ${p ? p.name : "layer"}`);
+    del.onclick = () => { bench.layers.splice(i, 1); saveBench(); renderBench(); };
+    li.append(th, mid, del); ol.appendChild(li);
+    if (p) renderSwatch(th, p, 48, 48);
   });
 }
-
-function renderCombos() {
-  const box = $("#combos"); box.innerHTML = "";
-  if (!state.combos.length) { box.innerHTML = `<p class="hint">Combos you save show up here so you can pull them back onto the bench.</p>`; return; }
-  [...state.combos].sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || "")).forEach(c => {
-    const row = document.createElement("div"); row.className = "combo";
-    const loadBtn = document.createElement("button"); loadBtn.type = "button"; loadBtn.className = "load";
-    const cv = document.createElement("canvas");
-    const txt = document.createElement("span"); txt.textContent = c.name || "Untitled combo";
-    const names = c.layers.map(l => polishById(l.pid)?.name).filter(Boolean);
-    const sm = document.createElement("small"); sm.textContent = names.join(" + ") || "Polishes no longer on your shelf"; txt.appendChild(sm);
-    loadBtn.append(cv, txt);
-    loadBtn.onclick = () => { bench.layers = c.layers.map(l => ({ ...l })); saveBench(); renderBench(); toast(`Loaded ${c.name || "combo"}`); };
-    const del = document.createElement("button"); del.type = "button"; del.className = "icon"; del.textContent = "×"; del.setAttribute("aria-label", "Delete combo " + (c.name || ""));
-    // Two presses to delete, so a stray click doesn't lose a combo.
-    del.onclick = () => {
-      if (!del.dataset.armed) { del.dataset.armed = "1"; del.textContent = "✓"; del.setAttribute("aria-label", "Confirm delete"); setTimeout(() => { del.dataset.armed = ""; del.textContent = "×"; }, 3000); return; }
-      state.combos = state.combos.filter(x => x.id !== c.id); saveCombos(); renderCombos(); toast("Combo deleted");
-    };
-    row.append(loadBtn, del); box.appendChild(row);
-    renderNail(cv, liveLayers(c.layers), { W: 34, H: 48 });
-  });
-}
-
-$("#saveCombo").onclick = () => {
-  if (!bench.layers.length) { toast("Add at least one layer first"); return; }
-  const name = $("#comboName").value.trim() || `Combo ${state.combos.length + 1}`;
-  state.combos.push({ id: newId(), name, layers: bench.layers.map(({ pid, coats }) => ({ pid, coats: coats || 2 })), createdAt: new Date().toISOString() });
-  saveCombos(); renderCombos();
-  $("#comboName").value = ""; toast(`Saved ${name}`);
-};
 
 /* ---------- grid fit ---------- */
 // Fill the full width: use the column count whose cards come closest to the breakpoint size, then
@@ -1167,4 +1114,3 @@ if (noHover) requestAnimationFrame(drift);
 buildPills();
 renderShelf();
 renderBench();
-renderCombos();

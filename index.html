@@ -20,27 +20,13 @@
         <div class="grid" id="grid"></div>
       </main>
 
-      <aside class="bench" id="bench" aria-label="Layering bench" hidden>
+      <aside class="bench" id="bench" aria-label="Layer polish" hidden>
         <div class="bench-head">
-          <div>
-            <h2>Layering bench</h2>
-            <p class="hint">Stack polishes to preview a combination.</p>
-          </div>
-          <button type="button" class="pill" id="closeBench">Close</button>
+          <h2 class="bench-title">Layer polish</h2>
+          <button type="button" class="mh-btn" id="closeBench" aria-label="Close layering"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#222" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></svg></button>
         </div>
-        <div class="stage"><canvas id="bigNail"></canvas></div>
-        <div>
-          <span class="label">Applied in this order</span>
-          <ol class="layers" id="layers"></ol>
-        </div>
-        <div class="save-row">
-          <input id="comboName" type="text" placeholder="Name this combo" aria-label="Combo name">
-          <button class="pill" id="saveCombo" type="button">Save</button>
-        </div>
-        <div>
-          <span class="label">Saved combos</span>
-          <div class="combos" id="combos"></div>
-        </div>
+        <div class="stage" id="stage"></div>
+        <ol class="layers" id="layers" aria-label="Layers, base first"></ol>
       </aside>
     </div>
   </div>
