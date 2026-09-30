@@ -461,6 +461,8 @@ function magneticSwatch(cv, p, W, H) {
     };
     // The touch-screen drift moves the glow around without forcing it into a cat eye.
     cv.drift = (x, y) => { if (!hovering) aim(x, y, restH); };
+    // Jump straight to a pose (glow position and shape) and draw it: used to render share images.
+    cv.pose = (x, y, hh) => { cur.x = target.x = x; cur.y = target.y = y; cur.h = target.h = hh; draw(); };
   }
   cv.classList.add("interactive");
   draw();
