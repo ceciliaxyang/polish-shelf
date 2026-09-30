@@ -1086,6 +1086,7 @@ function pulsePeek() {
 function renderBench() {
   syncSwatchButtons();
   if ($("#bench").hidden) return;
+  $("#bench").classList.toggle("empty", !liveLayers(bench.layers).length);
   renderStage();
   const ol = $("#layers"); ol.innerHTML = "";
   if (!bench.layers.length) { ol.innerHTML = `<li class="hint">Press + on a polish to start with a base color, then add effects on top.</li>`; return; }
