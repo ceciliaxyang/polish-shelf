@@ -792,14 +792,14 @@ function multichromeSwatch(cv, p, W, H) {
     outside: colors from just outside the reflection to the nail's edges
     band:    half-width of the reflection (share of the nail's width), soft: softness of its edges,
     tilt:    how diagonal it runs (-.5; 0 is straight up and down),
-    rimStrength, rimSide (1 or -1: rim only on the right or left edge of the reflection), spec (glint
+    rimStrength, rimWidth (how wide the rim of color is, .14), rimSide (1 or -1: rim only on the right or left edge of the reflection), spec (glint
     strength), cover (how much of what's below it covers when layered, .8) }
 */
 function powderSwatch(cv, p, W, H) {
   const dpr = swatchDpr(W), cw = Math.round(W * dpr), ch = Math.round(H * dpr);
   cv.width = cw; cv.height = ch;
   const ctx = cv.getContext("2d");
-  const opt = { band: .2, soft: .05, rimStrength: .8, spec: .9, cover: .8, tilt: -.5, ...p.powder };
+  const opt = { band: .2, soft: .05, rimStrength: .8, rimWidth: .14, spec: .9, cover: .8, tilt: -.5, ...p.powder };
   const lut = cols => { const L = new Float32Array(256 * 3); for (let i = 0; i < 256; i++) L.set(rgb(palette(cols, i / 255)), i * 3); return L; };
   const fallback = p.colors.slice(1);
   const IN = lut(opt.inside || fallback), RIM = lut(opt.rim || fallback), OUT = lut(opt.outside || fallback);
@@ -825,7 +825,7 @@ function powderSwatch(cv, p, W, H) {
         const ki = ((ti * 255) | 0) * 3, ko = ((to * 255) | 0) * 3, kr = ((Math.min(1, Math.max(0, .5 + dx * 2 + shift)) * 255) | 0) * 3;
         let r = OUT[ko] + (IN[ki] - OUT[ko]) * inside, g = OUT[ko + 1] + (IN[ki + 1] - OUT[ko + 1]) * inside, b = OUT[ko + 2] + (IN[ki + 2] - OUT[ko + 2]) * inside;
         // A thin, vivid rim of color where the reflection meets the sides.
-        const rim = opt.rimStrength * Math.exp(-((a - 1) / (.14 + opt.soft)) * ((a - 1) / (.14 + opt.soft))) * (opt.rimSide ? (Math.sign(dx) === opt.rimSide ? 1 : 0) : 1);
+        const rw = opt.rimWidth + opt.soft, rim = opt.rimStrength * Math.exp(-((a - 1) / rw) * ((a - 1) / rw)) * (opt.rimSide ? (Math.sign(dx) === opt.rimSide ? 1 : 0) : 1);
         r += (RIM[kr] - r) * rim; g += (RIM[kr + 1] - g) * rim; b += (RIM[kr + 2] - b) * rim;
         // Brighter in the reflection, a little darker toward the nail's edges; a sharp glint inside the reflection.
         const edge = Math.max(0, Math.abs(nx - .5) * 2 - .8) * 1.6, light = (.9 + .14 * inside) * (1 - edge * .35);

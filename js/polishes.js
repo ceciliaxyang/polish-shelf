@@ -549,8 +549,8 @@ const POLISHES = [
     // gold and peach streaks that slide across as it tilts, and bright white highlights. Barely any purple.
     // Always layered on top. On the shelf it's shown over a milky white gel, like the product photos.
     colors: ["#e8e4ea", "#bddbea", "#a9d3e6", "#dce8ef", "#f7c585", "#f7c585", "#f4a97c", "#ecdcd0", "#c3dcec"], // [base shown over, ...bands]
-    // A pale-blue mirror reflection with a gold-and-peach streak along one side, over ice-blue sides.
-    powder: { band: .17, inside: ["#e8f4fa", "#c0ddec", "#a8cee3"], rim: ["#f7c585", "#f4a97c"], rimSide: -1, rimStrength: 1, outside: ["#a2c4da", "#b6d0e1", "#d8d2d2"] },
+    // A pale-blue mirror reflection with a strong, warm orange streak along one side, over ice-blue sides.
+    powder: { band: .17, inside: ["#e8f4fa", "#c0ddec", "#a8cee3"], rim: ["#f8a24c", "#f3843e"], rimSide: -1, rimStrength: 1, rimWidth: .3, outside: ["#a2c4da", "#b6d0e1", "#d8d2d2"] },
     url: "https://www.amazon.com/dp/B0FNN6R827",
     photos: ["images/prettydiva-sunset-chrome-powder/1.jpg", "images/prettydiva-sunset-chrome-powder/2.jpg", "images/prettydiva-sunset-chrome-powder/3.jpg", "images/prettydiva-sunset-chrome-powder/4.jpg"], // saved from the product page
   },
