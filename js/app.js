@@ -916,7 +916,7 @@ function renderShelf() {
   const list = state.polishes.filter(p => !state.fx.size || effectsOf(p).some(k => state.fx.has(k)));
   if (!list.length) { grid.innerHTML = emptyMsg("No matches", "No polishes with that effect yet."); return; }
   for (const p of list) {
-    const card = document.createElement("article"); card.className = "card";
+    const card = document.createElement("article"); card.className = "card rise"; riseIn(card);
     const wrap = document.createElement("div"); wrap.className = "swatch-wrap";
     const sw = document.createElement("canvas"); sw.className = "swatch";
     const add = document.createElement("button"); add.type = "button"; add.className = "swatch-btn"; add.innerHTML = PLUS_CHECK; add.dataset.pid = p.id;
@@ -982,7 +982,10 @@ function openDetail(p, card) {
     // Photos load lazily: the ones near the top of the dialog right away, the rest as you scroll to them.
     const im = document.createElement("img"); im.loading = "lazy"; im.decoding = "async"; im.src = src; im.alt = `${p.name} photo ${i + 1}`;
     // Staggered entry: each photo a beat after the last, with a little randomness so it feels organic.
-    im.style.setProperty("--d", (.18 + i * .08 + Math.random() * .05).toFixed(3) + "s");
+    // It starts once the photo has loaded, so the rise is actually seen.
+    im.style.setProperty("--d", (.12 + i * .1 + Math.random() * .05).toFixed(3) + "s");
+    const reveal = () => requestAnimationFrame(() => requestAnimationFrame(() => im.classList.add("in")));
+    if (im.complete && im.naturalWidth) reveal(); else im.addEventListener("load", reveal, { once: true });
     row.appendChild(im);
   });
 
@@ -1273,6 +1276,18 @@ function renderBench() {
 const GAP = 40, MAX_CARD = 336;
 // Card swatches are drawn at the size they're actually shown (cards grow on bigger screens), so they
 // stay sharp instead of being stretched.
+// Cards rise into view as they're scrolled to. Cards arriving together (a new row, or the first screen)
+// are staggered left to right, top to bottom.
+let riseIO = null;
+function riseIn(card) {
+  if (!riseIO) riseIO = new IntersectionObserver(entries => {
+    const arriving = entries.filter(e => e.isIntersecting).map(e => e.target);
+    arriving.sort((a, b) => a.getBoundingClientRect().top - b.getBoundingClientRect().top || a.getBoundingClientRect().left - b.getBoundingClientRect().left);
+    arriving.forEach((c, k) => { riseIO.unobserve(c); c.style.setProperty("--d", (k * .07).toFixed(2) + "s"); c.classList.add("in"); });
+  }, { threshold: .15 });
+  riseIO.observe(card);
+}
+
 /* Swatches are drawn lazily: each one as it comes within about a screen of view, and the rest one at a
    time in idle moments, so the page is usable right away however many polishes there are. */
 let drawIO = null;

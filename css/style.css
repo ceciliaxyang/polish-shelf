@@ -209,9 +209,15 @@ body.detail-open .page::after { opacity: 1; }
 .modal.open .modal-head { opacity: 1; }
 /* Photos drift up and fade in one after another; each gets its own slightly varied delay (--d, set in
    app.js) so the entry feels organic rather than mechanical. On close they fade out together, quickly. */
-.m-photos img { opacity: 0; transform: translateY(18px); transition: opacity .2s ease, transform .2s ease; }
-.modal.open .m-photos img { opacity: 1; transform: none; transition: opacity .55s ease var(--d, .15s), transform .7s cubic-bezier(.2, .8, .2, 1) var(--d, .15s); }
-@media (prefers-reduced-motion: reduce) { .m-photos img { transform: none !important; } }
+/* Each photo rises in once it has actually loaded (so the motion is never spent on an empty frame), a beat
+   after the one before it (--d, set in app.js). On close they fade out together, quickly. */
+.m-photos img { opacity: 0; transform: translateY(28px) scale(.98); }
+.m-photos img.in { opacity: 1; transform: none; transition: opacity .6s ease var(--d, 0s), transform .8s cubic-bezier(.2, .8, .2, 1) var(--d, 0s); }
+.modal:not(.open) .m-photos img.in { opacity: 0; transition: opacity .2s ease; }
+/* Shelf cards rise into view as you scroll, each one in a row a beat after the last (--d, set in app.js). */
+.card.rise { opacity: 0; transform: translateY(16px); }
+.card.rise.in { opacity: 1; transform: none; transition: opacity .5s ease var(--d, 0s), transform .65s cubic-bezier(.2, .8, .2, 1) var(--d, 0s); }
+@media (prefers-reduced-motion: reduce) { .m-photos img, .card.rise { transform: none !important; } }
 /* The header row is exactly as tall as the swatch (72px, starting 32px down), with the title and the
    buttons centered in it, so swatch, title and buttons all share one vertical center.
    Left: 29px past the swatch. */
