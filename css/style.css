@@ -220,10 +220,10 @@ body.detail-open .page::after { opacity: 1; }
 @media (prefers-reduced-motion: reduce) { .m-photos img, .card.rise { transform: none !important; } }
 /* The header row is exactly as tall as the swatch (72px, starting 32px down), with the title and the
    buttons centered in it, so swatch, title and buttons all share one vertical center.
-   Left: 29px past the swatch. */
+   Left: 17px past the swatch. */
 /* The nav (header and swatch) is fixed, so it stays put while the photos scroll underneath. Once the
    photos start to scroll, the brand and name fade away; the swatch and buttons stay. */
-.modal-head { position: fixed; z-index: 2; top: 0; left: 0; right: 0; display: flex; align-items: center; gap: 16px; box-sizing: content-box; height: 72px; padding: calc(32px + env(safe-area-inset-top)) 48px 16px calc(36px + 72px + 29px); }
+.modal-head { position: fixed; z-index: 2; top: 0; left: 0; right: 0; display: flex; align-items: center; gap: 16px; box-sizing: content-box; height: 72px; padding: calc(32px + env(safe-area-inset-top)) 48px 16px calc(36px + 72px + 17px); }
 .mh-trail { display: flex; align-items: center; justify-content: flex-end; gap: 8px; width: 97px; flex-shrink: 0; }
 .mh-content { transition: opacity .2s ease; }
 .modal.scrolled .mh-content { opacity: 0; pointer-events: none; } /* once the photos scroll, only the swatch and buttons stay */
