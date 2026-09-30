@@ -1054,9 +1054,11 @@ function fitGrid() {
 new ResizeObserver(fitGrid).observe($("#grid"));
 
 /* ---------- auto-animate on touch screens ---------- */
-// Phones and tablets have no hover, so any swatch that's on screen moves on its own, as if a finger
-// were hovering over it. Each one wanders on its own slow path (two sine waves per axis with random
-// speeds and phases), so no two swatches follow the same motion.
+// Phones and tablets have no hover, so swatches move on their own, as if a finger were hovering over
+// them. Only the ones whose center sits in the middle third of the screen move, so motion follows
+// what you're looking at while scrolling; the large swatch in the detail view always moves. Each one
+// wanders on its own slow path (two sine waves per axis with random speeds and phases), so no two
+// swatches follow the same motion.
 const noHover = matchMedia("(hover: none)").matches;
 const drifting = new Map(); // canvas -> its path
 const autoIO = noHover ? new IntersectionObserver(entries => entries.forEach(e => {
@@ -1075,12 +1077,15 @@ function drift(now) {
   const detailOpen = document.body.classList.contains("detail-open");
   for (const [cv, p] of drifting) {
     if (!cv.isConnected) { drifting.delete(cv); continue; }
-    if (detailOpen && !cv.closest("#mStage")) continue; // the shelf is hidden behind the dialog
+    const inDetail = !!cv.closest("#mStage");
+    if (detailOpen && !inDetail) continue; // the shelf is hidden behind the dialog
+    const r = cv.getBoundingClientRect();
+    const mid = r.top + r.height / 2, h = innerHeight;
+    if (!inDetail && (mid < h / 3 || mid > h * 2 / 3)) continue; // outside the middle third: hold still
     p.t += dt;
     const w = (f, ph, t) => Math.sin(t * f * 6.283 + ph);
     const x = .5 + p.ax * w(p.fx[0], p.px[0], p.t) + p.ax * .45 * w(p.fx[1], p.px[1], p.t);
     const y = .5 + p.ay * w(p.fy[0], p.py[0], p.t) + p.ay * .45 * w(p.fy[1], p.py[1], p.t);
-    const r = cv.getBoundingClientRect();
     cv.onpointermove && cv.onpointermove({ clientX: r.left + x * r.width, clientY: r.top + y * r.height });
   }
   requestAnimationFrame(drift);
