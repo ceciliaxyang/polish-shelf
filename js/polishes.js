@@ -437,9 +437,9 @@ const POLISHES = [
     brand: "ILNP",
     effect: "sheermag",
     effects: ["sheer", "magnetic"],
-    // Clear topper: the bare nail shows through, with a bright silver magnetic shimmer, silver and holographic flakes (from the product page and photos)
-    colors: ["#e8c9be", "#fbf8f6", "#ece4e1", "#dccfcb"],
-    shadow: "#cda89c",
+    // Clear topper with a bright silver magnetic shimmer, silver and holographic flakes: shown as cool, clear silver (from the product page and photos)
+    colors: ["#d5d8de", "#fcfcfe", "#eceef3", "#dde0e6"],
+    shadow: "#aeb2bc",
     grain: .12,
     flakes: ["#ffffff", "#e8e8f0", "#ffd6ec", "#d4ecff", "#e6ffd8"],
     sparkle: { density: 6, floor: .6, deep: .35, size: 1.4, dark: .1, colors: ["#ffffff", "#ffffff", "#ffffff", "#f2f2f6", "#ff9fd0", "#8fd0ff", "#b4ff9c"], mix: .8 },
