@@ -941,6 +941,13 @@ function polishById(id) { return state.polishes.find(p => p.id === id); }
 function liveLayers(layers) { return layers.map(l => ({ ...l, polish: polishById(l.pid) })).filter(l => l.polish); }
 function setBenchOpen(open) { $("#bench").hidden = !open; $("#layout").classList.toggle("closed", !open); }
 $("#closeBench").onclick = () => setBenchOpen(false);
+// Layering is off on every visit; turning it off also puts the bench away (its layers are kept).
+$("#layeringToggle").onclick = e => {
+  const on = e.currentTarget.getAttribute("aria-checked") !== "true";
+  e.currentTarget.setAttribute("aria-checked", on);
+  document.body.classList.toggle("layering", on);
+  if (!on) setBenchOpen(false);
+};
 
 function addLayer(p) {
   const wasHidden = $("#bench").hidden;
