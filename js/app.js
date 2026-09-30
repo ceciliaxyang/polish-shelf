@@ -1033,7 +1033,8 @@ function renderBench() {
   renderStage();
   const ol = $("#layers"); ol.innerHTML = "";
   if (!bench.layers.length) { ol.innerHTML = `<li class="hint">Press + on a polish to start with a base color, then add effects on top.</li>`; return; }
-  bench.layers.forEach((l, i) => {
+  // Listed top layer first, like a stack seen from above.
+  bench.layers.map((l, i) => [l, i]).reverse().forEach(([l, i]) => {
     const p = polishById(l.pid);
     const li = document.createElement("li"); li.className = "layer";
     const th = document.createElement("canvas"); th.className = "layer-thumb";
