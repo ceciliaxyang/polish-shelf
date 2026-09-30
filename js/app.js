@@ -1066,6 +1066,31 @@ const isSheer = p => p.effect === "sheer" || p.effect === "sheermag" || effectsO
 // The big preview. Each polish paints over everything below it, so the preview starts from the topmost
 // polish that isn't sheer. Sheer layers above it combine with it: they tint it (multiply) and add their
 // own shimmer and sparkle (screen).
+// A sheer layered over another polish, in up to three passes:
+//   1. tint: its base color multiplies with the polish below (skipped for clear toppers like Bubbly),
+//      so darker sheers deepen what's underneath instead of veiling it grey;
+//   2. glow: its shimmer or magnetic flash drawn on black and added as light (screen);
+//   3. glitter: its sparkle drawn on black at full strength, packed densely and gathered into the flash,
+//      so the reflective part stays concentrated and bright.
+// Magnetic sheers gather into a tight cat eye stripe, the way the magnet pulls them on a real nail.
+function layerSheer(ctx, q, W, H, ow, oh) {
+  const draw = (p, op, alpha) => { const cv = document.createElement("canvas"); renderSwatch(cv, p, W, H); ctx.globalCompositeOperation = op; ctx.globalAlpha = alpha; ctx.drawImage(cv, 0, 0, ow, oh); };
+  const magnetic = q.effect === "magnetic" || q.effect === "sheermag" || !!q.glow; // drawn by the magnetic swatch
+  if (!q.clear) {
+    ctx.globalCompositeOperation = "multiply"; ctx.globalAlpha = .6;
+    ctx.fillStyle = q.baseColor || q.colors[0]; ctx.fillRect(0, 0, ow, oh);
+  }
+  if (magnetic) {
+    const shape = q.effect === "sheermag" || q.effect === "magnetic" ? { glow: { shape: .9 }, catEye: { ...q.catEye, width: .07 } } : {};
+    const blk = { ...q, ...shape, colors: ["#000000", ...q.colors.slice(1)], shadow: "#000000" };
+    const sp = { density: 1, floor: .1, ...q.sparkle };
+    draw({ ...blk, sparkle: { ...sp, density: 0 }, flakes: null }, "screen", .6);
+    draw({ ...blk, colors: q.colors.map(() => "#000000"), sparkle: { ...sp, density: sp.density * 2.2, floor: .04, mix: 1, dark: 0 } }, "screen", 1);
+  } else {
+    // Other sheers (shimmers, glow in the dark): their shimmer on a black base, added as light.
+    draw({ ...q, colors: q.baseColor ? q.colors : ["#000000", ...q.colors.slice(1)], baseColor: q.baseColor ? "#000000" : undefined, shadow: "#000000" }, "screen", .95);
+  }
+}
 function stackCanvas(W, H) {
   const live = liveLayers(bench.layers);
   if (!live.length || !W || !H) return null;
@@ -1075,26 +1100,8 @@ function stackCanvas(W, H) {
   let start = 0;
   live.forEach((L, i) => { if (!isSheer(L.polish)) start = i; });
   live.slice(start).forEach((L, i) => {
-    const cv = document.createElement("canvas");
-    // A clear topper over another polish has no color of its own, so it's added as light (screen) in two
-    // passes drawn on black: its magnetic glow as a white veil, then its glitter at full strength, packed
-    // densely and gathered into the glass bead / cat eye shape, with the polish below showing around it.
-    if (i && L.polish.clear) {
-      // Gathered into a tight cat eye: a narrow diagonal stripe across the nail.
-      const q = L.polish, blk = { ...q, colors: ["#000000", ...q.colors.slice(1)], shadow: "#000000",
-        glow: { shape: .9 }, catEye: { ...q.catEye, width: .07 } };
-      const sp = { density: 1, floor: .1, ...q.sparkle };
-      renderSwatch(cv, { ...blk, sparkle: { ...sp, density: 0 }, flakes: null }, W, H);
-      ctx.globalCompositeOperation = "screen"; ctx.globalAlpha = .6; ctx.drawImage(cv, 0, 0, out.width, out.height);
-      const cv2 = document.createElement("canvas");
-      renderSwatch(cv2, { ...blk, colors: q.colors.map(() => "#000000"), sparkle: { ...sp, density: sp.density * 2.2, floor: .04, mix: 1, dark: 0 } }, W, H);
-      ctx.globalAlpha = 1; ctx.drawImage(cv2, 0, 0, out.width, out.height);
-      return;
-    }
-    renderSwatch(cv, L.polish, W, H);
-    if (!i) { ctx.drawImage(cv, 0, 0, out.width, out.height); return; }
-    ctx.globalCompositeOperation = "multiply"; ctx.globalAlpha = .45; ctx.drawImage(cv, 0, 0, out.width, out.height);
-    ctx.globalCompositeOperation = "screen"; ctx.globalAlpha = .6; ctx.drawImage(cv, 0, 0, out.width, out.height);
+    if (!i) { const cv = document.createElement("canvas"); renderSwatch(cv, L.polish, W, H); ctx.drawImage(cv, 0, 0, out.width, out.height); return; }
+    layerSheer(ctx, L.polish, W, H, out.width, out.height);
   });
   ctx.globalCompositeOperation = "source-over"; ctx.globalAlpha = 1;
   return out;
