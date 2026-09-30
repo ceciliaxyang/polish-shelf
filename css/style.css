@@ -177,19 +177,21 @@ body.layering .swatch-btn { opacity: 1; transform: none; visibility: visible; tr
   body.layering .page { padding-bottom: calc(40px + 84px + env(safe-area-inset-bottom)); }
   @media (prefers-reduced-motion: reduce) { .bench, .peek-mini.pulse { transition: none; animation: none; } }
 }
-}
 
 /* Detail view (Figma "Desktop - 2") */
 .modal { position: fixed; inset: 0; z-index: 50; outline: none; overflow-y: auto; overscroll-behavior: contain; } /* scrolls when the photos run past the screen */
 /* Figma: background blur 100 + white 40%. The shelf itself is blurred (reliable in every browser), with the white wash on top. */
-.page { transition: filter .35s ease; }
+.page { position: relative; transition: filter .35s ease; }
 body.detail-open .page { filter: blur(50px); }
-/* The wash is a gradient, not a background-color: Safari on iOS 26 paints the status bar solid in the
-   background-color of a fixed layer at the top of the screen, which turned it white. With no color to
-   pick up, the blurred shelf shows through under the clock. */
-.modal-blur { position: fixed; inset: 0; background-image: linear-gradient(rgba(255, 255, 255, .4), rgba(255, 255, 255, .4)); opacity: 0; transition: opacity .35s ease; }
+/* The white wash lives on the shelf itself, not on a fixed layer. Safari on iOS 26 shows the page (not
+   fixed layers) under the status bar, and paints the bar solid in the color of any fixed layer at the
+   top. With the wash part of the page, the area under the clock is blurred and washed exactly like the
+   rest of the dialog, so the dialog reads as running all the way to the top of the screen. */
+.page::after { content: ""; position: absolute; inset: 0; background-image: linear-gradient(rgba(255, 255, 255, .4), rgba(255, 255, 255, .4)); opacity: 0; pointer-events: none; transition: opacity .35s ease; }
+body.detail-open .page::after { opacity: 1; }
+.modal-blur { position: fixed; inset: 0; }
 .modal-head { opacity: 0; transition: opacity .3s ease; }
-.modal.open .modal-blur, .modal.open .modal-head { opacity: 1; }
+.modal.open .modal-head { opacity: 1; }
 /* Photos drift up and fade in one after another; each gets its own slightly varied delay (--d, set in
    app.js) so the entry feels organic rather than mechanical. On close they fade out together, quickly. */
 .m-photos img { opacity: 0; transform: translateY(18px); transition: opacity .2s ease, transform .2s ease; }
