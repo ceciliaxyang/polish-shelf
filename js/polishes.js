@@ -391,7 +391,7 @@ const POLISHES = [
     name: "Lily",
     brand: "ILNP",
     effect: "sheermag",
-    effects: ["sheer", "magnetic", "holo"],
+    effects: ["sheer", "magnetic"],
     // Soft, see-through lilac with a silver magnetic sparkle, silver flakes and a holographic glint (from the product page and photos)
     colors: ["#b09cb8", "#eee6f0", "#d6c6dc", "#c0aac8"],
     shadow: "#8f7896",         // edges only deepen a little, since the base is sheer
