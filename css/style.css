@@ -120,7 +120,10 @@ select { padding: 2px; border: 1px solid var(--line); border-radius: 6px; backgr
 /* Figma: background blur 100 + white 40%. The shelf itself is blurred (reliable in every browser), with the white wash on top. */
 .page { transition: filter .35s ease; }
 body.detail-open .page { filter: blur(50px); }
-.modal-blur { position: absolute; inset: 0; background: rgba(255, 255, 255, .4); opacity: 0; transition: opacity .35s ease; }
+/* The wash is a gradient, not a background-color: Safari on iOS 26 paints the status bar solid in the
+   background-color of a fixed layer at the top of the screen, which turned it white. With no color to
+   pick up, the blurred shelf shows through under the clock. */
+.modal-blur { position: absolute; inset: 0; background-image: linear-gradient(rgba(255, 255, 255, .4), rgba(255, 255, 255, .4)); opacity: 0; transition: opacity .35s ease; }
 .modal-head, .m-carousel { opacity: 0; transition: opacity .3s ease; }
 .modal.open .modal-blur, .modal.open .modal-head, .modal.open .m-carousel { opacity: 1; }
 .modal.open .m-carousel { transition-delay: .15s; }
