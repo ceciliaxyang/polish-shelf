@@ -494,6 +494,7 @@ const POLISHES = [
     // copper into red-purple, with teal and green flashing at the edges (from the product page and photos)
     colors: ["#f2b04a", "#e08a34", "#c0603a", "#963a60", "#7a2a62", "#2a8a78", "#5cb24a"], // [facing, ..., edge]
     chrome: { smooth: .55 },   // a smooth, oily shift rather than coarse grain
+    glimmer: { color: "#2af0e0", share: .06 }, // bright electric-teal glimmers throughout
     url: "https://www.mooncat.com/products/deadly-nightshade",
     photos: ["images/mooncat-deadly-nightshade/1.jpg", "images/mooncat-deadly-nightshade/2.jpg", "images/mooncat-deadly-nightshade/3.jpg", "images/mooncat-deadly-nightshade/4.jpg"], // saved from the product page
   },

@@ -693,6 +693,7 @@ function thermalSwatch(cv, p, W, H) {
   baseColor: optional colored base (like a burgundy jelly) that shows between the particles; sheen
   (with baseColor) makes the shimmer fade toward the sides so the base shows there (used for shimmers);
   smooth (0 to 1) evens out the particles for a soft gleam rather than glitter.
+  glimmer: optional { color, share } bright colored glints scattered through the shimmer.
 */
 function multichromeSwatch(cv, p, W, H) {
   const dpr = swatchDpr(W), cw = Math.round(W * dpr), ch = Math.round(H * dpr);
@@ -710,6 +711,12 @@ function multichromeSwatch(cv, p, W, H) {
   const CELL = Math.max(2, Math.round(dpr * opt.grain)), gx = Math.ceil(cw / CELL), gy = Math.ceil(ch / CELL), N = gx * gy;
   const pb = new Float32Array(N), ph = new Float32Array(N);
   for (let i = 0; i < N; i++) { pb[i] = R(); ph[i] = R() - .5; }
+  // Optional glimmer { color, share }: that share of the particles are bright colored glints (e.g. electric
+  // teal) scattered through the shimmer; each flashes on and off as the nail tilts. Uses its own random
+  // stream so polishes without it keep their exact look.
+  const gl = p.glimmer ? { share: .04, ...p.glimmer } : null;
+  const glC = gl ? rgb(gl.color) : null, gp = gl ? new Float32Array(N) : null;
+  if (gl) { const R2 = rng((p.id || "p") + ":glimmer"); for (let i = 0; i < N; i++) gp[i] = R2(); }
   const img = ctx.createImageData(cw, ch), px = img.data;
   const rest = { x: .5, y: .5 }, cur = { ...rest }, target = { ...rest };
   let raf = 0;
@@ -744,6 +751,11 @@ function multichromeSwatch(cv, p, W, H) {
           r = tint[0] + (r - tint[0]) * a; gg = tint[1] + (gg - tint[1]) * a; bl = tint[2] + (bl - tint[2]) * a;
         }
         r += (255 - r) * sparkle * .5; gg += (255 - gg) * sparkle * .5; bl += (255 - bl) * sparkle * .5;
+        if (gl && gp[i] < gl.share) { // a colored glint, lit at its own tilt angle
+          const on = .5 + .5 * Math.sin(gp[i] * 900 + cur.x * 7 - cur.y * 5), m = .35 + .65 * on, hot = on > .8 ? (on - .8) * 2.5 : 0;
+          r += (glC[0] - r) * m; gg += (glC[1] - gg) * m; bl += (glC[2] - bl) * m;
+          r += (255 - r) * hot * .6; gg += (255 - gg) * hot * .6; bl += (255 - bl) * hot * .6;
+        }
         const edge = Math.max(0, Math.abs(nx - .5) * 2 - .82) * 2.8; // falls into shadow at the nail's actual edges
         r += (shadow[0] - r) * edge; gg += (shadow[1] - gg) * edge; bl += (shadow[2] - bl) * edge;
         const x0 = cx * CELL, y0 = cy * CELL, x1 = Math.min(cw, x0 + CELL), y1 = Math.min(ch, y0 + CELL);
