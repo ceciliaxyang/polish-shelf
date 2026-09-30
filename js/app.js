@@ -1066,6 +1066,49 @@ const isSheer = p => p.effect === "sheer" || p.effect === "sheermag" || effectsO
 // The big preview. Each polish paints over everything below it, so the preview starts from the topmost
 // polish that isn't sheer. Sheer layers above it combine with it: they tint it (multiply) and add their
 // own shimmer and sparkle (screen).
+const GRIP = `<svg width="10" height="16" viewBox="0 0 10 16" fill="currentColor" aria-hidden="true"><circle cx="2.5" cy="3" r="1.4"/><circle cx="7.5" cy="3" r="1.4"/><circle cx="2.5" cy="8" r="1.4"/><circle cx="7.5" cy="8" r="1.4"/><circle cx="2.5" cy="13" r="1.4"/><circle cx="7.5" cy="13" r="1.4"/></svg>`;
+
+// Drag to reorder the layer rows. With a mouse, any part of a row can be dragged (a grip appears on
+// hover); on touch screens, drag by the grip so the list still scrolls normally. The row follows the
+// pointer and the others slide aside to show where it will land.
+{
+  const ol = $("#layers");
+  let drag = null;
+  ol.addEventListener("pointerdown", e => {
+    const li = e.target.closest(".layer");
+    if (!li || e.target.closest(".layer-del") || (e.pointerType !== "mouse" && !e.target.closest(".layer-grip"))) return;
+    const rows = [...ol.querySelectorAll(".layer")];
+    drag = { li, rows, from: rows.indexOf(li), to: rows.indexOf(li), y0: e.clientY, h: li.offsetHeight, started: false };
+    li.setPointerCapture(e.pointerId);
+  });
+  ol.addEventListener("pointermove", e => {
+    if (!drag) return;
+    const dy = e.clientY - drag.y0;
+    if (!drag.started) { if (Math.abs(dy) < 4) return; drag.started = true; drag.li.classList.add("dragging"); ol.classList.add("reordering"); }
+    e.preventDefault();
+    const n = drag.rows.length, to = Math.max(0, Math.min(n - 1, drag.from + Math.round(dy / drag.h)));
+    drag.to = to;
+    drag.li.style.transform = `translateY(${Math.max(-drag.from * drag.h, Math.min((n - 1 - drag.from) * drag.h, dy))}px)`;
+    drag.rows.forEach((r, k) => {
+      if (r === drag.li) return;
+      const s = drag.from < to && k > drag.from && k <= to ? -drag.h : drag.from > to && k < drag.from && k >= to ? drag.h : 0;
+      r.style.transform = s ? `translateY(${s}px)` : "";
+    });
+  });
+  const end = () => {
+    if (!drag) return;
+    const d = drag; drag = null;
+    if (!d.started) return;
+    ol.classList.remove("reordering");
+    if (d.to !== d.from) { // rows are listed top layer first, the reverse of the stack order
+      const shown = [...bench.layers].reverse(), [m] = shown.splice(d.from, 1);
+      shown.splice(d.to, 0, m); bench.layers = shown.reverse(); saveBench();
+    }
+    renderBench();
+  };
+  ol.addEventListener("pointerup", end); ol.addEventListener("pointercancel", end);
+}
+
 // A sheer layered over another polish goes on in up to three passes:
 //   1. tint: its base color multiplies with the polish below (skipped for clear toppers like Bubbly),
 //      so darker sheers deepen what's underneath instead of veiling it grey;
@@ -1216,7 +1259,8 @@ function renderBench() {
     const del = document.createElement("button"); del.type = "button"; del.className = "layer-del"; del.innerHTML = TRASH;
     del.setAttribute("aria-label", `Remove ${p ? p.name : "layer"}`);
     del.onclick = () => { bench.layers.splice(i, 1); saveBench(); renderBench(); };
-    li.append(th, mid, del); ol.appendChild(li);
+    const grip = document.createElement("span"); grip.className = "layer-grip"; grip.innerHTML = GRIP; grip.setAttribute("aria-hidden", "true");
+    li.append(grip, th, mid, del); ol.appendChild(li);
     if (p) renderSwatch(th, p, 48, 48);
   });
 }
