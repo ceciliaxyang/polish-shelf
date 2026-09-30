@@ -912,6 +912,7 @@ function openDetail(p, card) {
 
   // Show the dialog first so the swatch can be drawn at the size it will actually appear.
   const m = $("#modal"); m.hidden = false; document.body.style.overflow = "hidden"; document.body.classList.add("detail-open");
+  m.scrollTop = 0; m.classList.remove("scrolled");
   sizeDetail();
   const stage = $("#mStage"); stage.innerHTML = "";
   const cv = document.createElement("canvas"); cv.className = "swatch";
@@ -943,6 +944,7 @@ function openDetail(p, card) {
 }
 
 // The photo row must stay below the header, whose height depends on the text; measure it.
+$("#modal").addEventListener("scroll", e => e.currentTarget.classList.toggle("scrolled", e.currentTarget.scrollTop > 4), { passive: true });
 function sizeDetail() { $("#modal").style.setProperty("--head", $(".modal-head").offsetHeight + "px"); }
 addEventListener("resize", () => { if (!$("#modal").hidden) sizeDetail(); });
 
