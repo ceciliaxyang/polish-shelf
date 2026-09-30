@@ -939,11 +939,11 @@ function renderShelf() {
     });
     text.append(title, fx);
     card.append(wrap, text); grid.appendChild(card);
-    sw._p = p; drawCard(sw);
+    sw._p = p; queueDraw(sw);
     if (autoIO) autoIO.observe(sw);
   }
   syncSwatchButtons();
-  shapeForScroll(true);
+  fillIdle();
 }
 
 /* ---------- detail view ---------- */
@@ -979,7 +979,8 @@ function openDetail(p, card) {
   // Photos: a plain row of the saved product photos (not interactive).
   const row = $("#mPhotos"); row.innerHTML = "";
   (p.photos || []).slice(0, 4).forEach((src, i) => {
-    const im = document.createElement("img"); im.src = src; im.alt = `${p.name} photo ${i + 1}`;
+    // Photos load lazily: the ones near the top of the dialog right away, the rest as you scroll to them.
+    const im = document.createElement("img"); im.loading = "lazy"; im.decoding = "async"; im.src = src; im.alt = `${p.name} photo ${i + 1}`;
     // Staggered entry: each photo a beat after the last, with a little randomness so it feels organic.
     im.style.setProperty("--d", (.18 + i * .08 + Math.random() * .05).toFixed(3) + "s");
     row.appendChild(im);
@@ -1272,16 +1273,56 @@ function renderBench() {
 const GAP = 40, MAX_CARD = 336;
 // Card swatches are drawn at the size they're actually shown (cards grow on bigger screens), so they
 // stay sharp instead of being stretched.
+/* Swatches are drawn lazily: each one as it comes within about a screen of view, and the rest one at a
+   time in idle moments, so the page is usable right away however many polishes there are. */
+let drawIO = null;
+const idle = window.requestIdleCallback || (fn => setTimeout(() => fn({ timeRemaining: () => 8 }), 60));
+// Swatches coming into view are drawn a frame at a time (as many as fit in ~12 ms, at least one), so
+// the page keeps painting and responding while the first screen fills in.
+const drawQueue = [];
+let pumping = 0;
+function pump() {
+  const t = performance.now(); let drew = false;
+  while (drawQueue.length && (!drew || performance.now() - t < 12)) {
+    const cv = drawQueue.shift();
+    if (!cv._w && cv.isConnected) { drawCard(cv); drew = true; }
+  }
+  if (drew) shapeForScroll(true);
+  pumping = drawQueue.length ? requestAnimationFrame(pump) : 0;
+}
+function queueDraw(cv) {
+  if (!drawIO) drawIO = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { drawIO.unobserve(e.target); drawQueue.push(e.target); } });
+    if (drawQueue.length && !pumping) pumping = requestAnimationFrame(pump);
+  }, { rootMargin: "50% 0px" });
+  drawIO.observe(cv);
+}
+function fillIdle() {
+  idle(deadline => {
+    const next = [...document.querySelectorAll("#grid .swatch")].find(cv => !cv._w);
+    if (!next) return;
+    if (deadline.timeRemaining() > 4) { drawIO && drawIO.unobserve(next); drawCard(next); shapeForScroll(true); }
+    fillIdle();
+  });
+}
 function drawCard(cv) {
   const w = Math.round(cv.parentElement.clientWidth) || 240;
   cv._w = w; renderSwatch(cv, cv._p, w, Math.round(w * 260 / 240));
 }
 let redrawTimer = 0;
+// After a resize, only swatches on screen are redrawn right away; the others are marked undrawn and
+// go back into the lazy queue, so resizing (or the scrollbar appearing) doesn't redraw the whole shelf.
 function redrawCards() {
   clearTimeout(redrawTimer);
-  redrawTimer = setTimeout(() => document.querySelectorAll("#grid .swatch").forEach(cv => {
-    if (Math.abs(cv.parentElement.clientWidth - cv._w) > 2) drawCard(cv);
-  }) || shapeForScroll(true), 150);
+  redrawTimer = setTimeout(() => {
+    const vh = innerHeight;
+    document.querySelectorAll("#grid .swatch").forEach(cv => {
+      if (!cv._w || Math.abs(cv.parentElement.clientWidth - cv._w) <= 2) return;
+      const r = cv.getBoundingClientRect();
+      if (r.bottom > -40 && r.top < vh + 40) drawCard(cv); else { cv._w = 0; queueDraw(cv); }
+    });
+    shapeForScroll(true); fillIdle();
+  }, 150);
 }
 
 function fitGrid() {
