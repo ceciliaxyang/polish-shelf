@@ -1115,7 +1115,6 @@ const GRIP = `<svg width="10" height="16" viewBox="0 0 10 16" fill="currentColor
 //   2. glow: its shimmer or magnetic flash drawn on black and added as light (screen);
 //   3. glitter: its sparkle drawn on black at full strength, packed densely and gathered into the flash,
 //      so the reflective part stays concentrated and bright.
-// Magnetic sheers gather into a tight cat eye stripe, the way the magnet pulls them on a real nail.
 // Each layer becomes a list of drawing steps: { cv, op, alpha } draws a rendered swatch, { fill, op, alpha }
 // fills a flat color. The swatch canvases stay live, so the stack can be redrawn as they animate.
 function sheerOps(q, W, H) {
@@ -1123,7 +1122,9 @@ function sheerOps(q, W, H) {
   const magnetic = q.effect === "magnetic" || q.effect === "sheermag" || !!q.glow; // drawn by the magnetic swatch
   if (!q.clear) ops.push({ fill: q.baseColor || q.colors[0], op: "multiply", alpha: .6 });
   if (magnetic) {
-    const shape = q.effect === "sheermag" || q.effect === "magnetic" ? { glow: { shape: .9 }, catEye: { ...q.catEye, width: .07 } } : {};
+    // Magnetic sheers rest in the same in-between shape as the shelf swatches: an organic glow between a
+    // glass bead and a cat eye, following the pointer as you hover.
+    const shape = q.effect === "sheermag" || q.effect === "magnetic" ? { glow: { shape: .5 } } : {};
     const blk = { ...q, ...shape, colors: ["#000000", ...q.colors.slice(1)], shadow: "#000000" };
     const sp = { density: 1, floor: .1, ...q.sparkle };
     draw({ ...blk, sparkle: { ...sp, density: 0 }, flakes: null }, "screen", .6);
