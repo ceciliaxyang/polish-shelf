@@ -246,8 +246,8 @@ body.detail-open .page::after { opacity: 1; }
 /* Effect pills under the name: 12px below it, like the card's pills but not clickable here */
 .mh-pills { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
 /* Like the card pills (grey border) but transparent, and not clickable here */
-.mh-pills .pill { cursor: default; background: transparent; }
-.mh-pills .pill:hover { border-color: var(--line); }
+.mh-pills .pill { cursor: default; background: transparent; border-color: #b0b0b0; } /* a darker stroke so it holds up over the blur */
+.mh-pills .pill:hover { border-color: #b0b0b0; }
 .mh-brand, .mh-name { margin: 0; color: #000; overflow-wrap: anywhere; }
 .mh-brand { font-size: 14px; }
 .mh-name { font-size: 20px; font-weight: 500; }
