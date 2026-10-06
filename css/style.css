@@ -157,14 +157,14 @@ button, input, select { font: inherit; color: inherit; }
    copy 112px below. Each card shows a placeholder polish swatch. */
 .combos-empty { grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; gap: 78px; padding: 40px 0 80px; }
 .ce-cards { position: relative; width: min(658px, 100%); aspect-ratio: 940.49 / 415.49; }
-.ce-card { position: absolute; width: 35.7261%; aspect-ratio: 1; border-radius: 11px; overflow: hidden; background: #f2f2f2; translate: -50% -50%;
+.ce-card { position: absolute; width: 35.7261%; aspect-ratio: 1; border-radius: 17.02%; overflow: hidden; /* 40px at full size, scaling down with the cards */ background: #f2f2f2; translate: -50% -50%;
   filter: drop-shadow(0 0 0 rgba(0, 0, 0, .02)) drop-shadow(0 8px 32px rgba(0, 0, 0, .04)) drop-shadow(0 32px 48px rgba(0, 0, 0, .1)); }
 .ce-1 { left: 21.0901%; top: 52.0710%; rotate: -11.6deg; }
 .ce-2 { left: 50.9904%; top: 42.4944%; z-index: 1; } /* the middle card sits on top, straight */
 .ce-3 { left: 79.8254%; top: 50.0012%; rotate: 8deg; }
 .ce-card canvas { display: block; width: 100%; height: 100%; }
 .ce-text { max-width: 427px; margin: 0; text-align: center; font-size: 16px; line-height: 16px; font-weight: 500; color: var(--text); } /* Figma node 2212:1561 */
-@media (max-width: 600px) { .combos-empty { gap: 48px; padding-top: 24px; } .ce-card { border-radius: 8px; } }
+@media (max-width: 600px) { .combos-empty { gap: 48px; padding-top: 24px; } }
 
 /* Layering pane (Figma "Desktop - 7", node 2180:86749): opens on the right while layering is on and
    sticks to the top of the window as the shelf scrolls. */
