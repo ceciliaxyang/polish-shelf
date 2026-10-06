@@ -977,7 +977,16 @@ const saveCombos = () => save(KEY.saved, combos);
 const bench = { layers: load(KEY.bench, []) };
 const saveBench = () => save(KEY.bench, bench.layers);
 
-function toast(msg) { const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => t.hidden = true, 2600); }
+// A short message at the bottom of the screen. With an action (e.g. Undo) it gets a button and stays up longer.
+function toast(msg, action) {
+  const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast.t);
+  if (action) {
+    const b = document.createElement("button"); b.type = "button"; b.className = "toast-btn"; b.textContent = action.label;
+    b.onclick = () => { clearTimeout(toast.t); t.hidden = true; action.fn(); };
+    t.appendChild(b);
+  }
+  toast.t = setTimeout(() => t.hidden = true, action ? 5000 : 2600);
+}
 
 /* ---------- shelf ---------- */
 // How magnetic swatches rest: 0 = glass bead, 1 = cat eye, in between when no finish is picked (the finish pills were removed, so always in between).
@@ -1076,11 +1085,11 @@ function renderShelf() {
 }
 
 /* ---------- saved combos ---------- */
-// Combos page (Figma node 2201:98964): one card per saved combo, newest first, with the layered swatch,
-// a heart to mark favorites, the name and the month it was made, and its polishes as overlapping thumbnails.
+// Combos page (Figma node 2201:98964): one card per saved combo, newest first, with the layered swatch
+// (no button on it), the name and the month it was made, and its polishes as overlapping thumbnails with a
+// trash button beside them.
 // The effect filters still apply: a combo shows when any of its polishes has a picked effect. Tapping a
 // combo's swatch loads it into the Layers pane.
-const HEART = `<svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M10 16.5s-6.5-3.9-6.5-8.6A3.4 3.4 0 0 1 10 6.1a3.4 3.4 0 0 1 6.5 1.8c0 4.7-6.5 8.6-6.5 8.6z"/></svg>`;
 const MONTH = new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric" });
 function renderCombos() {
   const grid = $("#grid"); grid.innerHTML = "";
@@ -1091,11 +1100,7 @@ function renderCombos() {
     const card = document.createElement("article"); card.className = "card rise combo-card"; riseIn(card);
     const wrap = document.createElement("div"); wrap.className = "swatch-wrap";
     const sw = document.createElement("canvas"); sw.className = "swatch";
-    const fav = document.createElement("button"); fav.type = "button"; fav.className = "swatch-btn fav-btn"; fav.innerHTML = HEART;
-    const syncFav = () => { fav.classList.toggle("on", !!c.fav); fav.setAttribute("aria-pressed", !!c.fav); fav.setAttribute("aria-label", `Favorite ${c.name}`); };
-    fav.onclick = () => { c.fav = !c.fav; saveCombos(); syncFav(); };
-    syncFav();
-    wrap.append(sw, fav);
+    wrap.append(sw);
     sw.tabIndex = 0; sw.setAttribute("role", "button"); sw.setAttribute("aria-label", `Open ${c.name} in Layers`);
     sw.onclick = () => loadCombo(c);
     sw.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); loadCombo(c); } };
@@ -1108,11 +1113,22 @@ function renderCombos() {
     liveLayers(c.layers).reverse().forEach(L => {
       const t = document.createElement("canvas"); t.title = L.polish.name || ""; renderSwatch(t, L.polish, 40, 40); stack.appendChild(t);
     });
-    text.append(title, stack);
+    const del = document.createElement("button"); del.type = "button"; del.className = "layer-del combo-del"; del.innerHTML = TRASH;
+    del.setAttribute("aria-label", `Delete ${c.name}`); del.title = "Delete combo";
+    del.onclick = () => deleteCombo(c);
+    const foot = document.createElement("div"); foot.className = "combo-foot";
+    foot.append(stack, del);
+    text.append(title, foot);
     card.append(wrap, text); grid.appendChild(card);
     sw._combo = c; queueDraw(sw);
   }
   fillIdle();
+}
+// Deleting is immediate, with Undo in the toast to put it back where it was.
+function deleteCombo(c) {
+  const at = combos.indexOf(c); if (at < 0) return;
+  combos.splice(at, 1); saveCombos(); renderShelf(); renderBench();
+  toast(`Deleted ${c.name}`, { label: "Undo", fn: () => { combos.splice(Math.min(at, combos.length), 0, c); saveCombos(); renderShelf(); renderBench(); } });
 }
 function loadCombo(c) {
   bench.layers = c.layers.map(l => ({ ...l })); saveBench();
