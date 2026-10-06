@@ -1011,6 +1011,7 @@ $("#comboBtn").onclick = () => {
 // The button's two thumbnails: the two newest saved combos, or the first polishes on the shelf until
 // there are any.
 function renderComboThumbs() {
+  if (renderComboThumbs.hold) return; // a saved swatch is still flying in; it updates when it lands
   const picks = combos.slice(-2).reverse().map(c => ({ layers: c.layers }));
   for (const p of state.polishes) { if (picks.length >= 2) break; picks.push({ p }); }
   [".tp-front", ".tp-back"].forEach((sel, i) => {
@@ -1150,10 +1151,47 @@ function saveCombo() {
   const c = { id: newId(), name: comboName(bench.layers), layers: bench.layers.map(l => ({ pid: l.pid, coats: l.coats })), createdAt: new Date().toISOString() };
   combos.push(c); saveCombos();
   toast(`Saved as ${c.name}`);
+  flyToCombos(c.layers);
   renderBench();
   if (state.view === "combos") renderShelf();
 }
 $("#saveCombo").onclick = saveCombo;
+// Like dropping something into a shopping cart: a copy of the layered swatch lifts off the Layers preview
+// (or the phone's peek bar), arcs over and shrinks into the Favorite combos button, which gives a little
+// bump as it lands and then shows the new combo in its thumbnails.
+function flyToCombos(layers) {
+  const btn = $("#comboBtn"), tr = $("#comboThumbs").getBoundingClientRect();
+  const src = [$("#stage"), $("#peekMini")].find(el => { const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0; });
+  if (reduceMotion || !src || !tr.width) return;
+  const from = src.getBoundingClientRect();
+  // The button has to be in sight to catch it: scroll the page back up if it's scrolled away, and on
+  // phones let the expanded sheet drop back to its peek bar.
+  let target = tr;
+  if (tr.top < 0) { target = { left: tr.left, top: tr.top + scrollY, width: tr.width, height: tr.height }; scrollTo({ top: 0, behavior: "smooth" }); }
+  if (sheetMQ.matches) setSheet(false);
+  const cv = document.createElement("canvas");
+  if (!drawStack(cv, layers, Math.round(from.width), Math.round(from.height))) return;
+  const radius = parseFloat(getComputedStyle(src).borderTopLeftRadius) || 12;
+  cv.className = "fly-swatch";
+  Object.assign(cv.style, { left: from.left + "px", top: from.top + "px", width: from.width + "px", height: from.height + "px", borderRadius: radius + "px" });
+  document.body.appendChild(cv);
+  renderComboThumbs.hold = true;
+  const s = target.width / from.width;
+  const dx = target.left + target.width / 2 - (from.left + from.width / 2), dy = target.top + target.height / 2 - (from.top + from.height / 2);
+  const end = 4 / s; // the thumbnails' 4px corners, measured before scaling
+  const fly = cv.animate([
+    { transform: "translate(0, 0) scale(1)", borderRadius: radius + "px", opacity: 1, offset: 0 },
+    { transform: `translate(0, -16px) scale(1.04)`, borderRadius: radius + "px", opacity: 1, offset: .12, easing: "cubic-bezier(.3, 0, .6, 1)" },
+    { transform: `translate(${dx * .55}px, ${dy * .7 - 70}px) scale(${Math.min(.5, s * 3)})`, borderRadius: (radius + end) / 2 + "px", opacity: 1, offset: .55, easing: "cubic-bezier(.5, 0, 1, 1)" },
+    { transform: `translate(${dx}px, ${dy}px) scale(${s})`, borderRadius: end + "px", opacity: .9, offset: 1 }
+  ], { duration: 800, easing: "linear", fill: "forwards" });
+  const land = () => {
+    cv.remove();
+    renderComboThumbs.hold = false; renderComboThumbs();
+    btn.animate([{ transform: "scale(1)" }, { transform: "scale(1.1)" }, { transform: "scale(.97)" }, { transform: "scale(1)" }], { duration: 420, easing: "cubic-bezier(.2, .8, .2, 1)" });
+  };
+  fly.onfinish = land; fly.oncancel = land;
+}
 
 /* ---------- detail view ---------- */
 // Tapping a swatch opens the detail view over a blurred shelf: the live swatch moves into the header's
