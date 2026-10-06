@@ -1087,8 +1087,17 @@ function renderShelf() {
 const MONTH = new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric" });
 function renderCombos() {
   const grid = $("#grid"); grid.innerHTML = "";
-  // Empty state (Figma node 2212:1478): three blank tilted cards over a line of copy.
-  if (!combos.length) { grid.innerHTML = `<div class="combos-empty"><div class="ce-cards" aria-hidden="true"><span class="ce-card ce-1"></span><span class="ce-card ce-2"></span><span class="ce-card ce-3"></span></div><p class="ce-text">Create your favorite combinations by layering different polishes</p></div>`; return; }
+  // Empty state (Figma node 2212:1478): three cards (the outer two tilted) over a line of copy, each showing one of the
+  // first polishes on the shelf as a placeholder swatch.
+  if (!combos.length) {
+    grid.innerHTML = `<div class="combos-empty"><div class="ce-cards" aria-hidden="true"><span class="ce-card ce-1"></span><span class="ce-card ce-2"></span><span class="ce-card ce-3"></span></div><p class="ce-text">Create your favorite combinations by layering different polishes</p></div>`;
+    grid.querySelectorAll(".ce-card").forEach((card, i) => {
+      const p = state.polishes[i]; if (!p) return;
+      const w = Math.round(card.getBoundingClientRect().width) || 235, cv = document.createElement("canvas");
+      renderSwatch(cv, p, w, w); card.appendChild(cv);
+    });
+    return;
+  }
   const list = [...combos].reverse().filter(c => !state.fx.size || liveLayers(c.layers).some(L => effectsOf(L.polish).some(k => state.fx.has(k))));
   if (!list.length) { grid.innerHTML = emptyMsg("No matches", "No saved combos with that effect yet."); return; }
   for (const c of list) {
