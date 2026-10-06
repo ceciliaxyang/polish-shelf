@@ -999,20 +999,21 @@ $("#comboBtn").onclick = () => {
 };
 // The button's two thumbnails: the two newest saved combos, or the first polishes on the shelf until
 // there are any.
-// Favorite combos (and the divider after it) only appear once a combo is saved, rising in the first time.
+// Favorite combos only appears once a combo is saved, rising in the first time.
 // Deleting the last combo while on the combos page goes back to the shelf.
 // The effect filters belong to the shelf: on the combos page they fade out and can't be used (and don't
 // filter the combos); the picks come back when you return to the shelf.
 function setView(v) {
   state.view = v;
   $("#comboBtn").setAttribute("aria-pressed", v === "combos");
-  $(".scope-bar").classList.toggle("combos-view", v === "combos");
+  $(".shelf-head").classList.toggle("combos-view", v === "combos");
+  $("#shelfTitle").textContent = v === "combos" ? "Favorite combos" : "Polish shelf";
   $("#fxPills").inert = v === "combos";
 }
 function syncComboBtn() {
   const btn = $("#comboBtn"), none = !combos.length;
   if (!none && btn.hidden) { btn.classList.remove("rise-in"); void btn.offsetWidth; btn.classList.add("rise-in"); }
-  btn.hidden = none; $(".scope-divider").hidden = none;
+  btn.hidden = none;
   if (none && state.view === "combos") { setView("shelf"); renderShelf(); }
 }
 function renderComboThumbs() {

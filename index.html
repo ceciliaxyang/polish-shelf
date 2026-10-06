@@ -25,16 +25,13 @@
     <div class="layout closed" id="layout">
       <main>
         <header class="shelf-head">
+          <!-- Figma "Action Header Web", node 2218:2270: the title with the Favorite combos tab in the upper right,
+               then the effect pills in a sideways-scrolling row. -->
           <div class="shelf-top">
-            <h1 class="shelf-title">Polish shelf</h1>
-          </div>
-          <!-- Scoping bar (Figma "Action Header Web", node 2201:99032): the Favorite combos tab, a divider, then the
-               effect pills in their own sideways-scrolling row. -->
-          <div class="scopes scope-bar">
+            <h1 class="shelf-title" id="shelfTitle">Polish shelf</h1>
             <button type="button" class="scope combo-btn" id="comboBtn" aria-pressed="false" aria-controls="grid"><span class="thumb-pair" id="comboThumbs" aria-hidden="true"><span class="tp tp-back"></span><span class="tp tp-front"></span></span>Favorite combos</button>
-            <span class="scope-divider" aria-hidden="true"></span>
-            <div class="scopes fx-row" id="fxPills" role="group" aria-label="Filter by effect"></div>
           </div>
+          <div class="scopes fx-row" id="fxPills" role="group" aria-label="Filter by effect"></div>
         </header>
         <div class="grid" id="grid"></div>
       </main>

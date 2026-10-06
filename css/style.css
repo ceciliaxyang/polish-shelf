@@ -62,18 +62,13 @@ button, input, select { font: inherit; color: inherit; }
 .scope:hover { background: #ededed; }
 .scope[aria-pressed="true"] { background: var(--text); color: #fff; mix-blend-mode: normal; }
 .scope:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
-/* Scoping bar (Figma node 2201:99032): the Favorite combos tab on #f7f7f7, a 32px-wide divider, then the
-   effect pills on #f2f2f2. The whole row scrolls sideways together when it runs out of room. */
-.scope-bar { align-items: center; }
-.combo-btn { display: flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 4px 16px; border-radius: 100px; background: #f7f7f7; }
+/* Favorite combos (Figma node 2218:2545) sits at the title's top right on #f7f7f7; the effect pills below are #f2f2f2. */
+.combo-btn { flex-shrink: 0; display: flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 4px 16px; border-radius: 100px; background: #f7f7f7; }
 .combo-btn:hover { background: #ededed; }
 .combo-btn[aria-pressed="true"] { background: var(--text); }
-.scope-divider { flex-shrink: 0; position: relative; width: 32px; height: 42px; }
-.scope-divider::before { content: ""; position: absolute; left: 50%; top: 1px; bottom: 1px; width: 1px; background: #ebebeb; }
-.fx-row { flex: none; margin: 0; padding: 0; overflow: visible; }
-/* On the combos page the divider and effect pills fade out (the filters only apply to the shelf). */
-.scope-divider, .fx-row { transition: opacity .25s ease; }
-.scope-bar.combos-view .scope-divider, .scope-bar.combos-view .fx-row { opacity: 0; pointer-events: none; }
+/* On the combos page the effect pills fade out (the filters only apply to the shelf). */
+.fx-row { transition: opacity .25s ease; }
+.shelf-head.combos-view .fx-row { opacity: 0; pointer-events: none; }
 .fx-row .scope { background: #f2f2f2; }
 .fx-row .scope:hover { background: #e8e8e8; }
 .fx-row .scope[aria-pressed="true"] { background: var(--text); }
@@ -91,7 +86,6 @@ button, input, select { font: inherit; color: inherit; }
   .shelf-head { gap: 16px; margin-bottom: 40px; padding: 0; }
   .shelf-title { font-size: 32px; line-height: 40px; letter-spacing: -.9px; }
   .scopes { margin-inline: -16px; padding-inline: 16px; }
-  .fx-row { margin: 0; padding: 0; }
 }
 .pill.small { padding: 6px 12px; font-size: 13px; line-height: 16px; }
 
