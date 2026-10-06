@@ -1538,14 +1538,14 @@ function renderBench() {
   if (!benchIsOpen()) return;
   $("#bench").classList.toggle("no-layers", !liveLayers(bench.layers).length);
   renderStage();
-  // A saved combo's name sits above its layers. Save combo needs two or more polishes; while the bench
-  // matches a saved combo the button becomes Delete combo instead.
+  // A saved combo's name sits above its layers. Save combo only appears (rising in) once there's a second
+  // layer; while the bench matches a saved combo the button becomes Delete combo instead.
   const saved = benchCombo(), btn = $("#saveCombo");
   $("#benchName").hidden = !saved; $("#benchName").textContent = saved ? saved.name : "";
-  btn.hidden = !bench.layers.length;
-  btn.disabled = !saved && liveLayers(bench.layers).length < 2;
+  const show = !!saved || liveLayers(bench.layers).length >= 2;
+  if (show && btn.hidden) { btn.classList.remove("rise-in"); void btn.offsetWidth; btn.classList.add("rise-in"); }
+  btn.hidden = !show;
   btn.textContent = saved ? "Delete combo" : "Save combo";
-  btn.title = btn.disabled ? "Add another polish to save a combo" : "";
   const ol = $("#layers"); ol.innerHTML = "";
   if (!bench.layers.length) { ol.innerHTML = `<li class="hint">Start adding polishes to see how they layer together.</li>`; return; }
   // Listed top layer first, like a stack seen from above.

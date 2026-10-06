@@ -191,7 +191,10 @@ button, input, select { font: inherit; color: inherit; }
 .bench-name { flex-shrink: 0; margin: 0 0 -24px; padding: 12px 0 16px; font-size: 20px; font-weight: 500; color: #000; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .save-combo { flex-shrink: 0; align-self: flex-start; min-width: 56px; padding: 12px 16px; border: 0; border-radius: 32px; background: var(--text); color: #fff; font-size: 12px; line-height: 16px; font-weight: 500; cursor: pointer; transition: opacity .15s ease; }
 .save-combo:hover { background: #000; }
-.save-combo:disabled { opacity: .35; cursor: default; background: var(--text); }
+/* Save combo rises and fades in when the second layer arrives. */
+.save-combo.rise-in { animation: save-in .45s cubic-bezier(.2, .8, .2, 1) both; }
+@keyframes save-in { from { opacity: 0; transform: translateY(10px) scale(.92); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .save-combo.rise-in { animation: none; } }
 .save-combo:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
 .layer { position: relative; display: flex; align-items: center; gap: 16px; height: 72px; border-bottom: 1px solid #ebebeb; transition: transform .2s cubic-bezier(.2, .8, .2, 1); user-select: none; -webkit-user-select: none; }
 /* Drag to reorder: on touch screens a grip is the handle to drag by; with a mouse there's no grip, just
