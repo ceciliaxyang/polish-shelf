@@ -1080,14 +1080,15 @@ function renderShelf() {
 
 /* ---------- saved combos ---------- */
 // Combos page (Figma node 2201:98964): one card per saved combo, newest first, with the layered swatch
-// (no button on it), the name and the month it was made, and its polishes as overlapping thumbnails with a
-// trash button beside them.
+// (no button on it), the name and the month it was made, and its polishes as overlapping thumbnails. A
+// combo is deleted from the Layers pane once it's loaded there.
 // The effect filters still apply: a combo shows when any of its polishes has a picked effect. Tapping a
 // combo's swatch loads it into the Layers pane.
 const MONTH = new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric" });
 function renderCombos() {
   const grid = $("#grid"); grid.innerHTML = "";
-  if (!combos.length) { grid.innerHTML = emptyMsg("No combos yet", "Layer a few polishes, then press Save combo in the Layers pane."); return; }
+  // Empty state (Figma node 2212:1478): three blank tilted cards over a line of copy.
+  if (!combos.length) { grid.innerHTML = `<div class="combos-empty"><div class="ce-cards" aria-hidden="true"><span class="ce-card ce-1"></span><span class="ce-card ce-2"></span><span class="ce-card ce-3"></span></div><p class="ce-text">Create your favorite combinations by layering different polishes</p></div>`; return; }
   const list = [...combos].reverse().filter(c => !state.fx.size || liveLayers(c.layers).some(L => effectsOf(L.polish).some(k => state.fx.has(k))));
   if (!list.length) { grid.innerHTML = emptyMsg("No matches", "No saved combos with that effect yet."); return; }
   for (const c of list) {
@@ -1107,18 +1108,14 @@ function renderCombos() {
     liveLayers(c.layers).reverse().forEach(L => {
       const t = document.createElement("canvas"); t.title = L.polish.name || ""; renderSwatch(t, L.polish, 40, 40); stack.appendChild(t);
     });
-    const del = document.createElement("button"); del.type = "button"; del.className = "layer-del combo-del"; del.innerHTML = TRASH;
-    del.setAttribute("aria-label", `Delete ${c.name}`); del.title = "Delete combo";
-    del.onclick = () => deleteCombo(c);
-    const foot = document.createElement("div"); foot.className = "combo-foot";
-    foot.append(stack, del);
-    text.append(title, foot);
+    text.append(title, stack);
     card.append(wrap, text); grid.appendChild(card);
     sw._combo = c; queueDraw(sw);
   }
   fillIdle();
 }
-// Deleting is immediate, with Undo in the toast to put it back where it was.
+// Deleting (from the Layers pane) is immediate, with Undo in the toast to put it back where it was. The
+// layers stay on the bench, so it can be saved again.
 function deleteCombo(c) {
   const at = combos.indexOf(c); if (at < 0) return;
   combos.splice(at, 1); saveCombos(); renderShelf(); renderBench();
@@ -1155,7 +1152,7 @@ function saveCombo() {
   renderBench();
   if (state.view === "combos") renderShelf();
 }
-$("#saveCombo").onclick = saveCombo;
+$("#saveCombo").onclick = () => { const saved = benchCombo(); saved ? deleteCombo(saved) : saveCombo(); };
 // Like dropping something into a shopping cart: a copy of the layered swatch lifts off the Layers preview
 // (or the phone's peek bar), arcs over and shrinks into the Favorite combos button, which gives a little
 // bump as it lands and then shows the new combo in its thumbnails.
@@ -1530,14 +1527,14 @@ function renderBench() {
   if (!benchIsOpen()) return;
   $("#bench").classList.toggle("no-layers", !liveLayers(bench.layers).length);
   renderStage();
-  // A saved combo's name sits above its layers; Save combo needs two or more polishes and turns into
-  // "Saved" while the bench matches a saved combo.
+  // A saved combo's name sits above its layers. Save combo needs two or more polishes; while the bench
+  // matches a saved combo the button becomes Delete combo instead.
   const saved = benchCombo(), btn = $("#saveCombo");
   $("#benchName").hidden = !saved; $("#benchName").textContent = saved ? saved.name : "";
   btn.hidden = !bench.layers.length;
-  btn.disabled = !!saved || liveLayers(bench.layers).length < 2;
-  btn.textContent = saved ? "Saved" : "Save combo";
-  btn.title = !saved && btn.disabled ? "Add another polish to save a combo" : "";
+  btn.disabled = !saved && liveLayers(bench.layers).length < 2;
+  btn.textContent = saved ? "Delete combo" : "Save combo";
+  btn.title = btn.disabled ? "Add another polish to save a combo" : "";
   const ol = $("#layers"); ol.innerHTML = "";
   if (!bench.layers.length) { ol.innerHTML = `<li class="hint">Start adding polishes to see how they layer together.</li>`; return; }
   // Listed top layer first, like a stack seen from above.

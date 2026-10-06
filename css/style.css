@@ -150,10 +150,20 @@ button, input, select { font: inherit; color: inherit; }
 .combo-stack { display: flex; }
 .combo-stack canvas { width: 40px; height: 40px; border: 3px solid #fff; border-radius: 8px; background: #d9d9d9; }
 .combo-stack canvas + canvas { margin-left: -11px; }
-.combo-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; }
 .pill.tiny { padding: 6px 12px; font-size: 12px; line-height: 18px; } /* card effect pills (Figma: smaller pill) */
 .empty { grid-column: 1 / -1; border: 1px dashed var(--line); border-radius: 24px; padding: 1.5rem; text-align: center; color: var(--muted); font-size: 14px; }
 .empty strong { display: block; color: var(--fg); font-weight: normal; font-size: 18px; margin-bottom: 4px; }
+/* Combos page empty state (Figma node 2212:1478): three 336px blank cards turned -11.6, -3 and 8 degrees,
+   laid out on their 940 x 415 footprint and scaled down with the page, then the copy 112px below. */
+.combos-empty { grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; gap: 112px; padding: 40px 0 80px; }
+.ce-cards { position: relative; width: min(940px, 100%); aspect-ratio: 940.49 / 415.49; }
+.ce-card { position: absolute; width: 35.7261%; aspect-ratio: 1; border-radius: 16px; background: #f2f2f2; translate: -50% -50%;
+  filter: drop-shadow(0 0 0 rgba(0, 0, 0, .02)) drop-shadow(0 8px 32px rgba(0, 0, 0, .04)) drop-shadow(0 32px 48px rgba(0, 0, 0, .1)); }
+.ce-1 { left: 21.0901%; top: 52.0710%; rotate: -11.6deg; }
+.ce-2 { left: 50.9904%; top: 42.4944%; rotate: -3deg; z-index: 1; } /* the middle card sits on top */
+.ce-3 { left: 79.8254%; top: 50.0012%; rotate: 8deg; }
+.ce-text { max-width: 427px; margin: 0; text-align: center; font-size: 24px; line-height: 32px; font-weight: 500; letter-spacing: -.8px; color: #000; }
+@media (max-width: 600px) { .combos-empty { gap: 48px; padding-top: 24px; } .ce-card { border-radius: 10px; } .ce-text { font-size: 20px; line-height: 28px; letter-spacing: -.5px; } }
 
 /* Layering pane (Figma "Desktop - 7", node 2180:86749): opens on the right while layering is on and
    sticks to the top of the window as the shelf scrolls. */
