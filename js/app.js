@@ -965,7 +965,7 @@ const KEY = { combos: "polish-shelf:combos", saved: "polish-shelf:saved-combos",
 function load(key, fallback) { try { const v = JSON.parse(localStorage.getItem(key)); return v ?? fallback; } catch (e) { return fallback; } }
 function save(key, value) {
   try { localStorage.setItem(key, JSON.stringify(value)); }
-  catch (e) { toast("Couldn't save. Your browser storage may be full."); }
+  catch (e) { console.warn("Couldn't save combos", e); }
 }
 function newId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
 
@@ -977,7 +977,6 @@ const saveCombos = () => save(KEY.saved, combos);
 const bench = { layers: load(KEY.bench, []) };
 const saveBench = () => save(KEY.bench, bench.layers);
 
-function toast(msg) { const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => t.hidden = true, 2600); }
 
 /* ---------- shelf ---------- */
 // How magnetic swatches rest: 0 = glass bead, 1 = cat eye, in between when no finish is picked (the finish pills were removed, so always in between).
@@ -1324,13 +1323,11 @@ function addLayer(p) {
   saveBench();
   if (!benchIsOpen()) setBenchOpen(true); else renderBench();
   pulsePeek();
-  toast(`Added ${p.name || "polish"} as layer ${at + 1}`);
 }
 // Pressing a checked swatch button takes that polish back off the bench.
 function removePolish(p) {
   bench.layers = bench.layers.filter(l => l.pid !== p.id);
   saveBench(); renderBench();
-  toast(`Removed ${p.name || "polish"} from layers`);
 }
 
 // Swatch buttons show a checkmark while that polish is on the bench.
