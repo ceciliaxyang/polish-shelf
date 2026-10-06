@@ -1090,7 +1090,7 @@ function renderCombos() {
   // Empty state (Figma node 2212:1478): three cards (the outer two tilted) over a line of copy, each showing one of the
   // first polishes on the shelf as a placeholder swatch.
   if (!combos.length) {
-    grid.innerHTML = `<div class="combos-empty"><div class="ce-cards" aria-hidden="true"><span class="ce-card ce-1"></span><span class="ce-card ce-2"></span><span class="ce-card ce-3"></span></div><p class="ce-text">Create your favorite combinations by layering different polishes</p></div>`;
+    grid.innerHTML = `<div class="combos-empty"><div class="ce-cards" aria-hidden="true"><span class="ce-card ce-1"></span><span class="ce-card ce-2"></span><span class="ce-card ce-3"></span></div><p class="ce-text">Layer different polishes to make custom creations</p></div>`;
     grid.querySelectorAll(".ce-card").forEach((card, i) => {
       const p = state.polishes[i]; if (!p) return;
       const w = Math.round(card.getBoundingClientRect().width) || 235, cv = document.createElement("canvas");
