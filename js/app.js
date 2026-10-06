@@ -801,7 +801,9 @@ function powderSwatch(cv, p, W, H) {
   const dpr = swatchDpr(W), cw = Math.round(W * dpr), ch = Math.round(H * dpr);
   cv.width = cw; cv.height = ch;
   const ctx = cv.getContext("2d");
-  const opt = { band: .2, soft: .05, rimStrength: .8, rimWidth: .14, spec: .9, cover: .8, tilt: -.5, ...p.powder };
+  const opt = { band: .2, soft: .05, rimStrength: .8, rimWidth: .14, spec: .9, cover: .8, veil: .4, peak: .72, tilt: -.5, ...p.powder };
+  // Layered over other polishes the film is thinner: softer reflection edges and a gentler glint.
+  if (opt.film || opt.light) { opt.soft = Math.max(opt.soft, opt.band * .6); opt.spec *= .4; }
   const lut = cols => { const L = new Float32Array(256 * 3); for (let i = 0; i < 256; i++) L.set(rgb(palette(cols, i / 255)), i * 3); return L; };
   const fallback = p.colors.slice(1);
   const IN = lut(opt.inside || fallback), RIM = lut(opt.rim || fallback), OUT = lut(opt.outside || fallback);
@@ -834,14 +836,27 @@ function powderSwatch(cv, p, W, H) {
         const dg = (dx - band * .45) / .006, spec = Math.min(1, opt.spec * Math.exp(-dg * dg) * (1 - Math.abs(ny - .5) * .5) + glint[y * cw + x]);
         r = Math.min(255, r * light); g = Math.min(255, g * light); b = Math.min(255, b * light);
         r += (255 - r) * spec; g += (255 - g) * spec; b += (255 - b) * spec;
-        // The film mostly covers its base, which shows through a little (cover).
-        r = base[0] + (r - base[0]) * opt.cover; g = base[1] + (g - base[1]) * opt.cover; b = base[2] + (b - base[2]) * opt.cover;
+        let al = 255;
+        if (opt.light) {
+          // The mirror's glow, on black, to be added as light (screen): only in the reflection, rim and glints.
+          const k = Math.min(1, Math.max(inside, rim) + spec);
+          r *= k; g *= k; b *= k;
+        } else if (opt.film) {
+          // Layered: a see-through film over the polish below. It covers most in the reflection, rim and glints,
+          // and only lays a thin pearly veil over the sides, so the color underneath shows through there.
+          // The film is thickest just beside the reflection too, where the side colors are strongest.
+          const near = .7 * Math.exp(-Math.pow(Math.max(0, ad - band) / .14, 2));
+          al = 255 * Math.min(1, opt.veil + (opt.peak - opt.veil) * Math.max(inside, rim, near) + spec);
+        } else {
+          // The film mostly covers its base, which shows through a little (cover).
+          r = base[0] + (r - base[0]) * opt.cover; g = base[1] + (g - base[1]) * opt.cover; b = base[2] + (b - base[2]) * opt.cover;
+        }
         const o = (y * cw + x) * 4;
-        px[o] = r; px[o + 1] = g; px[o + 2] = b; px[o + 3] = 255;
+        px[o] = r; px[o + 1] = g; px[o + 2] = b; px[o + 3] = al;
         if (st === 2) { // fill the skipped neighbours while animating
           const o2 = o + 4, o3 = o + cw * 4, o4 = o3 + 4;
-          if (x + 1 < cw) { px[o2] = r; px[o2 + 1] = g; px[o2 + 2] = b; px[o2 + 3] = 255; }
-          if (y + 1 < ch) { px[o3] = r; px[o3 + 1] = g; px[o3 + 2] = b; px[o3 + 3] = 255; if (x + 1 < cw) { px[o4] = r; px[o4 + 1] = g; px[o4 + 2] = b; px[o4 + 3] = 255; } }
+          if (x + 1 < cw) { px[o2] = r; px[o2 + 1] = g; px[o2 + 2] = b; px[o2 + 3] = al; }
+          if (y + 1 < ch) { px[o3] = r; px[o3 + 1] = g; px[o3 + 2] = b; px[o3 + 3] = al; if (x + 1 < cw) { px[o4] = r; px[o4 + 1] = g; px[o4 + 2] = b; px[o4 + 3] = al; } }
         }
       }
     }
@@ -1222,10 +1237,16 @@ const GRIP = `<svg width="10" height="16" viewBox="0 0 10 16" fill="currentColor
 //      so the reflective part stays concentrated and bright.
 // Each layer becomes a list of drawing steps: { cv, op, alpha } draws a rendered swatch, { fill, op, alpha }
 // fills a flat color. The swatch canvases stay live, so the stack can be redrawn as they animate.
-function sheerOps(q, W, H) {
+function sheerOps(q, W, H, under) {
   const ops = [], draw = (p, op, alpha) => { const cv = document.createElement("canvas"); renderSwatch(cv, p, W, H); ops.push({ cv, op, alpha }); };
-  // A chrome powder is a mirror film that mostly covers what's below (its cover share), letting a little show through.
-  if (isPowder(q)) { draw({ ...q, powder: { ...q.powder, cover: 1 } }, "source-over", (q.powder && q.powder.cover) || .8); return ops; }
+  // A chrome powder is a thin, see-through mirror film: strong in its reflection, a pearly veil on the sides
+  // that lets the color below show through (veil and peak in its powder settings).
+  // Its reflection also glows (screen), so it reads brighter and paler than the film's color alone.
+  if (isPowder(q)) {
+    draw({ ...q, powder: { ...q.powder, film: true } }, "source-over", 1);
+    draw({ ...q, powder: { ...q.powder, light: true } }, "screen", (q.powder && q.powder.glow) ?? .45);
+    return ops;
+  }
   const magnetic = q.effect === "magnetic" || q.effect === "sheermag" || !!q.glow; // drawn by the magnetic swatch
   if (!q.clear) ops.push({ fill: q.baseColor || q.colors[0], op: "multiply", alpha: .6 });
   if (magnetic) {
@@ -1235,7 +1256,8 @@ function sheerOps(q, W, H) {
     const blk = { ...q, ...shape, colors: ["#000000", ...q.colors.slice(1)], shadow: "#000000" };
     const sp = { density: 1, floor: .1, ...q.sparkle };
     draw({ ...blk, sparkle: { ...sp, density: 0 }, flakes: null }, "screen", .6);
-    draw({ ...blk, colors: q.colors.map(() => "#000000"), sparkle: { ...sp, density: sp.density * 2.2, floor: .04, mix: 1, dark: 0 } }, "screen", 1);
+    // Under a chrome powder the glitter is buried beneath the mirror film and barely shows.
+    draw({ ...blk, colors: q.colors.map(() => "#000000"), sparkle: { ...sp, density: sp.density * 2.2, floor: .04, mix: 1, dark: 0 } }, "screen", under ? .35 : 1);
   } else {
     // Other sheers (shimmers, glow in the dark): their shimmer on a black base, added as light.
     draw({ ...q, colors: q.baseColor ? q.colors : ["#000000", ...q.colors.slice(1)], baseColor: q.baseColor ? "#000000" : undefined, shadow: "#000000" }, "screen", .95);
@@ -1248,9 +1270,9 @@ function stackOps(W, H) {
   let start = 0;
   live.forEach((L, i) => { if (!isOverlay(L.polish)) start = i; });
   const ops = [];
-  live.slice(start).forEach((L, i) => {
+  live.slice(start).forEach((L, i, top) => {
     if (!i) { const cv = document.createElement("canvas"); renderSwatch(cv, L.polish, W, H); ops.push({ cv, op: "source-over", alpha: 1 }); }
-    else ops.push(...sheerOps(L.polish, W, H));
+    else ops.push(...sheerOps(L.polish, W, H, top.slice(i + 1).some(M => isPowder(M.polish))));
   });
   return ops;
 }
