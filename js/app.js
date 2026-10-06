@@ -1572,7 +1572,27 @@ function setSheet(expanded) {
   const b = $("#bench");
   b.classList.toggle("expanded", expanded); b.style.transform = "";
   $("#peek").setAttribute("aria-expanded", expanded);
-  if (!expanded) b.scrollTop = 0;
+  if (!expanded) { b.scrollTop = 0; $(".bench-title").blur(); }
+  // Wait out the tap that opened the sheet, so it doesn't also start editing the name.
+  clearTimeout(setSheet.t); setSheet.t = setTimeout(syncTitleEditing, expanded ? 400 : 0);
+}
+// A saved combo's name is edited in place by tapping it, with nothing on screen saying so. It saves when focus
+// leaves (Enter does the same, Escape cancels). On phones the collapsed sheet's header only opens the sheet.
+function syncTitleEditing() {
+  const t = $(".bench-title"), on = !!benchCombo() && (!sheetMQ.matches || $("#bench").classList.contains("expanded"));
+  if (on) { t.contentEditable = "plaintext-only"; t.spellcheck = false; } else t.removeAttribute("contenteditable");
+}
+{
+  const t = $(".bench-title");
+  t.addEventListener("keydown", e => {
+    if (e.key === "Enter") { e.preventDefault(); t.blur(); }
+    else if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); t.textContent = (benchCombo() || {}).name || ""; t.blur(); }
+  });
+  t.addEventListener("blur", () => {
+    const c = benchCombo(), name = t.textContent.replace(/\s+/g, " ").trim();
+    if (c && name && name !== c.name) { c.name = name; saveCombos(); renderShelf(); }
+    renderBench();
+  });
 }
 function pulsePeek() {
   if (!sheetMQ.matches || $("#bench").classList.contains("expanded")) return;
@@ -1583,11 +1603,12 @@ function pulsePeek() {
   const syncRole = () => { if (sheetMQ.matches) { peek.setAttribute("role", "button"); peek.tabIndex = 0; } else { peek.removeAttribute("role"); peek.removeAttribute("tabindex"); setSheet(false); } };
   sheetMQ.addEventListener("change", () => { syncRole(); renderBench(); });
   syncRole();
-  peek.onkeydown = e => { if (sheetMQ.matches && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); setSheet(!b.classList.contains("expanded")); } };
+  peek.onkeydown = e => { if (sheetMQ.matches && !e.target.isContentEditable && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); setSheet(!b.classList.contains("expanded")); } };
   // Drag the header to move the sheet with your finger; a short tap toggles it.
   let drag = null;
   head.addEventListener("pointerdown", e => {
     if (!sheetMQ.matches || e.target.closest("#closeBench")) return;
+    if (e.target.closest(".bench-title[contenteditable]")) return;  // editing the combo's name, not dragging
     drag = { y: e.clientY, moved: 0, open: b.classList.contains("expanded"), rest: b.offsetHeight - head.offsetHeight - 24 };
     head.setPointerCapture(e.pointerId); b.style.transition = "none";
   });
@@ -1615,7 +1636,9 @@ function renderBench() {
   // A saved combo's name replaces the "Layers" headline. Save combo only appears (rising in) once there's a second
   // layer; while the bench matches a saved combo the button becomes Delete combo instead.
   const saved = benchCombo(), btn = $("#saveCombo");
-  $(".bench-title").textContent = saved ? saved.name : "Layers";
+  const title = $(".bench-title");
+  if (document.activeElement !== title) title.textContent = saved ? saved.name : "Layers";
+  syncTitleEditing();
   const show = !!saved || liveLayers(bench.layers).length >= 2;
   if (show && btn.hidden) { btn.classList.remove("rise-in"); void btn.offsetWidth; btn.classList.add("rise-in"); }
   btn.hidden = !show;
