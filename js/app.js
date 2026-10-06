@@ -1003,8 +1003,7 @@ function buildPills() {
 
 // Favorite combos switches the page between the shelf and your saved combos (Figma node 2201:98964).
 $("#comboBtn").onclick = () => {
-  state.view = state.view === "combos" ? "shelf" : "combos";
-  $("#comboBtn").setAttribute("aria-pressed", state.view === "combos");
+  setView(state.view === "combos" ? "shelf" : "combos");
   scrollTo({ top: 0 });
   renderShelf();
 };
@@ -1012,11 +1011,19 @@ $("#comboBtn").onclick = () => {
 // there are any.
 // Favorite combos (and the divider after it) only appear once a combo is saved, rising in the first time.
 // Deleting the last combo while on the combos page goes back to the shelf.
+// The effect filters belong to the shelf: on the combos page they fade out and can't be used (and don't
+// filter the combos); the picks come back when you return to the shelf.
+function setView(v) {
+  state.view = v;
+  $("#comboBtn").setAttribute("aria-pressed", v === "combos");
+  $(".scope-bar").classList.toggle("combos-view", v === "combos");
+  $("#fxPills").inert = v === "combos";
+}
 function syncComboBtn() {
   const btn = $("#comboBtn"), none = !combos.length;
   if (!none && btn.hidden) { btn.classList.remove("rise-in"); void btn.offsetWidth; btn.classList.add("rise-in"); }
   btn.hidden = none; $(".scope-divider").hidden = none;
-  if (none && state.view === "combos") { state.view = "shelf"; btn.setAttribute("aria-pressed", false); renderShelf(); }
+  if (none && state.view === "combos") { setView("shelf"); renderShelf(); }
 }
 function renderComboThumbs() {
   syncComboBtn();
@@ -1091,8 +1098,7 @@ function renderShelf() {
 // Combos page (Figma node 2201:98964): one card per saved combo, newest first, with the layered swatch
 // (no button on it), the name and the month it was made, and its polishes as overlapping thumbnails. A
 // combo is deleted from the Layers pane once it's loaded there.
-// The effect filters still apply: a combo shows when any of its polishes has a picked effect. Tapping a
-// combo's swatch loads it into the Layers pane.
+// Tapping a combo's swatch loads it into the Layers pane.
 const MONTH = new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric" });
 function renderCombos() {
   const grid = $("#grid"); grid.innerHTML = "";
@@ -1109,8 +1115,7 @@ function renderCombos() {
     });
     return;
   }
-  const list = [...combos].reverse().filter(c => !state.fx.size || liveLayers(c.layers).some(L => effectsOf(L.polish).some(k => state.fx.has(k))));
-  if (!list.length) { grid.innerHTML = emptyMsg("No matches", "No saved combos with that effect yet."); return; }
+  const list = [...combos].reverse();
   for (const c of list) {
     const card = document.createElement("article"); card.className = "card rise combo-card"; riseIn(card);
     const wrap = document.createElement("div"); wrap.className = "swatch-wrap";

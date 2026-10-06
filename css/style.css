@@ -71,6 +71,9 @@ button, input, select { font: inherit; color: inherit; }
 .scope-divider { flex-shrink: 0; position: relative; width: 32px; height: 42px; }
 .scope-divider::before { content: ""; position: absolute; left: 50%; top: 1px; bottom: 1px; width: 1px; background: #ebebeb; }
 .fx-row { flex: none; margin: 0; padding: 0; overflow: visible; }
+/* On the combos page the divider and effect pills fade out (the filters only apply to the shelf). */
+.scope-divider, .fx-row { transition: opacity .25s ease; }
+.scope-bar.combos-view .scope-divider, .scope-bar.combos-view .fx-row { opacity: 0; pointer-events: none; }
 .fx-row .scope { background: #f2f2f2; }
 .fx-row .scope:hover { background: #e8e8e8; }
 .fx-row .scope[aria-pressed="true"] { background: var(--text); }
