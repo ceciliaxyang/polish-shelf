@@ -192,8 +192,9 @@ button, input, select { font: inherit; color: inherit; }
 .save-combo:hover { background: #000; }
 /* Save combo rises and fades in when the second layer arrives. */
 .save-combo.rise-in { animation: save-in .45s cubic-bezier(.2, .8, .2, 1) both; }
+.combo-btn.rise-in { animation: save-in .45s cubic-bezier(.2, .8, .2, 1) both; }
 @keyframes save-in { from { opacity: 0; transform: translateY(10px) scale(.92); } to { opacity: 1; transform: none; } }
-@media (prefers-reduced-motion: reduce) { .save-combo.rise-in { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .save-combo.rise-in, .combo-btn.rise-in { animation: none; } }
 .save-combo:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
 .layer { position: relative; display: flex; align-items: center; gap: 16px; height: 72px; border-bottom: 1px solid #ebebeb; transition: transform .2s cubic-bezier(.2, .8, .2, 1); user-select: none; -webkit-user-select: none; }
 /* Drag to reorder: on touch screens a grip is the handle to drag by; with a mouse there's no grip, just

@@ -1010,7 +1010,16 @@ $("#comboBtn").onclick = () => {
 };
 // The button's two thumbnails: the two newest saved combos, or the first polishes on the shelf until
 // there are any.
+// Favorite combos (and the divider after it) only appear once a combo is saved, rising in the first time.
+// Deleting the last combo while on the combos page goes back to the shelf.
+function syncComboBtn() {
+  const btn = $("#comboBtn"), none = !combos.length;
+  if (!none && btn.hidden) { btn.classList.remove("rise-in"); void btn.offsetWidth; btn.classList.add("rise-in"); }
+  btn.hidden = none; $(".scope-divider").hidden = none;
+  if (none && state.view === "combos") { state.view = "shelf"; btn.setAttribute("aria-pressed", false); renderShelf(); }
+}
 function renderComboThumbs() {
+  syncComboBtn();
   if (renderComboThumbs.hold) return; // a saved swatch is still flying in; it updates when it lands
   const picks = combos.slice(-2).reverse().map(c => ({ layers: c.layers }));
   for (const p of state.polishes) { if (picks.length >= 2) break; picks.push({ p }); }
@@ -1168,6 +1177,9 @@ $("#saveCombo").onclick = () => { const saved = benchCombo(); saved ? deleteComb
 // (or the phone's peek bar) and, in one smooth arc, shrinks into the Favorite combos button, which gives a little
 // bump as it lands and then shows the new combo in its thumbnails.
 function flyToCombos(layers) {
+  // The first save is what makes the button appear: show it right away (no rise, which would move the
+  // landing spot) so it's there to catch the swatch.
+  syncComboBtn(); $("#comboBtn").classList.remove("rise-in");
   const btn = $("#comboBtn"), tr = $("#comboThumbs").getBoundingClientRect();
   const src = [$("#stage"), $("#peekMini")].find(el => { const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0; });
   if (reduceMotion || !src || !tr.width) return;
