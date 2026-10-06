@@ -1164,8 +1164,8 @@ function saveCombo() {
   if (state.view === "combos") renderShelf();
 }
 $("#saveCombo").onclick = () => { const saved = benchCombo(); saved ? deleteCombo(saved) : saveCombo(); };
-// Like dropping something into a shopping cart: a copy of the layered swatch lifts off the Layers preview
-// (or the phone's peek bar), arcs over and shrinks into the Favorite combos button, which gives a little
+// Like dropping something into a shopping cart: a copy of the layered swatch leaves the Layers preview
+// (or the phone's peek bar) and, in one smooth arc, shrinks into the Favorite combos button, which gives a little
 // bump as it lands and then shows the new combo in its thumbnails.
 function flyToCombos(layers) {
   const btn = $("#comboBtn"), tr = $("#comboThumbs").getBoundingClientRect();
@@ -1187,12 +1187,17 @@ function flyToCombos(layers) {
   const s = target.width / from.width;
   const dx = target.left + target.width / 2 - (from.left + from.width / 2), dy = target.top + target.height / 2 - (from.top + from.height / 2);
   const end = 4 / s; // the thumbnails' 4px corners, measured before scaling
-  const fly = cv.animate([
-    { transform: "translate(0, 0) scale(1)", borderRadius: radius + "px", opacity: 1, offset: 0 },
-    { transform: `translate(0, -16px) scale(1.04)`, borderRadius: radius + "px", opacity: 1, offset: .12, easing: "cubic-bezier(.3, 0, .6, 1)" },
-    { transform: `translate(${dx * .55}px, ${dy * .7 - 70}px) scale(${Math.min(.5, s * 3)})`, borderRadius: (radius + end) / 2 + "px", opacity: 1, offset: .55, easing: "cubic-bezier(.5, 0, 1, 1)" },
-    { transform: `translate(${dx}px, ${dy}px) scale(${s})`, borderRadius: end + "px", opacity: .9, offset: 1 }
-  ], { duration: 800, easing: "linear", fill: "forwards" });
+  // One continuous motion that heads for the button from the first frame: a curve that rises toward the
+  // button's height first and then sweeps across into it (never above it and back), sampled into keyframes,
+  // with a single ease over the whole flight. It shrinks at an even visual rate (geometrically) while its
+  // corners round down to the thumbnail's.
+  const cx = dx * .3, cy = dy, N = 24, frames = [];
+  for (let i = 0; i <= N; i++) {
+    const t = i / N, u = 1 - t;
+    const x = 2 * u * t * cx + t * t * dx, y = 2 * u * t * cy + t * t * dy;
+    frames.push({ transform: `translate(${x}px, ${y}px) scale(${Math.pow(s, t)})`, borderRadius: radius + (end - radius) * t + "px", opacity: 1 - .1 * t });
+  }
+  const fly = cv.animate(frames, { duration: 650, easing: "cubic-bezier(.35, 0, .25, 1)", fill: "forwards" });
   const land = () => {
     cv.remove();
     renderComboThumbs.hold = false; renderComboThumbs();
