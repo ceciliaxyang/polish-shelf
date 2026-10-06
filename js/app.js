@@ -977,16 +977,7 @@ const saveCombos = () => save(KEY.saved, combos);
 const bench = { layers: load(KEY.bench, []) };
 const saveBench = () => save(KEY.bench, bench.layers);
 
-// A short message at the bottom of the screen. With an action (e.g. Undo) it gets a button and stays up longer.
-function toast(msg, action) {
-  const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast.t);
-  if (action) {
-    const b = document.createElement("button"); b.type = "button"; b.className = "toast-btn"; b.textContent = action.label;
-    b.onclick = () => { clearTimeout(toast.t); t.hidden = true; action.fn(); };
-    t.appendChild(b);
-  }
-  toast.t = setTimeout(() => t.hidden = true, action ? 5000 : 2600);
-}
+function toast(msg) { const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => t.hidden = true, 2600); }
 
 /* ---------- shelf ---------- */
 // How magnetic swatches rest: 0 = glass bead, 1 = cat eye, in between when no finish is picked (the finish pills were removed, so always in between).
@@ -1139,12 +1130,10 @@ function renderCombos() {
   }
   fillIdle();
 }
-// Deleting (from the Layers pane) is immediate, with Undo in the toast to put it back where it was. The
-// layers stay on the bench, so it can be saved again.
+// Deleting (from the Layers pane) is immediate. The layers stay on the bench, so it can be saved again.
 function deleteCombo(c) {
   const at = combos.indexOf(c); if (at < 0) return;
   combos.splice(at, 1); saveCombos(); renderShelf(); renderBench();
-  toast(`Deleted ${c.name}`, { label: "Undo", fn: () => { combos.splice(Math.min(at, combos.length), 0, c); saveCombos(); renderShelf(); renderBench(); } });
 }
 function loadCombo(c) {
   bench.layers = c.layers.map(l => ({ ...l })); saveBench();
@@ -1172,7 +1161,6 @@ function saveCombo() {
   if (liveLayers(bench.layers).length < 2 || benchCombo()) return;
   const c = { id: newId(), name: comboName(bench.layers), layers: bench.layers.map(l => ({ pid: l.pid, coats: l.coats })), createdAt: new Date().toISOString() };
   combos.push(c); saveCombos();
-  toast(`Saved as ${c.name}`);
   flyToCombos(c.layers);
   renderBench();
   if (state.view === "combos") renderShelf();
