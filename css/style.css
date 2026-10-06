@@ -62,13 +62,18 @@ button, input, select { font: inherit; color: inherit; }
 .scope:hover { background: #ededed; }
 .scope[aria-pressed="true"] { background: var(--text); color: #fff; mix-blend-mode: normal; }
 .scope:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
-/* Scoping bar (Figma node 2199:92318): "Filter" dropdown and "Combos" button on #f7f7f7, multiplied. Opening
-   the Filter dropdown slides the effect pills open in a row below it. */
-.scope-bar { flex-shrink: 0; align-items: stretch; }
-.scope-menu, .combo-btn { display: flex; align-items: center; justify-content: center; gap: 8px; }
-.scope-menu .chev { display: block; flex-shrink: 0; transition: transform .25s cubic-bezier(.2, .8, .2, 1); }
-.scope-menu[aria-expanded="true"] .chev { transform: rotate(180deg); }
-.combo-btn { padding: 4px 16px; border-radius: 100px; }
+/* Scoping bar (Figma node 2201:99032): the Favorite combos tab on #f7f7f7, a 32px-wide divider, then the
+   effect pills on #f2f2f2, which scroll sideways on their own when they run out of room. */
+.scope-bar { align-items: center; }
+.combo-btn { display: flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 4px 16px; border-radius: 100px; background: #f7f7f7; }
+.combo-btn:hover { background: #ededed; }
+.combo-btn[aria-pressed="true"] { background: var(--text); }
+.scope-divider { flex-shrink: 0; position: relative; width: 32px; height: 42px; }
+.scope-divider::before { content: ""; position: absolute; left: 50%; top: 1px; bottom: 1px; width: 1px; background: #ebebeb; }
+.fx-row { flex: 1; min-width: 0; margin: -8px 0; padding: 8px 8px 8px 0; }
+.fx-row .scope { background: #f2f2f2; }
+.fx-row .scope:hover { background: #e8e8e8; }
+.fx-row .scope[aria-pressed="true"] { background: var(--text); }
 /* Thumbnail Pair: two 19.25px cards, the back one turned 10deg and the front one -3deg. */
 .thumb-pair { position: relative; flex-shrink: 0; width: 28px; height: 28px; }
 .tp { position: absolute; width: 19.25px; height: 19.25px; border-radius: 4px; overflow: hidden; background: #fff;
@@ -79,18 +84,12 @@ button, input, select { font: inherit; color: inherit; }
 /* Once a swatch fills a card, drop the white card behind it: its edge showed as a thin light outline
    around the swatch's rounded corners. */
 .tp:has(canvas) { background: none; }
-.fx-reveal { display: grid; grid-template-rows: 0fr; margin-inline: -8px; transition: grid-template-rows .3s cubic-bezier(.2, .8, .2, 1), margin-bottom .3s cubic-bezier(.2, .8, .2, 1); }
-.fx-reveal.open { grid-template-rows: 1fr; margin-bottom: -8px; }
-.fx-inner { min-height: 0; overflow: hidden; }
-.fx-reveal .scopes { margin: 0; padding: 12px 8px 8px; opacity: 0; transform: translateY(-6px); transition: opacity .2s ease, transform .3s cubic-bezier(.2, .8, .2, 1); }
-.fx-reveal.open .scopes { opacity: 1; transform: none; }
-@media (prefers-reduced-motion: reduce) { .fx-reveal, .fx-reveal .scopes, .scope-menu .chev { transition: none; } }
 @media (max-width: 600px) {
   .shelf-head { gap: 16px; margin-bottom: 40px; padding: 0; }
   .shelf-title { font-size: 32px; line-height: 40px; letter-spacing: -.9px; }
   .scopes { margin-inline: -16px; padding-inline: 16px; }
-  .fx-reveal { margin-inline: -16px; }
-  .fx-reveal .scopes { margin: 0; padding: 12px 16px 8px; }
+  .scope-bar { overflow: visible; }
+  .fx-row { margin: -8px -16px -8px 0; padding: 8px 16px 8px 0; }
 }
 .pill.small { padding: 6px 12px; font-size: 13px; line-height: 16px; }
 
@@ -176,9 +175,9 @@ button, input, select { font: inherit; color: inherit; }
 .stage canvas { display: block; width: 100%; height: 100%; }
 .stage-layers { position: absolute; inset: 0; visibility: hidden; pointer-events: none; }
 .stage-layers canvas { position: absolute; inset: 0; }
-.layers { list-style: none; margin: 0; padding: 0; }
-/* Saved combo name over its layers, and the Save combo pill under them (Figma node 2200:97821). */
-.bench-name { margin: 0 0 -24px; padding: 12px 0 8px; font-size: 20px; font-weight: 500; color: #000; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.layers { flex-shrink: 0; list-style: none; margin: 0; padding: 0; }
+/* Saved combo name over its layers (16px above the rows), and the Save combo pill under them (Figma node 2200:97821). */
+.bench-name { flex-shrink: 0; margin: 0 0 -24px; padding: 12px 0 16px; font-size: 20px; font-weight: 500; color: #000; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .save-combo { flex-shrink: 0; align-self: flex-start; min-width: 56px; padding: 12px 16px; border: 0; border-radius: 32px; background: var(--text); color: #fff; font-size: 12px; line-height: 16px; font-weight: 500; cursor: pointer; transition: opacity .15s ease; }
 .save-combo:hover { background: #000; }
 .save-combo:disabled { opacity: .35; cursor: default; background: var(--text); }

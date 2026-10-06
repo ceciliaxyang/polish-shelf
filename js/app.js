@@ -1001,14 +1001,7 @@ function buildPills() {
   });
 }
 
-// The Filter dropdown shows and hides the effect pills underneath it.
-$("#filterBtn").onclick = () => {
-  const btn = $("#filterBtn"), open = btn.getAttribute("aria-expanded") !== "true";
-  btn.setAttribute("aria-expanded", open);
-  $("#fxReveal").classList.toggle("open", open);
-  $("#fxReveal").inert = !open;
-};
-// Combos switches the page between the shelf and your saved combos (Figma node 2201:98964).
+// Favorite combos switches the page between the shelf and your saved combos (Figma node 2201:98964).
 $("#comboBtn").onclick = () => {
   state.view = state.view === "combos" ? "shelf" : "combos";
   $("#comboBtn").setAttribute("aria-pressed", state.view === "combos");
