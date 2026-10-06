@@ -1087,12 +1087,14 @@ function renderShelf() {
 const MONTH = new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric" });
 function renderCombos() {
   const grid = $("#grid"); grid.innerHTML = "";
-  // Empty state (Figma node 2212:1478): three cards (the outer two tilted) over a line of copy, each showing one of the
-  // first polishes on the shelf as a placeholder swatch.
+  // Empty state (Figma node 2212:1478): three cards (the outer two tilted) over a line of copy, each showing
+  // a polish picked at random from the whole shelf (a new mix each time) as a placeholder swatch.
   if (!combos.length) {
     grid.innerHTML = `<div class="combos-empty"><div class="ce-cards" aria-hidden="true"><span class="ce-card ce-1"></span><span class="ce-card ce-2"></span><span class="ce-card ce-3"></span></div><p class="ce-text">Layer different polishes to make custom creations</p></div>`;
-    grid.querySelectorAll(".ce-card").forEach((card, i) => {
-      const p = state.polishes[i]; if (!p) return;
+    const pool = [...state.polishes];
+    grid.querySelectorAll(".ce-card").forEach(card => {
+      if (!pool.length) return;
+      const p = pool.splice(Math.floor(Math.random() * pool.length), 1)[0];
       const w = Math.round(card.getBoundingClientRect().width) || 235, cv = document.createElement("canvas");
       renderSwatch(cv, p, w, w); card.appendChild(cv);
     });
