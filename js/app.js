@@ -961,7 +961,7 @@ function glowSwatch(cv, p, W, H) {
 
 /* ---------- state ---------- */
 const $ = s => document.querySelector(s);
-const KEY = { combos: "polish-shelf:combos", bench: "polish-shelf:bench" };
+const KEY = { combos: "polish-shelf:combos", saved: "polish-shelf:saved-combos", bench: "polish-shelf:bench" };
 function load(key, fallback) { try { const v = JSON.parse(localStorage.getItem(key)); return v ?? fallback; } catch (e) { return fallback; } }
 function save(key, value) {
   try { localStorage.setItem(key, JSON.stringify(value)); }
@@ -969,9 +969,11 @@ function save(key, value) {
 }
 function newId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
 
-// Polishes come from js/polishes.js; the bench is saved in this browser. (Saved combos were removed for now;
-// any saved earlier stay in this browser's storage under KEY.combos.)
-const state = { polishes: typeof POLISHES !== "undefined" ? POLISHES : [], fx: new Set(), finish: null };
+// Polishes come from js/polishes.js; the bench and saved combos are kept in this browser. (Combos saved by
+// an older version, under KEY.combos, are left alone.) `view` is the shelf or the saved combos page.
+const state = { polishes: typeof POLISHES !== "undefined" ? POLISHES : [], fx: new Set(), finish: null, view: "shelf" };
+const combos = load(KEY.saved, []).filter(c => c && Array.isArray(c.layers));
+const saveCombos = () => save(KEY.saved, combos);
 const bench = { layers: load(KEY.bench, []) };
 const saveBench = () => save(KEY.bench, bench.layers);
 
@@ -997,23 +999,24 @@ $("#filterBtn").onclick = () => {
   $("#fxReveal").classList.toggle("open", open);
   $("#fxReveal").inert = !open;
 };
-// Combos opens (and closes) the Layers pane; on phones it opens the sheet all the way, expanding it if
-// it's resting as the peek bar.
+// Combos switches the page between the shelf and your saved combos (Figma node 2201:98964).
 $("#comboBtn").onclick = () => {
-  if (sheetMQ.matches && benchIsOpen() && !$("#bench").classList.contains("expanded")) return setSheet(true);
-  const open = !benchIsOpen();
-  setBenchOpen(open);
-  if (open && sheetMQ.matches) setSheet(true);
+  state.view = state.view === "combos" ? "shelf" : "combos";
+  $("#comboBtn").setAttribute("aria-pressed", state.view === "combos");
+  scrollTo({ top: 0 });
+  renderShelf();
 };
-// The button's two thumbnails: the top two layers, or the first polishes on the shelf until there are any.
+// The button's two thumbnails: the two newest saved combos, or the first polishes on the shelf until
+// there are any.
 function renderComboThumbs() {
-  $("#comboBtn").setAttribute("aria-pressed", benchIsOpen());
-  const picks = [...bench.layers].reverse().map(l => polishById(l.pid)).filter(Boolean);
-  for (const p of state.polishes) { if (picks.length >= 2) break; if (!picks.includes(p)) picks.push(p); }
+  const picks = combos.slice(-2).reverse().map(c => ({ layers: c.layers }));
+  for (const p of state.polishes) { if (picks.length >= 2) break; picks.push({ p }); }
   [".tp-front", ".tp-back"].forEach((sel, i) => {
-    const box = $("#comboThumbs " + sel), p = picks[i]; box.innerHTML = "";
-    if (!p) return;
-    const c = document.createElement("canvas"); renderSwatch(c, p, 40, 40); box.appendChild(c);
+    const box = $("#comboThumbs " + sel), pick = picks[i]; box.innerHTML = "";
+    if (!pick) return;
+    const c = document.createElement("canvas");
+    if (pick.p) renderSwatch(c, pick.p, 40, 40); else drawStack(c, pick.layers, 40, 40);
+    box.appendChild(c);
   });
 }
 
@@ -1036,6 +1039,7 @@ const PLUS_CHECK = `<svg width="20" height="20" viewBox="0 0 20 20" aria-hidden=
 function emptyMsg(title, body) { return `<div class="empty"><strong>${title}</strong>${body}</div>`; }
 
 function renderShelf() {
+  if (state.view === "combos") return renderCombos();
   const grid = $("#grid"); grid.innerHTML = "";
   if (!state.polishes.length) { grid.innerHTML = emptyMsg("Your shelf is empty", "Add your polishes to js/polishes.js and they will show up here."); return; }
   const list = state.polishes.filter(p => !state.fx.size || effectsOf(p).some(k => state.fx.has(k)));
@@ -1070,6 +1074,77 @@ function renderShelf() {
   syncSwatchButtons();
   fillIdle();
 }
+
+/* ---------- saved combos ---------- */
+// Combos page (Figma node 2201:98964): one card per saved combo, newest first, with the layered swatch,
+// a heart to mark favorites, the name and the month it was made, and its polishes as overlapping thumbnails.
+// The effect filters still apply: a combo shows when any of its polishes has a picked effect. Tapping a
+// combo's swatch loads it into the Layers pane.
+const HEART = `<svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M10 16.5s-6.5-3.9-6.5-8.6A3.4 3.4 0 0 1 10 6.1a3.4 3.4 0 0 1 6.5 1.8c0 4.7-6.5 8.6-6.5 8.6z"/></svg>`;
+const MONTH = new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric" });
+function renderCombos() {
+  const grid = $("#grid"); grid.innerHTML = "";
+  if (!combos.length) { grid.innerHTML = emptyMsg("No combos yet", "Layer a few polishes, then press Save combo in the Layers pane."); return; }
+  const list = [...combos].reverse().filter(c => !state.fx.size || liveLayers(c.layers).some(L => effectsOf(L.polish).some(k => state.fx.has(k))));
+  if (!list.length) { grid.innerHTML = emptyMsg("No matches", "No saved combos with that effect yet."); return; }
+  for (const c of list) {
+    const card = document.createElement("article"); card.className = "card rise combo-card"; riseIn(card);
+    const wrap = document.createElement("div"); wrap.className = "swatch-wrap";
+    const sw = document.createElement("canvas"); sw.className = "swatch";
+    const fav = document.createElement("button"); fav.type = "button"; fav.className = "swatch-btn fav-btn"; fav.innerHTML = HEART;
+    const syncFav = () => { fav.classList.toggle("on", !!c.fav); fav.setAttribute("aria-pressed", !!c.fav); fav.setAttribute("aria-label", `Favorite ${c.name}`); };
+    fav.onclick = () => { c.fav = !c.fav; saveCombos(); syncFav(); };
+    syncFav();
+    wrap.append(sw, fav);
+    sw.tabIndex = 0; sw.setAttribute("role", "button"); sw.setAttribute("aria-label", `Open ${c.name} in Layers`);
+    sw.onclick = () => loadCombo(c);
+    sw.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); loadCombo(c); } };
+    const text = document.createElement("div"); text.className = "card-text";
+    const title = document.createElement("div"); title.className = "card-title";
+    const nm = document.createElement("p"); nm.className = "name"; nm.textContent = c.name; nm.title = c.name;
+    const when = document.createElement("p"); when.className = "combo-date"; when.textContent = c.createdAt ? `Created ${MONTH.format(new Date(c.createdAt))}` : "";
+    title.append(nm, when);
+    const stack = document.createElement("div"); stack.className = "combo-stack";
+    liveLayers(c.layers).reverse().forEach(L => {
+      const t = document.createElement("canvas"); t.title = L.polish.name || ""; renderSwatch(t, L.polish, 40, 40); stack.appendChild(t);
+    });
+    text.append(title, stack);
+    card.append(wrap, text); grid.appendChild(card);
+    sw._combo = c; queueDraw(sw);
+  }
+  fillIdle();
+}
+function loadCombo(c) {
+  bench.layers = c.layers.map(l => ({ ...l })); saveBench();
+  if (!benchIsOpen()) setBenchOpen(true); else renderBench();
+  if (sheetMQ.matches) setSheet(true);
+}
+// The saved combo that matches what's on the bench right now, if any (same polishes, coats and order).
+const layerKey = layers => layers.map(l => l.pid + ":" + l.coats).join("|");
+const benchCombo = () => bench.layers.length ? combos.find(c => layerKey(c.layers) === layerKey(bench.layers)) : null;
+// Saved combos get a name made from their polishes: the first word of the base polish's name and the last
+// word of the top one ("Sand Viper" under "Bubbly Sunset" makes "Sand Sunset"), numbered if it's taken.
+// Numbers and punctuation are skipped ("404: Soul Not Found" counts as "Soul Not Found").
+const FILLER = new Set(["a", "an", "the", "of", "for", "and", "in", "on", "to", "my", "by"]);
+function comboName(layers) {
+  const words = l => { const p = polishById(l.pid); return ((p && p.name) || "").split(/\s+/).map(w => w.replace(/[^\p{L}'’-]/gu, "")).filter(w => /\p{L}/u.test(w) && !FILLER.has(w.toLowerCase())); };
+  const base = words(layers[0]), top = words(layers[layers.length - 1]);
+  let name = [base[0], top[top.length - 1]].filter(Boolean).join(" ");
+  if (!name || base[0] === top[top.length - 1]) name = [base[0], "Remix"].filter(Boolean).join(" ") || "Untitled combo";
+  const taken = new Set(combos.map(c => c.name));
+  let out = name, n = 2;
+  while (taken.has(out)) out = `${name} No. ${n++}`;
+  return out;
+}
+function saveCombo() {
+  if (liveLayers(bench.layers).length < 2 || benchCombo()) return;
+  const c = { id: newId(), name: comboName(bench.layers), layers: bench.layers.map(l => ({ pid: l.pid, coats: l.coats })), createdAt: new Date().toISOString() };
+  combos.push(c); saveCombos();
+  toast(`Saved as ${c.name}`);
+  renderBench();
+  if (state.view === "combos") renderShelf();
+}
+$("#saveCombo").onclick = saveCombo;
 
 /* ---------- detail view ---------- */
 // Tapping a swatch opens the detail view over a blurred shelf: the live swatch moves into the header's
@@ -1163,7 +1238,6 @@ function setBenchOpen(open) {
   else { b.classList.remove("open"); b._hideT = setTimeout(() => { if (!benchIsOpen()) b.hidden = true; }, sheetMQ.matches || reduceMotion ? 0 : 450); }
   $("#layout").classList.toggle("closed", !open);
   document.body.classList.toggle("bench-open", open);
-  $("#comboBtn").setAttribute("aria-pressed", open);
   setSheet(false);
   if (open) renderBench();
 }
@@ -1292,8 +1366,8 @@ function sheerOps(q, W, H, under) {
   }
   return ops;
 }
-function stackOps(W, H) {
-  const live = liveLayers(bench.layers);
+function stackOps(W, H, layers = bench.layers) {
+  const live = liveLayers(layers);
   if (!live.length || !W || !H) return null;
   let start = 0;
   live.forEach((L, i) => { if (!isOverlay(L.polish)) start = i; });
@@ -1313,12 +1387,17 @@ function composeOps(ctx, ops, ow, oh) {
   ctx.globalCompositeOperation = "source-over"; ctx.globalAlpha = 1;
 }
 function stackCanvas(W, H) {
-  const ops = stackOps(W, H);
-  if (!ops) return null;
-  const out = document.createElement("canvas"), dpr = swatchDpr(W);
+  const out = document.createElement("canvas");
+  return drawStack(out, bench.layers, W, H) ? out : null;
+}
+// Draws a layered stack (the bench, or a saved combo) into a canvas, as a still.
+function drawStack(out, layers, W, H) {
+  const ops = stackOps(W, H, layers);
+  if (!ops) return false;
+  const dpr = swatchDpr(W);
   out.width = Math.round(W * dpr); out.height = Math.round(H * dpr);
   composeOps(out.getContext("2d"), ops, out.width, out.height);
-  return out;
+  return true;
 }
 // The big preview is interactive: the pointer (or the touch-screen drift) is passed to every layer's own
 // swatch, each animates the way it does on the shelf (magnetic glow following, thermal shifting, glints
@@ -1404,6 +1483,14 @@ function renderBench() {
   if (!benchIsOpen()) return;
   $("#bench").classList.toggle("no-layers", !liveLayers(bench.layers).length);
   renderStage();
+  // A saved combo's name sits above its layers; Save combo needs two or more polishes and turns into
+  // "Saved" while the bench matches a saved combo.
+  const saved = benchCombo(), btn = $("#saveCombo");
+  $("#benchName").hidden = !saved; $("#benchName").textContent = saved ? saved.name : "";
+  btn.hidden = !bench.layers.length;
+  btn.disabled = !!saved || liveLayers(bench.layers).length < 2;
+  btn.textContent = saved ? "Saved" : "Save combo";
+  btn.title = !saved && btn.disabled ? "Add another polish to save a combo" : "";
   const ol = $("#layers"); ol.innerHTML = "";
   if (!bench.layers.length) { ol.innerHTML = `<li class="hint">Start adding polishes to see how they layer together.</li>`; return; }
   // Listed top layer first, like a stack seen from above.
@@ -1476,7 +1563,9 @@ function fillIdle() {
 }
 function drawCard(cv) {
   const w = Math.round(cv.parentElement.clientWidth) || 240;
-  cv._w = w; renderSwatch(cv, cv._p, w, Math.round(w * 260 / 240));
+  cv._w = w;
+  if (cv._combo) drawStack(cv, cv._combo.layers, w, Math.round(w * 260 / 240));
+  else renderSwatch(cv, cv._p, w, Math.round(w * 260 / 240));
 }
 let redrawTimer = 0;
 // After a resize, only swatches on screen are redrawn right away; the others are marked undrawn and
