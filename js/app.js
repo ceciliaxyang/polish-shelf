@@ -1142,15 +1142,44 @@ function loadCombo(c) {
 // The saved combo that matches what's on the bench right now, if any (same polishes, coats and order).
 const layerKey = layers => layers.map(l => l.pid + ":" + l.coats).join("|");
 const benchCombo = () => bench.layers.length ? combos.find(c => layerKey(c.layers) === layerKey(bench.layers)) : null;
-// Saved combos get a name made from their polishes: the first word of the base polish's name and the last
-// word of the top one ("Sand Viper" under "Bubbly Sunset" makes "Sand Sunset"), numbered if it's taken.
-// Numbers and punctuation are skipped ("404: Soul Not Found" counts as "Soul Not Found").
-const FILLER = new Set(["a", "an", "the", "of", "for", "and", "in", "on", "to", "my", "by"]);
+// Saved combos are named like a new polish: a "flavor" word from an upper layer in front of the base polish's
+// key noun ("Aurora Pink" over "Jewel Beetle" makes "Pink Beetle"). The flavor comes from the highest layer
+// that isn't a sheer topper, so "Pandora's Box" under "Bubbly" over "Banished Prince" makes "Pandora's Prince".
+// - A base shaped "Queen of the Dead" keeps its shape and takes the flavor's noun: "Queen of the Halo".
+// - A one-word flavor goes after the noun ("Knight Lily"), fused when it's a compound: Moonjelly gives "Ragejelly".
+// - The flavor is a color word if the name ends in one ("Pink"), else every word before its noun, hyphenated
+//   ("Green-eyed", "Pandora's"), or the noun itself made singular ("Petals for a Narcissist" gives "Petal").
+// Numbers, punctuation and phrases after "of", "for", "not" and the like are skipped. Names get "No. 2" if taken.
+const NAME_STOP = new Set(["a", "an", "the", "of", "for", "and", "in", "on", "to", "my", "by", "not", "will", "have", "is", "am", "are", "i", "you"]);
+const COLOR_WORDS = new Set(["pink", "red", "blue", "green", "purple", "violet", "lilac", "lavender", "gold", "golden", "silver", "orange", "yellow", "teal", "white", "black", "rose", "coral", "peach", "plum", "berry", "ruby", "jade", "bronze", "copper", "sunset", "aurora"]);
+const COMPOUND_HEADS = ["moon", "sun", "star", "sky", "sea", "snow", "fire", "rain"];
+const cap = w => w.charAt(0).toUpperCase() + w.slice(1);
+function nameParts(p) {
+  let s = ((p && p.name) || "").replace(/^[^\p{L}]*\d[^\p{L}]*/u, "").split(",")[0];  // "404: Soul…" → "Soul…"; "Knight, Knave…" → "Knight"
+  const words = s.split(/\s+/).map(w => w.replace(/[^\p{L}'’-]/gu, "")).filter(w => /\p{L}/u.test(w));
+  const stop = words.findIndex((w, i) => i > 0 && NAME_STOP.has(w.toLowerCase()));
+  const head = stop > 0 ? words.slice(0, stop) : words.filter(w => !NAME_STOP.has(w.toLowerCase()));
+  return { words, head, noun: head[head.length - 1] || "", ofShape: stop > 0 && words[stop].toLowerCase() === "of" ? words.slice(0, stop + (words[stop + 1] && words[stop + 1].toLowerCase() === "the" ? 2 : 1)).join(" ") : "" };
+}
+function flavorWord(f) {
+  const last = f.head[f.head.length - 1] || "";
+  if (f.head.length > 1 && COLOR_WORDS.has(last.toLowerCase())) return last;
+  if (f.head.length > 1) return f.head.slice(0, -1).map((w, i) => i ? w.toLowerCase() : w).join("-");
+  return /[^s]s$/i.test(last) ? last.slice(0, -1) : last;
+}
 function comboName(layers) {
-  const words = l => { const p = polishById(l.pid); return ((p && p.name) || "").split(/\s+/).map(w => w.replace(/[^\p{L}'’-]/gu, "")).filter(w => /\p{L}/u.test(w) && !FILLER.has(w.toLowerCase())); };
-  const base = words(layers[0]), top = words(layers[layers.length - 1]);
-  let name = [base[0], top[top.length - 1]].filter(Boolean).join(" ");
-  if (!name || base[0] === top[top.length - 1]) name = [base[0], "Remix"].filter(Boolean).join(" ") || "Untitled combo";
+  const live = layers.filter(l => polishById(l.pid));
+  const baseP = polishById((live[0] || layers[0] || {}).pid), uppers = live.slice(1).map(l => polishById(l.pid));
+  const flavorP = [...uppers].reverse().find(p => p.effect !== "sheermag") || uppers[uppers.length - 1];
+  const base = nameParts(baseP), fl = nameParts(flavorP);
+  let name;
+  if (!base.noun || !fl.noun) name = base.noun || fl.noun || "Untitled";
+  else if (base.ofShape) name = `${base.ofShape} ${fl.noun}`;
+  else if (fl.words.length === 1) {
+    const w = fl.words[0], pre = COMPOUND_HEADS.find(h => w.toLowerCase().startsWith(h) && w.length > h.length + 2);
+    name = pre ? base.noun + w.slice(pre.length).toLowerCase() : `${base.noun} ${w}`;
+  } else name = `${cap(flavorWord(fl))} ${base.noun}`;
+  if (baseP === flavorP || name.toLowerCase() === base.noun.toLowerCase()) name = `${base.noun} Remix`;
   const taken = new Set(combos.map(c => c.name));
   let out = name, n = 2;
   while (taken.has(out)) out = `${name} No. ${n++}`;
