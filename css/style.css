@@ -62,10 +62,34 @@ button, input, select { font: inherit; color: inherit; }
 .scope:hover { background: #e8e8e8; }
 .scope[aria-pressed="true"] { background: var(--text); color: #fff; }
 .scope:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+/* Scoping bar (Figma node 2199:92318): "Filter" dropdown and "Combos" button on #f7f7f7, multiplied. Opening
+   the Filter dropdown slides the effect pills open in a row below it. */
+.scope-bar { flex-shrink: 0; align-items: stretch; }
+.scope-menu, .combo-btn { display: flex; align-items: center; justify-content: center; gap: 8px; background: #f7f7f7; mix-blend-mode: multiply; }
+.scope-menu:hover, .combo-btn:hover { background: #ededed; }
+.scope-menu .chev { display: block; flex-shrink: 0; transition: transform .25s cubic-bezier(.2, .8, .2, 1); }
+.scope-menu[aria-expanded="true"] .chev { transform: rotate(180deg); }
+.combo-btn { padding: 4px 16px; border-radius: 100px; }
+.combo-btn[aria-pressed="true"] { background: var(--text); color: #fff; mix-blend-mode: normal; }
+/* Thumbnail Pair: two 19.25px cards, the back one turned 10deg and the front one -3deg. */
+.thumb-pair { position: relative; flex-shrink: 0; width: 28px; height: 28px; }
+.tp { position: absolute; width: 19.25px; height: 19.25px; border-radius: 4px; overflow: hidden; background: #fff;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, .02), 0 1.75px 3.5px rgba(0, 0, 0, .16); }
+.tp-back { left: 6.5px; top: 2.4px; transform: rotate(10deg); }
+.tp-front { left: 1.58px; top: 7.14px; transform: rotate(-3deg); }
+.tp canvas { display: block; width: 100%; height: 100%; }
+.fx-reveal { display: grid; grid-template-rows: 0fr; margin-inline: -8px; transition: grid-template-rows .3s cubic-bezier(.2, .8, .2, 1), margin-bottom .3s cubic-bezier(.2, .8, .2, 1); }
+.fx-reveal.open { grid-template-rows: 1fr; margin-bottom: -8px; }
+.fx-inner { min-height: 0; overflow: hidden; }
+.fx-reveal .scopes { margin: 0; padding: 8px; opacity: 0; transform: translateY(-6px); transition: opacity .2s ease, transform .3s cubic-bezier(.2, .8, .2, 1); }
+.fx-reveal.open .scopes { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) { .fx-reveal, .fx-reveal .scopes, .scope-menu .chev { transition: none; } }
 @media (max-width: 600px) {
   .shelf-head { gap: 16px; margin-bottom: 40px; padding: 0; }
   .shelf-title { font-size: 32px; line-height: 40px; letter-spacing: -.9px; }
   .scopes { margin-inline: -16px; padding-inline: 16px; }
+  .fx-reveal { margin-inline: -16px; }
+  .fx-reveal .scopes { margin: 0; padding-inline: 16px; }
 }
 .pill.small { padding: 6px 12px; font-size: 13px; line-height: 16px; }
 

@@ -28,7 +28,17 @@
           <div class="shelf-top">
             <h1 class="shelf-title">Polish shelf</h1>
           </div>
-          <div class="scopes" id="fxPills" role="group" aria-label="Filter by effect"></div>
+          <!-- Scoping bar (Figma "Action Header Web", node 2199:92318): a Filter dropdown that reveals the effect
+               pills below it, and a Combos button that opens the Layers pane. -->
+          <div class="scoping">
+            <div class="scopes scope-bar">
+              <button type="button" class="scope scope-menu" id="filterBtn" aria-expanded="false" aria-controls="fxPills">Filter<svg class="chev" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5"/></svg></button>
+              <button type="button" class="scope combo-btn" id="comboBtn" aria-pressed="false" aria-controls="bench"><span class="thumb-pair" id="comboThumbs" aria-hidden="true"><span class="tp tp-back"></span><span class="tp tp-front"></span></span>Combos</button>
+            </div>
+            <div class="fx-reveal" id="fxReveal" inert>
+              <div class="fx-inner"><div class="scopes" id="fxPills" role="group" aria-label="Filter by effect"></div></div>
+            </div>
+          </div>
         </header>
         <div class="grid" id="grid"></div>
       </main>

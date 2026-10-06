@@ -990,6 +990,33 @@ function buildPills() {
   });
 }
 
+// The Filter dropdown shows and hides the effect pills underneath it.
+$("#filterBtn").onclick = () => {
+  const btn = $("#filterBtn"), open = btn.getAttribute("aria-expanded") !== "true";
+  btn.setAttribute("aria-expanded", open);
+  $("#fxReveal").classList.toggle("open", open);
+  $("#fxReveal").inert = !open;
+};
+// Combos opens (and closes) the Layers pane; on phones it opens the sheet all the way, expanding it if
+// it's resting as the peek bar.
+$("#comboBtn").onclick = () => {
+  if (sheetMQ.matches && benchIsOpen() && !$("#bench").classList.contains("expanded")) return setSheet(true);
+  const open = !benchIsOpen();
+  setBenchOpen(open);
+  if (open && sheetMQ.matches) setSheet(true);
+};
+// The button's two thumbnails: the top two layers, or the first polishes on the shelf until there are any.
+function renderComboThumbs() {
+  $("#comboBtn").setAttribute("aria-pressed", benchIsOpen());
+  const picks = [...bench.layers].reverse().map(l => polishById(l.pid)).filter(Boolean);
+  for (const p of state.polishes) { if (picks.length >= 2) break; if (!picks.includes(p)) picks.push(p); }
+  [".tp-front", ".tp-back"].forEach((sel, i) => {
+    const box = $("#comboThumbs " + sel), p = picks[i]; box.innerHTML = "";
+    if (!p) return;
+    const c = document.createElement("canvas"); renderSwatch(c, p, 40, 40); box.appendChild(c);
+  });
+}
+
 function toggleFx(k) {
   state.fx.has(k) ? state.fx.delete(k) : state.fx.add(k);
   document.querySelectorAll("#fxPills .scope").forEach(b => b.setAttribute("aria-pressed", state.fx.has(b.dataset.fx)));
@@ -1136,6 +1163,7 @@ function setBenchOpen(open) {
   else { b.classList.remove("open"); b._hideT = setTimeout(() => { if (!benchIsOpen()) b.hidden = true; }, sheetMQ.matches || reduceMotion ? 0 : 450); }
   $("#layout").classList.toggle("closed", !open);
   document.body.classList.toggle("bench-open", open);
+  $("#comboBtn").setAttribute("aria-pressed", open);
   setSheet(false);
   if (open) renderBench();
 }
@@ -1372,6 +1400,7 @@ function pulsePeek() {
 
 function renderBench() {
   syncSwatchButtons();
+  renderComboThumbs();
   if (!benchIsOpen()) return;
   $("#bench").classList.toggle("no-layers", !liveLayers(bench.layers).length);
   renderStage();
