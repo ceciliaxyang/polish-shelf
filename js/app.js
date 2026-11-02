@@ -1,3 +1,13 @@
+/* ---------- page address ---------- */
+// While a polish is open the address bar shows its share link (p/<id>/, which carries its link preview).
+// Pin the base URL first so the site's relative paths (photos, saved data) still resolve from there.
+(() => {
+  const b = document.querySelector("base") || document.head.appendChild(document.createElement("base"));
+  b.setAttribute("href", new URL(".", location.href).href);
+})();
+const SITE_ROOT = document.baseURI;
+const SITE_TITLE = document.title;
+
 /* ---------- vocabulary ---------- */
 const EFFECTS = {
   sheer:     "Sheer",
@@ -1335,6 +1345,8 @@ function openDetail(p, card) {
   m.classList.add("open");
   card.style.visibility = "hidden";
   m.focus({ preventScroll: true }); // keyboard focus moves into the dialog (Tab reaches the buttons)
+  history.replaceState(null, "", SITE_ROOT + "p/" + encodeURIComponent(p.id) + "/");
+  document.title = `${p.name} · ${p.brand} · ${SITE_TITLE}`;
 }
 
 // The photo row must stay below the header, whose height depends on the text; measure it.
@@ -1347,6 +1359,7 @@ function closeDetail() {
   const stage = $("#mStage"), card = detail.card;
   const done = () => { m.hidden = true; m.classList.remove("open"); stage.style.transform = ""; document.body.style.overflow = ""; if (card) card.style.visibility = ""; };
   m.classList.remove("open"); document.body.classList.remove("detail-open");
+  history.replaceState(null, "", SITE_ROOT); document.title = SITE_TITLE;
   if (card && card.isConnected) {
     const from = stage.getBoundingClientRect(), to = card.getBoundingClientRect();
     stage.style.transform = `translate(${to.left - from.left}px, ${to.top - from.top}px) scale(${to.width / from.width}, ${to.height / from.height})`;
@@ -1808,3 +1821,10 @@ addEventListener("scroll", () => { if (!shapeRaf) shapeRaf = requestAnimationFra
 buildPills();
 renderShelf();
 renderBench();
+// A share link (p/<id>/) sends visitors here as ?p=<id>: open that polish.
+(() => {
+  const id = new URLSearchParams(location.search).get("p"), p = id && polishById(id);
+  if (!p) return;
+  const card = [...document.querySelectorAll("#grid .swatch")].find(cv => cv._p === p);
+  if (card) openDetail(p, card.parentElement);
+})();

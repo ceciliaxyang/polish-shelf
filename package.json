@@ -5,9 +5,11 @@
   "private": true,
   "scripts": {
     "dev": "serve -l 3001 .",
-    "start": "serve -l 3001 ."
+    "start": "serve -l 3001 .",
+    "previews": "node scripts/build-previews.js"
   },
   "devDependencies": {
-    "serve": "^14.2.4"
+    "serve": "^14.2.4",
+    "playwright": "^1.48.0"
   }
 }

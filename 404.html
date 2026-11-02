@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Polish shelf</title>
+  <!-- A polish share link (p/<id>/) whose page hasn't been built yet still opens the polish. Anything else goes to the shelf. -->
+  <script>
+    (() => {
+      const m = location.pathname.match(/^(.*?\/)p\/([^/]+)\/?$/);
+      location.replace(m ? m[1] + "?p=" + m[2] : "/polish-shelf/");
+    })();
+  </script>
+</head>
+<body><a href="/polish-shelf/">Polish shelf</a></body>
+</html>
