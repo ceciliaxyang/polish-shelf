@@ -40,8 +40,8 @@
     grain    optional, magnetic: strength of the fine light/dark speckle in the body (default .06)
 */
 // Shelf order (the shelf shows polishes in this order): Mooncat magnetics, Bee's Knees magnetics, bold
-// Mooncat shimmers, holographic, thermals and neutral shimmers, sheers, glow in the dark, ILNP magnetics, then
-// chrome powders.
+// Mooncat shimmers, holographic, thermals and neutral shimmers, cremes, sheers, glow in the dark, ILNP magnetics,
+// Awesome Nail Polish (ANLAC) magnetics, Cracked Polish magnetics, then chrome powders.
 const POLISHES = [
   {
     id: "mooncat-404-soul-not-found",
@@ -102,6 +102,31 @@ const POLISHES = [
     glitter: "#e0301c",        // red glitter
     url: "https://www.mooncat.com/products/jasmine-dragon",
     photos: ["images/mooncat-jasmine-dragon/1.jpg", "images/mooncat-jasmine-dragon/2.jpg", "images/mooncat-jasmine-dragon/3.jpg", "images/mooncat-jasmine-dragon/4.jpg"], // saved from the product page
+  },
+  {
+    id: "mooncat-misa-misa",
+    name: "Misa Misa",
+    brand: "Mooncat",
+    effect: "magnetic",
+    tone: "bold",
+    // Black base with a purple-pink magnetic flash that pulls into a bright magenta-violet line (from the product page and order photo)
+    colors: ["#120a16", "#f27ae0", "#d64ac8", "#9a34c0", "#5a2080"],
+    shadow: "#060308",
+    url: "https://www.mooncat.com/products/misa-misa",
+  },
+  {
+    id: "mooncat-nyarrian-nights",
+    name: "Nyarrian Nights",
+    brand: "Mooncat",
+    effect: "magnetic",
+    effects: ["magnetic", "multichrome"],
+    tone: "bold",
+    // Purple base with blue shimmer; multichrome magnetic flash shifting pink to red-orange (from the product page and order photo)
+    colors: ["#3c1468", "#ffa040", "#ff5a2a", "#f2365e", "#d43aa8", "#7a3ae0"],
+    shimmer: "#4a62ff",
+    shadow: "#22083e",
+    grad: [.6, .6],            // hotter orange in the middle, pink to violet toward the edges
+    url: "https://www.mooncat.com/products/nyarrian-nights",
   },
   {
     id: "beesknees-knight-knave-optimist",
@@ -283,6 +308,20 @@ const POLISHES = [
     photos: ["images/mooncat-bottled-rage/1.jpg", "images/mooncat-bottled-rage/2.jpg", "images/mooncat-bottled-rage/3.jpg", "images/mooncat-bottled-rage/4.jpg"], // saved from the product page
   },
   {
+    id: "mooncat-manchineel-tree",
+    name: "Manchineel Tree",
+    brand: "Mooncat",
+    effect: "shimmer",
+    effects: ["shimmer"],
+    tone: "bold",
+    // Solar (sun-activated) neon green with orange shimmer that warms up in sunlight (from the product page and order photo)
+    baseColor: "#b8f02c",
+    colors: ["#f8a040", "#e8d030", "#c8f040", "#9ae028"], // shimmer colors [facing, ..., sides]
+    shadow: "#6a9c10",
+    chrome: { grain: 1.2, cover: .7, sheen: 1.2 },
+    url: "https://www.mooncat.com/products/manchineel-tree",
+  },
+  {
     id: "mooncat-banished-prince",
     name: "Banished Prince",
     brand: "Mooncat",
@@ -410,6 +449,42 @@ const POLISHES = [
     photos: ["images/mooncat-petals-for-a-narcissist/1.jpg", "images/mooncat-petals-for-a-narcissist/2.jpg", "images/mooncat-petals-for-a-narcissist/3.jpg", "images/mooncat-petals-for-a-narcissist/4.jpg"], // saved from the product page
   },
   {
+    id: "mooncat-pearl-clutcher",
+    name: "Pearl Clutcher",
+    brand: "Mooncat",
+    effect: "shimmer",
+    effects: ["shimmer", "multichrome"],
+    tone: "neutral",
+    // Pearly white shimmer that reads almost chrome, shifting through light pink, lilac and green with the angle (from the product page and order photo)
+    baseColor: "#e6e4e8",
+    colors: ["#fbf6fa", "#f4d4e4", "#dcd0f2", "#cfe8dc"], // shimmer colors [facing, ..., sides]
+    shadow: "#b8b4c0",
+    chrome: { grain: 1, cover: 1, sheen: 1.6 },
+    url: "https://www.mooncat.com/products/pearl-clutcher",
+  },
+  {
+    id: "mooncat-into-the-abyss",
+    name: "Into The Abyss",
+    brand: "Mooncat",
+    effect: "creme",
+    effects: ["creme"],
+    tone: "neutral",
+    // Deep midnight blue creme (from the product page and order photo)
+    colors: ["#141c3c"],
+    url: "https://www.mooncat.com/products/into-the-abyss",
+  },
+  {
+    id: "mooncat-kafkaesque",
+    name: "Kafkaesque",
+    brand: "Mooncat",
+    effect: "creme",
+    effects: ["creme"],
+    tone: "neutral",
+    // Espresso black creme from the Tale of 5 Lacquers set: reads near black with a brown undertone (from the order photo)
+    colors: ["#22161a"],
+    url: "https://www.mooncat.com/products/kafkaesque",
+  },
+  {
     id: "mooncat-moonjelly",
     name: "Moonjelly",
     brand: "Mooncat",
@@ -427,6 +502,17 @@ const POLISHES = [
     sparkle: { density: 2.4, size: 1, floor: .4, mix: .8, colors: ["#ffffff", "#8cc8ff", "#c8a0ff", "#ffb0dc", "#a8f0d0"] },
     url: "https://www.mooncat.com/products/moonjelly",
     photos: ["images/mooncat-moonjelly/1.jpg", "images/mooncat-moonjelly/2.jpg", "images/mooncat-moonjelly/3.jpg", "images/mooncat-moonjelly/4.jpg"], // saved from the product page
+  },
+  {
+    id: "cracked-taro-milk-tea",
+    name: "Taro Milk Tea",
+    brand: "Cracked Polish",
+    effect: "sheer",
+    effects: ["sheer"],
+    tone: "neutral",
+    // Buildable, milky lavender grey jelly (from the product description and order photo)
+    colors: ["#a596bc"],
+    url: "https://crackedpolish.com/products/taro-milk-tea",
   },
   {
     id: "mooncat-the-avatar-state",
@@ -537,6 +623,130 @@ const POLISHES = [
     sparkle: { density: 6, floor: .35, deep: .35, size: 1.4, dark: .1, colors: ["#ffffff", "#ffffff", "#ffffff", "#f2f2f6", "#ff9fd0", "#8fd0ff", "#b4ff9c"], mix: .8 },
     url: "https://www.ilnp.com/bubbly-silver-magnetic-topper-nail-polish/",
     photos: ["images/ilnp-bubbly/1.jpg", "images/ilnp-bubbly/2.jpg", "images/ilnp-bubbly/3.jpg", "images/ilnp-bubbly/4.jpg"], // saved from the product page
+  },
+  {
+    id: "anp-great-purple-emperor",
+    name: "Great Purple Emperor",
+    brand: "Awesome Nail Polish",
+    effect: "magnetic",
+    tone: "bold",
+    // ANLAC butterfly collection: deep violet base with a bright purple magnetic flash (from the order photo; the product page wouldn't load)
+    colors: ["#2a1250", "#c78cff", "#9a52f0", "#6a2ad0"],
+    shadow: "#160830",
+    url: "https://awesomenailpolish.com/products/great-purple-emperor",
+  },
+  {
+    id: "anp-sapphire-morpho",
+    name: "Sapphire Morpho",
+    brand: "Awesome Nail Polish",
+    effect: "magnetic",
+    tone: "bold",
+    // ANLAC butterfly collection: blue base with fine blue-purple magnetic shimmer (from the product page and order photo)
+    colors: ["#0e2a78", "#7ab8ff", "#4a7cf0", "#5a50d8"],
+    shadow: "#06143e",
+    url: "https://awesomenailpolish.com/products/sapphire-morpho",
+  },
+  {
+    id: "anp-balinese-swallowtail",
+    name: "Balinese Swallowtail",
+    brand: "Awesome Nail Polish",
+    effect: "magnetic",
+    effects: ["magnetic", "multichrome"],
+    tone: "bold",
+    // ANLAC butterfly collection: purple base with fine lime-green to blue magnetic shimmer (from the product page and order photo)
+    colors: ["#4a1c6c", "#c8f05a", "#7ee08a", "#4ab4d8", "#4a6ad0"],
+    shadow: "#260c3c",
+    url: "https://awesomenailpolish.com/products/balinese-swallowtail",
+  },
+  {
+    id: "anp-yotsuya-kaidan",
+    name: "Yotsuya Kaidan",
+    brand: "Awesome Nail Polish",
+    effect: "sheermag",
+    effects: ["sheer", "magnetic"],
+    tone: "bold",
+    // Semi-sheer lime with pink, orange and gold micro flakes and a silver magnetic shimmer that reads green over the lime (from the product page and order photo)
+    colors: ["#b4c048", "#f2ffd0", "#d8f0a0", "#c4d878"],
+    shadow: "#7a8a28",
+    flakes: ["#ff9ac0", "#ffb060", "#f2d060"],
+    sparkle: { density: 3, floor: .3, size: 1.1, colors: ["#ffffff", "#ff9ac0", "#ffb060", "#f2d060"], mix: .7 },
+    url: "https://awesomenailpolish.com/products/yotsuya-kaidan",
+  },
+  {
+    id: "anp-peachy",
+    name: "Peachy",
+    brand: "Awesome Nail Polish",
+    effect: "sheermag",
+    effects: ["sheer", "magnetic"],
+    tone: "neutral",
+    // Sheer peach with orange, gold and green shimmer and a pale yellow magnetic flash (from the product page and order photo)
+    colors: ["#e8b4a0", "#fff4c0", "#f8e0a0", "#f0c890"],
+    shadow: "#c08c7c",
+    sparkle: { density: 2.5, floor: .3, colors: ["#ffffff", "#ffb060", "#f2d060", "#a8e080"], mix: .7 },
+    url: "https://awesomenailpolish.com/products/peachy",
+  },
+  {
+    id: "anp-cranberry-iced-tea",
+    name: "Cranberry Iced Tea",
+    brand: "Awesome Nail Polish",
+    effect: "sheermag",
+    effects: ["sheer", "magnetic"],
+    tone: "bold",
+    // Semi-sheer berry pink with a golden magnetic shimmer (from the product page and order photo)
+    colors: ["#b8204a", "#ffd870", "#f4a850", "#e07048"],
+    shadow: "#6e0c28",
+    url: "https://awesomenailpolish.com/products/cranberry-iced-tea",
+  },
+  {
+    id: "anp-fuyu",
+    name: "Fuyu",
+    brand: "Awesome Nail Polish",
+    effect: "sheermag",
+    effects: ["sheer", "magnetic"],
+    tone: "neutral",
+    // "Winter": pale pink with a silky blue-purple magnetic shimmer (from the product page and order photo)
+    colors: ["#e2c4d0", "#d4d0ff", "#b4b0f4", "#c8b4e8"],
+    shadow: "#b498b0",
+    url: "https://awesomenailpolish.com/products/fuyu",
+  },
+  {
+    id: "cracked-lahar",
+    name: "Lahar",
+    brand: "Cracked Polish",
+    effect: "magnetic",
+    effects: ["magnetic", "shimmer"],
+    tone: "bold",
+    // Ash grey with a hint of purple and a copper-to-gold magnetic shift (from the product page and order photo)
+    colors: ["#4a4450", "#f4c870", "#e0a050", "#c07040", "#8a5a6a"],
+    shadow: "#26222c",
+    url: "https://crackedpolish.com/products/lahar",
+  },
+  {
+    id: "cracked-scorchy",
+    name: "Scorchy",
+    brand: "Cracked Polish",
+    effect: "sheermag",
+    effects: ["sheer", "magnetic"],
+    tone: "bold",
+    clear: true,               // a magnetic topper: layered over another polish, mostly its flash shows
+    // Fiery orange magnetic topper with a soft gold shift and flickers of black speckle (from the product page and order photo)
+    colors: ["#3a2418", "#ffc060", "#ff8a2a", "#e05a1a"],
+    shadow: "#1a0e08",
+    sparkle: { density: 1.5, dark: .3 },
+    url: "https://crackedpolish.com/products/scorchy",
+  },
+  {
+    id: "cracked-hibernaty",
+    name: "Hibernaty",
+    brand: "Cracked Polish",
+    effect: "sheermag",
+    effects: ["sheer", "magnetic"],
+    tone: "bold",
+    clear: true,               // a magnetic topper: layered over another polish, mostly its flash shows
+    // Bronze magnetic topper; reviewers describe a warm pinky rose-gold shift (from the product page and order photo)
+    colors: ["#3a2a24", "#f4c09a", "#d48a6a", "#b0604a"],
+    shadow: "#1c120e",
+    url: "https://crackedpolish.com/products/hibernaty",
   },
   {
     id: "prettydiva-sunset-chrome-powder",
