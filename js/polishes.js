@@ -14,6 +14,7 @@
     shimmer: "#b0308a",        // optional: shimmer color suspended in the base
     shadow: "#2a1232",         // optional, magnetic: the deep color the edges fall into (default: darker base)
     clear: true,               // optional: a clear topper; on top of other layers only its shimmer and sparkle show
+    sheer: true,               // optional: layers as a sheer (what's underneath shows through) without showing the Sheer pill
   },
 
   Colors per effect:
@@ -630,7 +631,8 @@ const POLISHES = [
     name: "Moonjelly",
     brand: "Mooncat",
     effect: "shimmer",
-    effects: ["sheer", "flakies"],
+    effects: ["shimmer", "flakies"],
+    sheer: true,               // still layers as a sheer: what's underneath shows through
     tone: "bold",
     // Sheer white jelly with electric blue shimmer, blue-to-green-to-purple-to-pink flakies and micro holo glitter;
     // on the nail it glows pinky-lilac with blue where the light hits (from the product page and photos)

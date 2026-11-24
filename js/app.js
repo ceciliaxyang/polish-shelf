@@ -1425,7 +1425,7 @@ function syncSwatchButtons() {
 
 const TRASH = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 4h11M6.25 4V2.5h3.5V4M4 4l.6 9.1a1 1 0 0 0 1 .9h4.8a1 1 0 0 0 1-.9L12 4M6.75 6.75v4.5M9.25 6.75v4.5"/></svg>`;
 // A sheer polish lets what's underneath show through; anything else covers it completely.
-const isSheer = p => p.effect === "sheer" || p.effect === "sheermag" || effectsOf(p).includes("sheer");
+const isSheer = p => p.sheer || p.effect === "sheer" || p.effect === "sheermag" || effectsOf(p).includes("sheer");
 // Chrome powders are rubbed onto the top of a manicure: always the topmost layer, over whatever is below.
 const isPowder = p => p.effect === "powder";
 const isOverlay = p => isSheer(p) || isPowder(p);
