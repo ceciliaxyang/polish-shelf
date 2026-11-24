@@ -21,6 +21,7 @@ const EFFECTS = {
   duochrome: "Duochrome",
   multichrome: "Multichrome",
   thermal:   "Thermal",
+  solar:     "Solar",
   glow:      "Glow in the dark",
   powder:    "Chrome powder",
 };
