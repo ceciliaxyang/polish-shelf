@@ -243,7 +243,7 @@ const POLISHES = [
     name: "Scorchy",
     brand: "Cracked Polish",
     effect: "sheermag",
-    effects: ["sheer", "magnetic"],
+    effects: ["magtopper"],
     tone: "bold",
     clear: true,               // a magnetic topper: layered over another polish, mostly its flash shows
     // Fiery orange magnetic topper with a soft gold shift, edging yellow-green at the sides, with black speckle (from the product page and photos)
@@ -258,7 +258,7 @@ const POLISHES = [
     name: "Hibernaty",
     brand: "Cracked Polish",
     effect: "sheermag",
-    effects: ["sheer", "magnetic"],
+    effects: ["magtopper"],
     tone: "bold",
     clear: true,               // a magnetic topper: layered over another polish, mostly its flash shows
     // Bronze magnetic topper with pink shimmer: a rose-pink to copper flash, sheer mauve-brown over a bare nail (from the product page and photos)
