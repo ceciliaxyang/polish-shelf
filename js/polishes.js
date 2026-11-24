@@ -110,7 +110,7 @@ const POLISHES = [
     effect: "magnetic",
     tone: "bold",
     // Black base with a purple-pink magnetic flash that pulls into a bright magenta-violet line (from the product page and order photo)
-    colors: ["#120a16", "#f27ae0", "#d64ac8", "#9a34c0", "#5a2080"],
+    colors: ["#120a16", "#e48af4", "#c454dc", "#9a34c0", "#5a2080"],
     shadow: "#060308",
     url: "https://www.mooncat.com/products/misa-misa",
     photos: ["images/mooncat-misa-misa/1.jpg", "images/mooncat-misa-misa/2.jpg", "images/mooncat-misa-misa/3.jpg", "images/mooncat-misa-misa/4.jpg"], // saved from the product page
@@ -123,9 +123,9 @@ const POLISHES = [
     effects: ["magnetic", "multichrome"],
     tone: "bold",
     // Purple base with blue shimmer; multichrome magnetic flash shifting pink to red-orange (from the product page and order photo)
-    colors: ["#3c1468", "#ffa040", "#ff5a2a", "#f2365e", "#d43aa8", "#7a3ae0"],
+    colors: ["#2a1270", "#ff8a40", "#ff4a3a", "#e83a8a", "#a040e0", "#4a5aff"],
     shimmer: "#4a62ff",
-    shadow: "#22083e",
+    shadow: "#160840",
     grad: [.6, .6],            // hotter orange in the middle, pink to violet toward the edges
     url: "https://www.mooncat.com/products/nyarrian-nights",
     photos: ["images/mooncat-nyarrian-nights/1.jpg", "images/mooncat-nyarrian-nights/2.jpg", "images/mooncat-nyarrian-nights/3.jpg", "images/mooncat-nyarrian-nights/4.jpg"], // saved from the product page
@@ -138,8 +138,8 @@ const POLISHES = [
     effects: ["magnetic", "multichrome"],
     tone: "bold",
     // ANLAC butterfly collection: purple base with fine red-orange-green magnetic shimmer (from the product page and photos)
-    colors: ["#3a167a", "#d49aff", "#b066f0", "#d86a8a", "#c89a50", "#7ab860"], // purple flash with warm and green edges
-    shadow: "#160830",
+    colors: ["#4c1892", "#e2a4ff", "#c072f2", "#e07a8a", "#c89a50", "#7ab860"], // purple flash with warm and green edges
+    shadow: "#280c5a",
     url: "https://awesomenailpolish.com/products/great-purple-emperor",
     photos: ["images/anp-great-purple-emperor/1.jpg", "images/anp-great-purple-emperor/2.jpg", "images/anp-great-purple-emperor/3.jpg", "images/anp-great-purple-emperor/4.jpg"], // saved from the product page
   },
@@ -149,9 +149,9 @@ const POLISHES = [
     brand: "Awesome Nail Polish",
     effect: "magnetic",
     tone: "bold",
-    // ANLAC butterfly collection: blue base with fine blue-purple magnetic shimmer (from the product page and order photo)
-    colors: ["#0e2a78", "#7ab8ff", "#4a7cf0", "#5a50d8"],
-    shadow: "#06143e",
+    // ANLAC butterfly collection: blue base with fine blue-purple magnetic shimmer that reads teal-cyan on the nail (from the product page and photos)
+    colors: ["#0e4088", "#6ad8f4", "#34a8e2", "#4a7ae0"],
+    shadow: "#062048",
     url: "https://awesomenailpolish.com/products/sapphire-morpho",
     photos: ["images/anp-sapphire-morpho/1.jpg", "images/anp-sapphire-morpho/2.jpg", "images/anp-sapphire-morpho/3.jpg", "images/anp-sapphire-morpho/4.jpg"], // saved from the product page
   },
@@ -162,9 +162,9 @@ const POLISHES = [
     effect: "magnetic",
     effects: ["magnetic", "multichrome"],
     tone: "bold",
-    // ANLAC butterfly collection: purple base with fine lime-green to blue magnetic shimmer (from the product page and order photo)
-    colors: ["#4a1c6c", "#c8f05a", "#7ee08a", "#4ab4d8", "#4a6ad0"],
-    shadow: "#260c3c",
+    // ANLAC butterfly collection: plum purple base with fine lime-green magnetic shimmer and a hint of blue at the edges (from the product page and photos)
+    colors: ["#5c2c50", "#dce494", "#bccc6a", "#8eac62", "#6a8a92"],
+    shadow: "#34142e",
     url: "https://awesomenailpolish.com/products/balinese-swallowtail",
     photos: ["images/anp-balinese-swallowtail/1.jpg", "images/anp-balinese-swallowtail/2.jpg", "images/anp-balinese-swallowtail/3.jpg", "images/anp-balinese-swallowtail/4.jpg"], // saved from the product page
   },
@@ -175,9 +175,9 @@ const POLISHES = [
     effect: "sheermag",
     effects: ["sheer", "magnetic"],
     tone: "bold",
-    // Semi-sheer lime with pink, orange and gold micro flakes and a silver magnetic shimmer that reads green over the lime (from the product page and order photo)
-    colors: ["#b4c048", "#f2ffd0", "#d8f0a0", "#c4d878"],
-    shadow: "#7a8a28",
+    // Semi-sheer olive lime with pink, orange and gold micro flakes; the magnetic shimmer flashes pink at its core and green at the sides (from the product page and photos)
+    colors: ["#8c9c48", "#f4b4dc", "#dc8ec8", "#c8e0a0", "#a4bc6c"],
+    shadow: "#5a6a28",
     flakes: ["#ff9ac0", "#ffb060", "#f2d060"],
     sparkle: { density: 3, floor: .3, size: 1.1, colors: ["#ffffff", "#ff9ac0", "#ffb060", "#f2d060"], mix: .7 },
     url: "https://awesomenailpolish.com/products/yotsuya-kaidan",
@@ -191,8 +191,8 @@ const POLISHES = [
     effects: ["sheer", "magnetic"],
     tone: "neutral",
     // Sheer peach with orange, gold and green shimmer and a pale yellow magnetic flash (from the product page and order photo)
-    colors: ["#e8b4a0", "#fff4c0", "#f8e0a0", "#f0c890"],
-    shadow: "#c08c7c",
+    colors: ["#d8a888", "#f8cc78", "#f0a254", "#e6c6a0"],
+    shadow: "#b08068",
     sparkle: { density: 2.5, floor: .3, colors: ["#ffffff", "#ffb060", "#f2d060", "#a8e080"], mix: .7 },
     url: "https://awesomenailpolish.com/products/peachy",
     photos: ["images/anp-peachy/1.jpg", "images/anp-peachy/2.jpg", "images/anp-peachy/3.jpg", "images/anp-peachy/4.jpg"], // saved from the product page
@@ -204,9 +204,9 @@ const POLISHES = [
     effect: "sheermag",
     effects: ["sheer", "magnetic"],
     tone: "bold",
-    // Semi-sheer berry pink with a golden magnetic shimmer (from the product page and order photo)
-    colors: ["#b8204a", "#ffd870", "#f4a850", "#e07048"],
-    shadow: "#6e0c28",
+    // Semi-sheer berry red with a golden magnetic shimmer that reads orange on the nail (from the product page and photos)
+    colors: ["#c82c40", "#ffb462", "#ff8a3a", "#f06040"],
+    shadow: "#8a1a2a",
     url: "https://awesomenailpolish.com/products/cranberry-iced-tea",
     photos: ["images/anp-cranberry-iced-tea/1.jpg", "images/anp-cranberry-iced-tea/2.jpg", "images/anp-cranberry-iced-tea/3.jpg", "images/anp-cranberry-iced-tea/4.jpg"], // saved from the product page
   },
@@ -217,9 +217,9 @@ const POLISHES = [
     effect: "sheermag",
     effects: ["sheer", "magnetic"],
     tone: "neutral",
-    // "Winter": pale pink with a silky blue-purple magnetic shimmer (from the product page and order photo)
-    colors: ["#e2c4d0", "#d4d0ff", "#b4b0f4", "#c8b4e8"],
-    shadow: "#b498b0",
+    // "Winter": pale pink-lilac with a silky blue-purple magnetic shimmer (from the product page and photos)
+    colors: ["#c8a8c2", "#d0c8ff", "#aea6f2", "#e2bce2"],
+    shadow: "#987890",
     url: "https://awesomenailpolish.com/products/fuyu",
     photos: ["images/anp-fuyu/1.jpg", "images/anp-fuyu/2.jpg", "images/anp-fuyu/3.jpg", "images/anp-fuyu/4.jpg"], // saved from the product page
   },
@@ -230,9 +230,9 @@ const POLISHES = [
     effect: "magnetic",
     effects: ["magnetic", "shimmer"],
     tone: "bold",
-    // Ash grey with a hint of purple and a copper-to-gold magnetic shift (from the product page and order photo)
-    colors: ["#4a4450", "#f4c870", "#e0a050", "#c07040", "#8a5a6a"],
-    shadow: "#26222c",
+    // Ash grey with a hint of purple; the magnetic flash reads red-orange to copper in the photos (from the product page and photos)
+    colors: ["#5e5c66", "#ff8a48", "#f45a2c", "#d23c2a", "#8a4652"],
+    shadow: "#36343c",
     url: "https://crackedpolish.com/products/lahar",
     photos: ["images/cracked-lahar/1.jpg", "images/cracked-lahar/2.jpg", "images/cracked-lahar/3.jpg", "images/cracked-lahar/4.jpg"], // saved from the product page
   },
@@ -244,8 +244,8 @@ const POLISHES = [
     effects: ["sheer", "magnetic"],
     tone: "bold",
     clear: true,               // a magnetic topper: layered over another polish, mostly its flash shows
-    // Fiery orange magnetic topper with a soft gold shift and flickers of black speckle (from the product page and order photo)
-    colors: ["#3a2418", "#ffc060", "#ff8a2a", "#e05a1a"],
+    // Fiery orange magnetic topper with a soft gold shift, edging yellow-green at the sides, with black speckle (from the product page and photos)
+    colors: ["#2e2420", "#ffc040", "#ff8418", "#f05e12", "#c8b030"],
     shadow: "#1a0e08",
     sparkle: { density: 1.5, dark: .3 },
     url: "https://crackedpolish.com/products/scorchy",
@@ -259,9 +259,10 @@ const POLISHES = [
     effects: ["sheer", "magnetic"],
     tone: "bold",
     clear: true,               // a magnetic topper: layered over another polish, mostly its flash shows
-    // Bronze magnetic topper; reviewers describe a warm pinky rose-gold shift (from the product page and order photo)
-    colors: ["#3a2a24", "#f4c09a", "#d48a6a", "#b0604a"],
-    shadow: "#1c120e",
+    // Bronze magnetic topper with pink shimmer: a rose-pink to copper flash, sheer mauve-brown over a bare nail (from the product page and photos)
+    colors: ["#4a3a3e", "#ffc8bc", "#f496ae", "#e08a80", "#c07a52"],
+    shadow: "#241a1c",
+    sparkle: { density: 2.5, floor: .3, colors: ["#ffd0dc", "#ff9ec0", "#f0b090"], mix: .8 }, // pink shimmer through the sheer base
     url: "https://crackedpolish.com/products/hibernaty",
     photos: ["images/cracked-hibernaty/1.jpg", "images/cracked-hibernaty/2.jpg", "images/cracked-hibernaty/3.jpg", "images/cracked-hibernaty/4.jpg"], // saved from the product page
   },
@@ -549,8 +550,8 @@ const POLISHES = [
     effects: ["solar", "shimmer"],
     tone: "bold",
     // Solar (UV-activated): neon green indoors, warming toward orange in sunlight, with orange shimmer (from the product page and photos)
-    colors: ["#b4ee2a", "#f2a83a"], // [indoors, in sunlight]
-    thermal: { rest: .3 },     // mostly green at rest, like it looks indoors
+    colors: ["#b4ee2a", "#e8a820"], // [indoors, in sunlight]
+    thermal: { rest: .15 }, // mostly green at rest, like it looks indoors
     shimmer: "#ffa64a",
     url: "https://www.mooncat.com/products/manchineel-tree",
     photos: ["images/mooncat-manchineel-tree/1.jpg", "images/mooncat-manchineel-tree/2.jpg", "images/mooncat-manchineel-tree/3.jpg", "images/mooncat-manchineel-tree/4.jpg"], // saved from the product page
@@ -608,7 +609,7 @@ const POLISHES = [
     effects: ["creme"],
     tone: "neutral",
     // Deep midnight blue creme (from the product page and order photo)
-    colors: ["#141c3c"],
+    colors: ["#1a2656"],
     url: "https://www.mooncat.com/products/into-the-abyss",
     photos: ["images/mooncat-into-the-abyss/1.jpg", "images/mooncat-into-the-abyss/2.jpg", "images/mooncat-into-the-abyss/3.jpg", "images/mooncat-into-the-abyss/4.jpg"], // saved from the product page
   },
@@ -620,7 +621,7 @@ const POLISHES = [
     effects: ["creme"],
     tone: "neutral",
     // Deep brown creme from the Tale of 5 Lacquers set (from the product page and photos)
-    colors: ["#33201b"],
+    colors: ["#2c1c19"],
     url: "https://www.mooncat.com/products/kafkaesque",
     photos: ["images/mooncat-kafkaesque/1.jpg", "images/mooncat-kafkaesque/2.jpg", "images/mooncat-kafkaesque/3.jpg", "images/mooncat-kafkaesque/4.jpg"], // saved from the product page
   },
@@ -650,8 +651,8 @@ const POLISHES = [
     effect: "sheer",
     effects: ["sheer"],
     tone: "neutral",
-    // Buildable, milky lavender grey jelly (from the product description and order photo)
-    colors: ["#a596bc"],
+    // Buildable, milky lavender grey jelly that reads mauve on the nail (from the product description and photos)
+    colors: ["#bc9cb8"],
     url: "https://crackedpolish.com/products/taro-milk-tea",
     photos: ["images/cracked-taro-milk-tea/1.jpg", "images/cracked-taro-milk-tea/2.jpg", "images/cracked-taro-milk-tea/3.jpg", "images/cracked-taro-milk-tea/4.jpg"], // saved from the product page
   },
