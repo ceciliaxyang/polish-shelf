@@ -175,7 +175,7 @@ const POLISHES = [
     name: "Yotsuya Kaidan",
     brand: "Awesome Nail Polish",
     effect: "sheermag",
-    effects: ["sheer", "magnetic"],
+    effects: ["magtopper"],
     tone: "bold",
     // Semi-sheer olive lime with pink, orange and gold micro flakes; the magnetic shimmer flashes pink at its core and green at the sides (from the product page and photos)
     colors: ["#8c9c48", "#f4b4dc", "#dc8ec8", "#c8e0a0", "#a4bc6c"],
@@ -190,7 +190,7 @@ const POLISHES = [
     name: "Peachy",
     brand: "Awesome Nail Polish",
     effect: "sheermag",
-    effects: ["sheer", "magnetic"],
+    effects: ["magtopper"],
     tone: "neutral",
     // Sheer peach with orange, gold and green shimmer and a pale yellow magnetic flash (from the product page and order photo)
     colors: ["#d8a888", "#f8cc78", "#f0a254", "#e6c6a0"],
@@ -204,7 +204,7 @@ const POLISHES = [
     name: "Cranberry Iced Tea",
     brand: "Awesome Nail Polish",
     effect: "sheermag",
-    effects: ["sheer", "magnetic"],
+    effects: ["magtopper"],
     tone: "bold",
     // Semi-sheer berry red with a golden magnetic shimmer that reads orange on the nail (from the product page and photos)
     colors: ["#c82c40", "#ffb462", "#ff8a3a", "#f06040"],
@@ -217,7 +217,7 @@ const POLISHES = [
     name: "Fuyu",
     brand: "Awesome Nail Polish",
     effect: "sheermag",
-    effects: ["sheer", "magnetic"],
+    effects: ["magtopper"],
     tone: "neutral",
     // "Winter": pale pink-lilac with a silky blue-purple magnetic shimmer (from the product page and photos)
     colors: ["#c8a8c2", "#d0c8ff", "#aea6f2", "#e2bce2"],
