@@ -113,6 +113,7 @@ const POLISHES = [
     colors: ["#120a16", "#f27ae0", "#d64ac8", "#9a34c0", "#5a2080"],
     shadow: "#060308",
     url: "https://www.mooncat.com/products/misa-misa",
+    photos: ["images/mooncat-misa-misa/1.jpg", "images/mooncat-misa-misa/2.jpg", "images/mooncat-misa-misa/3.jpg", "images/mooncat-misa-misa/4.jpg"], // saved from the product page
   },
   {
     id: "mooncat-nyarrian-nights",
@@ -127,6 +128,7 @@ const POLISHES = [
     shadow: "#22083e",
     grad: [.6, .6],            // hotter orange in the middle, pink to violet toward the edges
     url: "https://www.mooncat.com/products/nyarrian-nights",
+    photos: ["images/mooncat-nyarrian-nights/1.jpg", "images/mooncat-nyarrian-nights/2.jpg", "images/mooncat-nyarrian-nights/3.jpg", "images/mooncat-nyarrian-nights/4.jpg"], // saved from the product page
   },
   {
     id: "beesknees-knight-knave-optimist",
@@ -320,6 +322,7 @@ const POLISHES = [
     shadow: "#6a9c10",
     chrome: { grain: 1.2, cover: .7, sheen: 1.2 },
     url: "https://www.mooncat.com/products/manchineel-tree",
+    photos: ["images/mooncat-manchineel-tree/1.jpg", "images/mooncat-manchineel-tree/2.jpg", "images/mooncat-manchineel-tree/3.jpg", "images/mooncat-manchineel-tree/4.jpg"], // saved from the product page
   },
   {
     id: "mooncat-banished-prince",
@@ -461,6 +464,7 @@ const POLISHES = [
     shadow: "#b8b4c0",
     chrome: { grain: 1, cover: 1, sheen: 1.6 },
     url: "https://www.mooncat.com/products/pearl-clutcher",
+    photos: ["images/mooncat-pearl-clutcher/1.jpg", "images/mooncat-pearl-clutcher/2.jpg", "images/mooncat-pearl-clutcher/3.jpg", "images/mooncat-pearl-clutcher/4.jpg"], // saved from the product page
   },
   {
     id: "mooncat-into-the-abyss",
@@ -472,6 +476,7 @@ const POLISHES = [
     // Deep midnight blue creme (from the product page and order photo)
     colors: ["#141c3c"],
     url: "https://www.mooncat.com/products/into-the-abyss",
+    photos: ["images/mooncat-into-the-abyss/1.jpg", "images/mooncat-into-the-abyss/2.jpg", "images/mooncat-into-the-abyss/3.jpg", "images/mooncat-into-the-abyss/4.jpg"], // saved from the product page
   },
   {
     id: "mooncat-kafkaesque",
@@ -480,9 +485,10 @@ const POLISHES = [
     effect: "creme",
     effects: ["creme"],
     tone: "neutral",
-    // Espresso black creme from the Tale of 5 Lacquers set: reads near black with a brown undertone (from the order photo)
-    colors: ["#22161a"],
+    // Deep brown creme from the Tale of 5 Lacquers set (from the product page and photos)
+    colors: ["#33201b"],
     url: "https://www.mooncat.com/products/kafkaesque",
+    photos: ["images/mooncat-kafkaesque/1.jpg", "images/mooncat-kafkaesque/2.jpg", "images/mooncat-kafkaesque/3.jpg", "images/mooncat-kafkaesque/4.jpg"], // saved from the product page
   },
   {
     id: "mooncat-moonjelly",
@@ -513,6 +519,7 @@ const POLISHES = [
     // Buildable, milky lavender grey jelly (from the product description and order photo)
     colors: ["#a596bc"],
     url: "https://crackedpolish.com/products/taro-milk-tea",
+    photos: ["images/cracked-taro-milk-tea/1.jpg", "images/cracked-taro-milk-tea/2.jpg", "images/cracked-taro-milk-tea/3.jpg", "images/cracked-taro-milk-tea/4.jpg"], // saved from the product page
   },
   {
     id: "mooncat-the-avatar-state",
@@ -629,11 +636,13 @@ const POLISHES = [
     name: "Great Purple Emperor",
     brand: "Awesome Nail Polish",
     effect: "magnetic",
+    effects: ["magnetic", "multichrome"],
     tone: "bold",
-    // ANLAC butterfly collection: deep violet base with a bright purple magnetic flash (from the order photo; the product page wouldn't load)
-    colors: ["#2a1250", "#c78cff", "#9a52f0", "#6a2ad0"],
+    // ANLAC butterfly collection: purple base with fine red-orange-green magnetic shimmer (from the product page and photos)
+    colors: ["#3a167a", "#d49aff", "#b066f0", "#d86a8a", "#c89a50", "#7ab860"], // purple flash with warm and green edges
     shadow: "#160830",
     url: "https://awesomenailpolish.com/products/great-purple-emperor",
+    photos: ["images/anp-great-purple-emperor/1.jpg", "images/anp-great-purple-emperor/2.jpg", "images/anp-great-purple-emperor/3.jpg", "images/anp-great-purple-emperor/4.jpg"], // saved from the product page
   },
   {
     id: "anp-sapphire-morpho",
@@ -645,6 +654,7 @@ const POLISHES = [
     colors: ["#0e2a78", "#7ab8ff", "#4a7cf0", "#5a50d8"],
     shadow: "#06143e",
     url: "https://awesomenailpolish.com/products/sapphire-morpho",
+    photos: ["images/anp-sapphire-morpho/1.jpg", "images/anp-sapphire-morpho/2.jpg", "images/anp-sapphire-morpho/3.jpg", "images/anp-sapphire-morpho/4.jpg"], // saved from the product page
   },
   {
     id: "anp-balinese-swallowtail",
@@ -657,6 +667,7 @@ const POLISHES = [
     colors: ["#4a1c6c", "#c8f05a", "#7ee08a", "#4ab4d8", "#4a6ad0"],
     shadow: "#260c3c",
     url: "https://awesomenailpolish.com/products/balinese-swallowtail",
+    photos: ["images/anp-balinese-swallowtail/1.jpg", "images/anp-balinese-swallowtail/2.jpg", "images/anp-balinese-swallowtail/3.jpg", "images/anp-balinese-swallowtail/4.jpg"], // saved from the product page
   },
   {
     id: "anp-yotsuya-kaidan",
@@ -671,6 +682,7 @@ const POLISHES = [
     flakes: ["#ff9ac0", "#ffb060", "#f2d060"],
     sparkle: { density: 3, floor: .3, size: 1.1, colors: ["#ffffff", "#ff9ac0", "#ffb060", "#f2d060"], mix: .7 },
     url: "https://awesomenailpolish.com/products/yotsuya-kaidan",
+    photos: ["images/anp-yotsuya-kaidan/1.jpg", "images/anp-yotsuya-kaidan/2.jpg", "images/anp-yotsuya-kaidan/3.jpg", "images/anp-yotsuya-kaidan/4.jpg"], // saved from the product page
   },
   {
     id: "anp-peachy",
@@ -684,6 +696,7 @@ const POLISHES = [
     shadow: "#c08c7c",
     sparkle: { density: 2.5, floor: .3, colors: ["#ffffff", "#ffb060", "#f2d060", "#a8e080"], mix: .7 },
     url: "https://awesomenailpolish.com/products/peachy",
+    photos: ["images/anp-peachy/1.jpg", "images/anp-peachy/2.jpg", "images/anp-peachy/3.jpg", "images/anp-peachy/4.jpg"], // saved from the product page
   },
   {
     id: "anp-cranberry-iced-tea",
@@ -696,6 +709,7 @@ const POLISHES = [
     colors: ["#b8204a", "#ffd870", "#f4a850", "#e07048"],
     shadow: "#6e0c28",
     url: "https://awesomenailpolish.com/products/cranberry-iced-tea",
+    photos: ["images/anp-cranberry-iced-tea/1.jpg", "images/anp-cranberry-iced-tea/2.jpg", "images/anp-cranberry-iced-tea/3.jpg", "images/anp-cranberry-iced-tea/4.jpg"], // saved from the product page
   },
   {
     id: "anp-fuyu",
@@ -708,6 +722,7 @@ const POLISHES = [
     colors: ["#e2c4d0", "#d4d0ff", "#b4b0f4", "#c8b4e8"],
     shadow: "#b498b0",
     url: "https://awesomenailpolish.com/products/fuyu",
+    photos: ["images/anp-fuyu/1.jpg", "images/anp-fuyu/2.jpg", "images/anp-fuyu/3.jpg", "images/anp-fuyu/4.jpg"], // saved from the product page
   },
   {
     id: "cracked-lahar",
@@ -720,6 +735,7 @@ const POLISHES = [
     colors: ["#4a4450", "#f4c870", "#e0a050", "#c07040", "#8a5a6a"],
     shadow: "#26222c",
     url: "https://crackedpolish.com/products/lahar",
+    photos: ["images/cracked-lahar/1.jpg", "images/cracked-lahar/2.jpg", "images/cracked-lahar/3.jpg", "images/cracked-lahar/4.jpg"], // saved from the product page
   },
   {
     id: "cracked-scorchy",
@@ -734,6 +750,7 @@ const POLISHES = [
     shadow: "#1a0e08",
     sparkle: { density: 1.5, dark: .3 },
     url: "https://crackedpolish.com/products/scorchy",
+    photos: ["images/cracked-scorchy/1.jpg", "images/cracked-scorchy/2.jpg", "images/cracked-scorchy/3.jpg", "images/cracked-scorchy/4.jpg"], // saved from the product page
   },
   {
     id: "cracked-hibernaty",
@@ -747,6 +764,7 @@ const POLISHES = [
     colors: ["#3a2a24", "#f4c09a", "#d48a6a", "#b0604a"],
     shadow: "#1c120e",
     url: "https://crackedpolish.com/products/hibernaty",
+    photos: ["images/cracked-hibernaty/1.jpg", "images/cracked-hibernaty/2.jpg", "images/cracked-hibernaty/3.jpg", "images/cracked-hibernaty/4.jpg"], // saved from the product page
   },
   {
     id: "prettydiva-sunset-chrome-powder",
