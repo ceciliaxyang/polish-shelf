@@ -11,6 +11,7 @@ const SITE_TITLE = document.title;
 /* ---------- vocabulary ---------- */
 const EFFECTS = {
   sheer:     "Sheer",
+  jelly:     "Jelly",
   magnetic:  "Magnetic",
   holo:      "Holographic",
   shimmer:   "Shimmer",

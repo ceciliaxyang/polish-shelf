@@ -648,8 +648,8 @@ const POLISHES = [
     id: "cracked-taro-milk-tea",
     name: "Taro Milk Tea",
     brand: "Cracked Polish",
-    effect: "sheer",
-    effects: ["sheer"],
+    effect: "sheer",           // drawn as a sheer, so what's underneath shows through when layered
+    effects: ["jelly"],
     tone: "neutral",
     // Buildable, milky lavender grey jelly that reads mauve on the nail (from the product description and photos)
     colors: ["#bc9cb8"],
