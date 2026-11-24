@@ -42,7 +42,8 @@
 */
 // Shelf order (the shelf shows polishes in this order): Mooncat, Awesome Nail Polish (ANLAC) and Cracked Polish
 // magnetics (kept together since they look alike), Bee's Knees magnetics, bold Mooncat shimmers, holographic,
-// thermals and solars, neutral shimmers, cremes, sheers, glow in the dark, ILNP magnetics, then chrome powders.
+// thermals and solars, neutral shimmers, sheers, glow in the dark, ILNP magnetics, chrome powders, then cremes
+// and jellies last.
 const POLISHES = [
   {
     id: "mooncat-404-soul-not-found",
@@ -603,30 +604,6 @@ const POLISHES = [
     photos: ["images/mooncat-pearl-clutcher/1.jpg", "images/mooncat-pearl-clutcher/2.jpg", "images/mooncat-pearl-clutcher/3.jpg", "images/mooncat-pearl-clutcher/4.jpg"], // saved from the product page
   },
   {
-    id: "mooncat-into-the-abyss",
-    name: "Into The Abyss",
-    brand: "Mooncat",
-    effect: "creme",
-    effects: ["creme"],
-    tone: "neutral",
-    // Deep midnight blue creme (from the product page and order photo)
-    colors: ["#1a2656"],
-    url: "https://www.mooncat.com/products/into-the-abyss",
-    photos: ["images/mooncat-into-the-abyss/1.jpg", "images/mooncat-into-the-abyss/2.jpg", "images/mooncat-into-the-abyss/3.jpg", "images/mooncat-into-the-abyss/4.jpg"], // saved from the product page
-  },
-  {
-    id: "mooncat-kafkaesque",
-    name: "Kafkaesque",
-    brand: "Mooncat",
-    effect: "creme",
-    effects: ["creme"],
-    tone: "neutral",
-    // Deep brown creme from the Tale of 5 Lacquers set (from the product page and photos)
-    colors: ["#2c1c19"],
-    url: "https://www.mooncat.com/products/kafkaesque",
-    photos: ["images/mooncat-kafkaesque/1.jpg", "images/mooncat-kafkaesque/2.jpg", "images/mooncat-kafkaesque/3.jpg", "images/mooncat-kafkaesque/4.jpg"], // saved from the product page
-  },
-  {
     id: "mooncat-moonjelly",
     name: "Moonjelly",
     brand: "Mooncat",
@@ -645,18 +622,6 @@ const POLISHES = [
     sparkle: { density: 2.4, size: 1, floor: .4, mix: .8, colors: ["#ffffff", "#8cc8ff", "#c8a0ff", "#ffb0dc", "#a8f0d0"] },
     url: "https://www.mooncat.com/products/moonjelly",
     photos: ["images/mooncat-moonjelly/1.jpg", "images/mooncat-moonjelly/2.jpg", "images/mooncat-moonjelly/3.jpg", "images/mooncat-moonjelly/4.jpg"], // saved from the product page
-  },
-  {
-    id: "cracked-taro-milk-tea",
-    name: "Taro Milk Tea",
-    brand: "Cracked Polish",
-    effect: "sheer",           // drawn as a sheer, so what's underneath shows through when layered
-    effects: ["jelly"],
-    tone: "neutral",
-    // Buildable, milky lavender grey jelly that reads mauve on the nail (from the product description and photos)
-    colors: ["#bc9cb8"],
-    url: "https://crackedpolish.com/products/taro-milk-tea",
-    photos: ["images/cracked-taro-milk-tea/1.jpg", "images/cracked-taro-milk-tea/2.jpg", "images/cracked-taro-milk-tea/3.jpg", "images/cracked-taro-milk-tea/4.jpg"], // saved from the product page
   },
   {
     id: "mooncat-the-avatar-state",
@@ -814,5 +779,41 @@ const POLISHES = [
     powder: { band: .17, inside: ["#fff8e6", "#fbe99a", "#f6cf78"], rim: ["#f8b88e", "#f8c898"], rimSide: 1, rimStrength: .9, outside: ["#f0b0d4", "#e4b2e4", "#efc6d8"] },
     url: "https://www.amazon.com/dp/B0DZXP9NBQ",
     photos: ["images/prettydiva-aurora-pink-chrome-powder/1.jpg", "images/prettydiva-aurora-pink-chrome-powder/2.jpg", "images/prettydiva-aurora-pink-chrome-powder/3.jpg", "images/prettydiva-aurora-pink-chrome-powder/4.jpg"], // saved from the product page
+  },
+  {
+    id: "mooncat-into-the-abyss",
+    name: "Into The Abyss",
+    brand: "Mooncat",
+    effect: "creme",
+    effects: ["creme"],
+    tone: "neutral",
+    // Deep midnight blue creme (from the product page and order photo)
+    colors: ["#1a2656"],
+    url: "https://www.mooncat.com/products/into-the-abyss",
+    photos: ["images/mooncat-into-the-abyss/1.jpg", "images/mooncat-into-the-abyss/2.jpg", "images/mooncat-into-the-abyss/3.jpg", "images/mooncat-into-the-abyss/4.jpg"], // saved from the product page
+  },
+  {
+    id: "mooncat-kafkaesque",
+    name: "Kafkaesque",
+    brand: "Mooncat",
+    effect: "creme",
+    effects: ["creme"],
+    tone: "neutral",
+    // Deep brown creme from the Tale of 5 Lacquers set (from the product page and photos)
+    colors: ["#2c1c19"],
+    url: "https://www.mooncat.com/products/kafkaesque",
+    photos: ["images/mooncat-kafkaesque/1.jpg", "images/mooncat-kafkaesque/2.jpg", "images/mooncat-kafkaesque/3.jpg", "images/mooncat-kafkaesque/4.jpg"], // saved from the product page
+  },
+  {
+    id: "cracked-taro-milk-tea",
+    name: "Taro Milk Tea",
+    brand: "Cracked Polish",
+    effect: "sheer",           // drawn as a sheer, so what's underneath shows through when layered
+    effects: ["jelly"],
+    tone: "neutral",
+    // Buildable, milky lavender grey jelly that reads mauve on the nail (from the product description and photos)
+    colors: ["#bc9cb8"],
+    url: "https://crackedpolish.com/products/taro-milk-tea",
+    photos: ["images/cracked-taro-milk-tea/1.jpg", "images/cracked-taro-milk-tea/2.jpg", "images/cracked-taro-milk-tea/3.jpg", "images/cracked-taro-milk-tea/4.jpg"], // saved from the product page
   },
 ];
