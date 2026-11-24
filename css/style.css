@@ -72,6 +72,29 @@ button, input, select { font: inherit; color: inherit; }
 .fx-row .scope { background: #f2f2f2; }
 .fx-row .scope:hover { background: #e8e8e8; }
 .fx-row .scope[aria-pressed="true"] { background: var(--text); }
+/* Zoom control: pinned after the effect pills, which fade out under it as they scroll. Closed, it is one
+   40px circle showing the current size; open, it widens to the left to show all three, with a white thumb
+   on the current one. Each icon is a 2x2, 3x3 or 4x4 grid of real swatches. */
+.fx-bar { display: flex; align-items: center; gap: 4px; }
+.fx-bar .fx-row { flex: 1; min-width: 0; margin-right: 0; padding-right: 16px;
+  -webkit-mask: linear-gradient(90deg, #000 calc(100% - 24px), transparent); mask: linear-gradient(90deg, #000 calc(100% - 24px), transparent); }
+.zoom { --w: 40px; --i: 0; position: relative; flex-shrink: 0; width: var(--w); height: 40px; border-radius: 100px; background: #f2f2f2; overflow: hidden;
+  touch-action: none; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent;
+  transition: width .32s cubic-bezier(.2, .8, .2, 1), background .15s ease; }
+.zoom.open { width: calc(var(--w) * 3); background: #e9e9e9; }
+.z-track { position: absolute; inset: 0 auto 0 0; display: flex; transform: translateX(calc(var(--i) * var(--w) * -1)); transition: transform .32s cubic-bezier(.2, .8, .2, 1); }
+.zoom.open .z-track { transform: none; }
+.z-thumb { position: absolute; top: 3px; left: 3px; width: calc(var(--w) - 6px); height: 34px; border-radius: 100px; background: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, .14);
+  opacity: 0; transform: translateX(calc(var(--i) * var(--w))); transition: transform .22s cubic-bezier(.2, .8, .2, 1), opacity .2s ease; }
+.zoom.open .z-thumb { opacity: 1; }
+.z-opt { position: relative; width: var(--w); height: 40px; padding: 0; border: 0; background: none; display: grid; place-items: center; cursor: pointer; }
+.z-opt:focus-visible { outline: 2px solid var(--text); outline-offset: -4px; border-radius: 100px; }
+.zoom.open .z-opt:not(.on) .zi { opacity: .5; }
+.zi { --n: 2; display: grid; grid-template-columns: repeat(var(--n), 1fr); gap: 1.5px; width: 18px; height: 18px; transition: opacity .2s ease; }
+.zi canvas { display: block; width: 100%; height: 100%; border-radius: 2px; background: #d9d9d9; }
+.zi[data-n="3"] { gap: 1.2px; } .zi[data-n="3"] canvas { border-radius: 1.5px; }
+.zi[data-n="4"] { gap: 1px; } .zi[data-n="4"] canvas { border-radius: 1px; }
+@media (prefers-reduced-motion: reduce) { .zoom, .z-track, .z-thumb { transition: none; } }
 /* Thumbnail Pair: two 19.25px cards, the back one turned 10deg and the front one -3deg. */
 .thumb-pair { position: relative; flex-shrink: 0; width: 28px; height: 28px; }
 .tp { position: absolute; width: 19.25px; height: 19.25px; border-radius: 4px; overflow: hidden; background: #fff;
@@ -133,6 +156,24 @@ button, input, select { font: inherit; color: inherit; }
 .m-add svg { display: block; width: 20px; height: 20px; margin: -2px; overflow: visible; }
 .m-add .plus { transform: scale(.8); }
 @media (prefers-reduced-motion: reduce) { .swatch-btn .plus, .swatch-btn .check, .swatch-btn.on .check, .m-add .plus, .m-add .check, .m-add.on .check { transition: none; } }
+/* Zoom: 3 per row keeps only the name (tags would stack and make rows uneven); 4 per row is swatches
+   only, without the + button (add from the polish's page). Combo cards follow the same rules. */
+.grid[data-zoom="3"] .brand, .grid[data-zoom="3"] .card-fx, .grid[data-zoom="3"] .combo-date, .grid[data-zoom="3"] .combo-stack { display: none; }
+.grid[data-zoom="3"] .card { gap: 12px; }
+.grid[data-zoom="3"] .name { font-size: 16px; }
+.grid[data-zoom="3"] .swatch-btn { top: 12px; right: 12px; width: 36px; height: 36px; padding: 8px; }
+.grid[data-zoom="4"] .card-text, .grid[data-zoom="4"] .swatch-btn { display: none; }
+.grid[data-zoom="4"] { gap: 24px; }
+@media (max-width: 600px) {
+  .grid[data-zoom="3"] { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px 10px; }
+  .grid[data-zoom="3"] .swatch-wrap { border-radius: 22px; }
+  .grid[data-zoom="3"] .card { gap: 8px; }
+  .grid[data-zoom="3"] .name { font-size: 13px; line-height: 16px; }
+  .grid[data-zoom="3"] .swatch-btn { top: 8px; right: 8px; width: 30px; height: 30px; padding: 7px; }
+  .grid[data-zoom="3"] .swatch-btn svg { width: 16px; height: 16px; }
+  .grid[data-zoom="4"] { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+  .grid[data-zoom="4"] .swatch-wrap { border-radius: 16px; }
+}
 .card-text { display: flex; flex-direction: column; gap: 12px; width: 100%; }
 .card-title { display: flex; flex-direction: column; gap: 8px; }
 .card-title { min-width: 0; width: 100%; }
