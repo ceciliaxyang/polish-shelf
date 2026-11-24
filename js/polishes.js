@@ -6,7 +6,7 @@
     name: "Name of polish",
     brand: "Brand name",
     effect: "magnetic",        // how the swatch is drawn: magnetic, sheermag (sheer magnetic), holo, thermal (also for solar), multichrome, shimmer, glow, powder (chrome powder)
-    effects: ["magnetic", "shimmer"], // optional: effect pills on the card and filters it shows up under (adds multichrome)
+    effects: ["magnetic", "shimmer"], // optional: effect pills on the card and filters it shows up under (adds multichrome; magtopper = Magnetic topper)
     tone: "bold",              // "bold" or "neutral", by taste: bolder, multi-color or darker tones are bold
     colors: ["#1b1030", "#b89cff"],
     url: "https://...",        // optional: product page the polish came from
@@ -670,7 +670,7 @@ const POLISHES = [
     name: "Lily",
     brand: "ILNP",
     effect: "sheermag",
-    effects: ["sheer", "magnetic"],
+    effects: ["magtopper"],
     tone: "neutral",
     // Soft, see-through lilac with a silver magnetic sparkle, silver flakes and a holographic glint (from the product page and photos)
     colors: ["#a893b3", "#ffffff", "#f1ebf6", "#d2c3dc"],
@@ -688,7 +688,7 @@ const POLISHES = [
     name: "Teddy",
     brand: "ILNP",
     effect: "sheermag",
-    effects: ["sheer", "magnetic"],
+    effects: ["magtopper"],
     tone: "neutral",
     // Soft, see-through teddy bear brown with dense silver magnetic sparkle and a few holographic glints (from the product page and photos)
     colors: ["#b89588", "#ffffff", "#f8efe9", "#dcc4b8"],
@@ -704,7 +704,7 @@ const POLISHES = [
     name: "Moonlit",
     brand: "ILNP",
     effect: "sheermag",
-    effects: ["sheer", "magnetic"],
+    effects: ["magtopper"],
     tone: "neutral",
     // Sheer charcoal with a bright silver magnetic beam and scattered holographic flecks like stars (from the product page and photos)
     colors: ["#48464c", "#f6f7fb", "#c4c3cb", "#85838d"],
@@ -720,7 +720,7 @@ const POLISHES = [
     name: "Bubbly",
     brand: "ILNP",
     effect: "sheermag",
-    effects: ["sheer", "magnetic"],
+    effects: ["magtopper"],
     tone: "neutral",
     clear: true,               // a clear topper: layered over another polish, only its shimmer and sparkle show
     // Clear topper with a bright silver magnetic shimmer, silver and holographic flakes: shown as cool, clear silver (from the product page and photos)

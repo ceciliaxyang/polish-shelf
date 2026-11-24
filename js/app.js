@@ -13,6 +13,7 @@ const EFFECTS = {
   sheer:     "Sheer",
   jelly:     "Jelly",
   magnetic:  "Magnetic",
+  magtopper: "Magnetic topper",
   holo:      "Holographic",
   shimmer:   "Shimmer",
   chrome:    "Chrome",
