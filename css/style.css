@@ -450,9 +450,11 @@ body.detail-open .page::after { opacity: 1; }
 /* One-line description (polishes.js desc): 14 on 18, grey 700 */
 .mh-desc { margin: 0; font-size: 14px; line-height: 18px; letter-spacing: -.5px; color: #6c6c6c; text-wrap: balance; overflow-wrap: anywhere; }
 .mh-desc[hidden] { display: none; }
-/* Effect pills: the filter pill (24px icon, 8px gap, 11/16 padding, 14 on 18) in grey 400; not clickable here */
+/* Effect pills: the filter pill (24px icon, 8px gap, 11/16 padding, 14 on 18) in white frosted glass, the
+   material the detail page's pills used before (white 40%, blurring the tinted backdrop); not clickable here */
 .mh-pills { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
-.mh-pill { display: inline-flex; align-items: center; gap: 8px; padding: 11px 16px; border-radius: 32px; background: #ddd; color: #222; font-size: 14px; line-height: 18px; white-space: nowrap; }
+.mh-pill { display: inline-flex; align-items: center; gap: 8px; padding: 11px 16px; border-radius: 32px; color: #222; font-size: 14px; line-height: 18px; white-space: nowrap;
+  background: rgba(255, 255, 255, .4); -webkit-backdrop-filter: blur(16px) saturate(1.4); backdrop-filter: blur(16px) saturate(1.4); }
 .m-photos { align-self: stretch; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
 .m-photos img { display: block; width: 100%; aspect-ratio: 1; height: auto; object-fit: cover; border-radius: 48px; background: var(--swatch); }
 @media (max-width: 1000px) {
