@@ -462,3 +462,6 @@ body.detail-open .page::after { opacity: 1; }
 .pour-wait .pour-base, .pour-wait .drop-under, .pour-wait .drop-gloss, .pour-wait .swatch-btn, .pour-wait .card-text { opacity: 0; }
 .drops .pour-wait .swatch-wrap > canvas.swatch, .drops .pouring:not(.pour-lit) .swatch-wrap > canvas.swatch { opacity: 0; }
 .drops .pour-wait .swatch-wrap > canvas.drop-swirl, .drops .pouring:not(.pour-lit) .swatch-wrap > canvas.drop-swirl { opacity: 0; }
+/* A swatch's old picture, fading out over its redraw at a new size (see drawCard in js/app.js). */
+.swatch-ghost { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
+.drops .drop > canvas.swatch-ghost { position: absolute; }
