@@ -4,6 +4,7 @@
   {
     id: "unique-id",           // any short unique text; saved combos refer to it
     name: "Name of polish",
+    desc: "One line on color and finish", // optional: shown under the name on the polish page
     brand: "Brand name",
     effect: "magnetic",        // how the swatch is drawn: magnetic, sheermag (sheer magnetic), holo, thermal (also for solar), multichrome, shimmer, glow, powder (chrome powder)
     effects: ["magnetic", "shimmer"], // optional: effect pills on the card and filters it shows up under (adds multichrome; magtopper = Magnetic topper)
@@ -46,6 +47,7 @@ const POLISHES = [
   {
     id: "mooncat-404-soul-not-found",
     name: "404: Soul Not Found",
+    desc: "Black base with a teal, blue and purple multichrome magnetic shift.",
     brand: "Mooncat",
     effect: "magnetic",
     effects: ["magnetic", "multichrome"],
@@ -60,6 +62,7 @@ const POLISHES = [
   {
     id: "mooncat-fields-of-lavender",
     name: "Fields of Lavender",
+    desc: "Mauve purple magnetic with a red-orange cat eye stripe.",
     brand: "Mooncat",
     effect: "magnetic",
     tone: "bold",
@@ -72,6 +75,7 @@ const POLISHES = [
   {
     id: "mooncat-pandoras-box",
     name: "Pandora's Box",
+    desc: "Wine burgundy magnetic with purple shimmer and a gold stripe.",
     brand: "Mooncat",
     effect: "magnetic",
     effects: ["magnetic", "shimmer"],
@@ -89,6 +93,7 @@ const POLISHES = [
   {
     id: "mooncat-jasmine-dragon",
     name: "Jasmine Dragon",
+    desc: "Bright orange magnetic with yellow-to-green flakies and red glitter.",
     brand: "Mooncat",
     effect: "magnetic",
     effects: ["magnetic", "flakies", "glitter"],
@@ -106,6 +111,7 @@ const POLISHES = [
   {
     id: "mooncat-nyarrian-nights",
     name: "Nyarrian Nights",
+    desc: "Pink to red-orange multichrome magnetic over a blue-shimmer purple base.",
     brand: "Mooncat",
     effect: "magnetic",
     effects: ["magnetic", "multichrome"],
@@ -121,6 +127,7 @@ const POLISHES = [
   {
     id: "mooncat-misa-misa",
     name: "Misa Misa",
+    desc: "Purple-pink magnetic that pulls away to a black base.",
     brand: "Mooncat",
     effect: "magnetic",
     tone: "bold",
@@ -133,6 +140,7 @@ const POLISHES = [
   {
     id: "anp-great-purple-emperor",
     name: "Great Purple Emperor",
+    desc: "Purple base with fine red, orange and green magnetic shimmer.",
     brand: "Awesome Nail Polish",
     effect: "magnetic",
     effects: ["magnetic", "multichrome"],
@@ -146,6 +154,7 @@ const POLISHES = [
   {
     id: "anp-sapphire-morpho",
     name: "Sapphire Morpho",
+    desc: "Blue base with fine blue-purple magnetic shimmer.",
     brand: "Awesome Nail Polish",
     effect: "magnetic",
     tone: "bold",
@@ -158,6 +167,7 @@ const POLISHES = [
   {
     id: "anp-balinese-swallowtail",
     name: "Balinese Swallowtail",
+    desc: "Purple base with fine lime, green and blue magnetic shimmer.",
     brand: "Awesome Nail Polish",
     effect: "magnetic",
     effects: ["magnetic", "multichrome"],
@@ -171,6 +181,7 @@ const POLISHES = [
   {
     id: "anp-yotsuya-kaidan",
     name: "Yotsuya Kaidan",
+    desc: "Semi-sheer lime with warm micro-flakes and a silky silver-green magnetic.",
     brand: "Awesome Nail Polish",
     effect: "sheermag",
     effects: ["magtopper"],
@@ -186,6 +197,7 @@ const POLISHES = [
   {
     id: "anp-cranberry-iced-tea",
     name: "Cranberry Iced Tea",
+    desc: "Semi-sheer berry pink with golden magnetic shimmer.",
     brand: "Awesome Nail Polish",
     effect: "sheermag",
     effects: ["magtopper"],
@@ -199,6 +211,7 @@ const POLISHES = [
   {
     id: "cracked-lahar",
     name: "Lahar",
+    desc: "Purple-tinged ash gray crelly with copper-gold magnetic shimmer.",
     brand: "Cracked Polish",
     effect: "magnetic",
     effects: ["magnetic", "shimmer"],
@@ -212,6 +225,7 @@ const POLISHES = [
   {
     id: "cracked-scorchy",
     name: "Scorchy",
+    desc: "Fiery orange magnetic topper with a soft gold shift.",
     brand: "Cracked Polish",
     effect: "sheermag",
     effects: ["magtopper"],
@@ -227,6 +241,7 @@ const POLISHES = [
   {
     id: "cracked-hibernaty",
     name: "Hibernaty",
+    desc: "Bronze magnetic topper.",
     brand: "Cracked Polish",
     effect: "sheermag",
     effects: ["magtopper"],
@@ -242,6 +257,7 @@ const POLISHES = [
   {
     id: "beesknees-im-nobody",
     name: "I'm Nobody",
+    desc: "Olive-bronze base with a pink-to-gold multichrome magnetic glow.",
     brand: "Bee's Knees",
     effect: "magnetic",
     effects: ["magnetic", "multichrome"],
@@ -258,6 +274,7 @@ const POLISHES = [
   {
     id: "beesknees-knight-knave-optimist",
     name: "Knight, Knave, Optimist",
+    desc: "Dark gray-purple magnetic with a pinkish glow and a blue-violet streak.",
     brand: "Bee's Knees",
     effect: "magnetic",
     effects: ["magnetic", "shimmer"],
@@ -274,6 +291,7 @@ const POLISHES = [
   {
     id: "beesknees-sprites",
     name: "Sprites",
+    desc: "Dark olive mosaic magnetic flashing pink, violet, blue and teal.",
     brand: "Bee's Knees",
     effect: "magnetic",
     effects: ["magnetic", "multichrome"],
@@ -291,6 +309,7 @@ const POLISHES = [
   {
     id: "beesknees-soon-you-will-not-have-to-drown",
     name: "Soon You Will Not Have to Drown",
+    desc: "Deep navy mosaic magnetic in gold and purple.",
     brand: "Bee's Knees",
     effect: "magnetic",
     effects: ["magnetic", "multichrome"],
@@ -305,6 +324,7 @@ const POLISHES = [
   {
     id: "mooncat-jewel-beetle",
     name: "Jewel Beetle",
+    desc: "Chrome-like multichrome shifting pink, gold and green.",
     brand: "Mooncat",
     effect: "multichrome",
     effects: ["multichrome", "shimmer"],
@@ -318,6 +338,7 @@ const POLISHES = [
   {
     id: "mooncat-root-of-all-evil",
     name: "Root of All Evil",
+    desc: "Semi-sheer burgundy red with teal-to-yellow-green shifting shimmer.",
     brand: "Mooncat",
     effect: "multichrome",
     effects: ["multichrome", "shimmer"],
@@ -339,6 +360,7 @@ const POLISHES = [
   {
     id: "mooncat-deadly-nightshade",
     name: "Deadly Nightshade",
+    desc: "Shifty shimmer moving through purple, teal, green, gold and blue.",
     brand: "Mooncat",
     effect: "shimmer",
     effects: ["shimmer"],
@@ -358,6 +380,7 @@ const POLISHES = [
   {
     id: "mooncat-sin-eater",
     name: "Sin Eater",
+    desc: "Deep wine purple with subtle red-to-orange-to-green shimmer.",
     brand: "Mooncat",
     effect: "shimmer",
     effects: ["shimmer", "multichrome"],
@@ -373,6 +396,7 @@ const POLISHES = [
   {
     id: "mooncat-garden-of-evil",
     name: "Garden of Evil",
+    desc: "Green with violet shimmer and micro holo glitter.",
     brand: "Mooncat",
     effect: "shimmer",
     effects: ["shimmer", "glitter"],
@@ -391,6 +415,7 @@ const POLISHES = [
   {
     id: "mooncat-am-i-everything-you-fear",
     name: "Am I Everything You Fear?",
+    desc: "Dusty deep teal with pink-to-orange-to-green shimmer and holo glitter.",
     brand: "Mooncat",
     effect: "shimmer",
     effects: ["shimmer", "multichrome", "glitter"],
@@ -406,6 +431,7 @@ const POLISHES = [
   {
     id: "mooncat-bottled-rage",
     name: "Bottled Rage",
+    desc: "Dark burgundy red-black with red-orange shimmer.",
     brand: "Mooncat",
     effect: "shimmer",
     effects: ["shimmer"],
@@ -421,6 +447,7 @@ const POLISHES = [
   {
     id: "mooncat-banished-prince",
     name: "Banished Prince",
+    desc: "Thermal that goes dark red when cold, bright red when warm, with shifting flakies.",
     brand: "Mooncat",
     effect: "thermal",
     effects: ["thermal", "flakies"],
@@ -435,6 +462,7 @@ const POLISHES = [
   {
     id: "mooncat-fake-halo",
     name: "Fake Halo",
+    desc: "Rose gold linear holographic.",
     brand: "Mooncat",
     effect: "holo",
     effects: ["holo"],
@@ -448,6 +476,7 @@ const POLISHES = [
   {
     id: "mooncat-dark-horse",
     name: "Dark Horse",
+    desc: "Dark chocolate brown with warm light brown shimmer.",
     brand: "Mooncat",
     effect: "shimmer",
     effects: ["shimmer"],
@@ -463,6 +492,7 @@ const POLISHES = [
   {
     id: "mooncat-sand-viper",
     name: "Sand Viper",
+    desc: "Sheer pink-beige jelly with orange-red shimmer.",
     brand: "Mooncat",
     effect: "shimmer",
     effects: ["shimmer"],
@@ -479,6 +509,7 @@ const POLISHES = [
   {
     id: "mooncat-koi-whiskers",
     name: "Koi Whiskers",
+    desc: "Thermal that goes coral when cold, pastel yellow when warm, with pink shimmer.",
     brand: "Mooncat",
     effect: "thermal",
     effects: ["thermal", "shimmer"],
@@ -493,6 +524,7 @@ const POLISHES = [
   {
     id: "mooncat-manchineel-tree",
     name: "Manchineel Tree",
+    desc: "Neon green solar with orange shimmer that warms up in the sun.",
     brand: "Mooncat",
     effect: "thermal",         // drawn like the thermals: it shifts color the same way, but with sunlight instead of heat
     effects: ["solar", "shimmer"],
@@ -507,6 +539,7 @@ const POLISHES = [
   {
     id: "mooncat-dark-omens",
     name: "Dark Omens",
+    desc: "Thermal that goes deep purple when cold, light purple when warm.",
     brand: "Mooncat",
     effect: "thermal",
     effects: ["thermal"],
@@ -520,6 +553,7 @@ const POLISHES = [
   {
     id: "mooncat-queen-of-the-dead",
     name: "Queen of the Dead",
+    desc: "Thermal that goes deep wine when cold, raspberry red when warm.",
     brand: "Mooncat",
     effect: "thermal",
     effects: ["thermal"],
@@ -533,6 +567,7 @@ const POLISHES = [
   {
     id: "mooncat-memento-mori",
     name: "Memento Mori",
+    desc: "Ivory with orange shimmer.",
     brand: "Mooncat",
     effect: "shimmer",
     effects: ["shimmer"],
@@ -548,6 +583,7 @@ const POLISHES = [
   {
     id: "mooncat-petals-for-a-narcissist",
     name: "Petals for a Narcissist",
+    desc: "Sheer white-gray with violet-pink shimmer.",
     brand: "Mooncat",
     effect: "shimmer",
     effects: ["shimmer"],
@@ -564,6 +600,7 @@ const POLISHES = [
   {
     id: "mooncat-moonjelly",
     name: "Moonjelly",
+    desc: "Sheer white jelly with blue shimmer, shifting flakies and micro holo glitter.",
     brand: "Mooncat",
     effect: "shimmer",
     effects: ["shimmer", "flakies"],
@@ -584,6 +621,7 @@ const POLISHES = [
   {
     id: "mooncat-pearl-clutcher",
     name: "Pearl Clutcher",
+    desc: "Pearly white shimmer with hints of pink, lilac and green.",
     brand: "Mooncat",
     effect: "shimmer",
     effects: ["shimmer", "multichrome"],
@@ -599,6 +637,7 @@ const POLISHES = [
   {
     id: "mooncat-the-avatar-state",
     name: "The Avatar State",
+    desc: "Sheer white with blue shimmer that glows aqua in the dark.",
     brand: "Mooncat",
     effect: "glow",
     effects: ["glow", "shimmer"],
@@ -614,6 +653,7 @@ const POLISHES = [
   {
     id: "mooncat-green-eyed-monster",
     name: "Green Eyed Monster",
+    desc: "Milky white with green shimmer that glows green in the dark.",
     brand: "Mooncat",
     effect: "glow",
     effects: ["glow", "shimmer"],
@@ -628,6 +668,7 @@ const POLISHES = [
   {
     id: "mooncat-moonlight-lullaby",
     name: "Moonlight Lullaby",
+    desc: "Icy blue-white with white shimmer that glows white in the dark.",
     brand: "Mooncat",
     effect: "glow",
     effects: ["glow", "shimmer"],
@@ -642,6 +683,7 @@ const POLISHES = [
   {
     id: "ilnp-bubbly",
     name: "Bubbly",
+    desc: "Clear magnetic topper with silver shimmer and holo flakes.",
     brand: "ILNP",
     effect: "sheermag",
     effects: ["magtopper"],
@@ -660,6 +702,7 @@ const POLISHES = [
   {
     id: "anp-fuyu",
     name: "Fuyu",
+    desc: "Pale pink with blue-purple shimmer and a silky magnetic sheen.",
     brand: "Awesome Nail Polish",
     effect: "sheermag",
     effects: ["magtopper"],
@@ -673,6 +716,7 @@ const POLISHES = [
   {
     id: "ilnp-lily",
     name: "Lily",
+    desc: "Soft lilac crelly with silver magnetic sparkle.",
     brand: "ILNP",
     effect: "sheermag",
     effects: ["magtopper"],
@@ -691,6 +735,7 @@ const POLISHES = [
   {
     id: "ilnp-teddy",
     name: "Teddy",
+    desc: "Light teddy bear brown crelly with silver magnetic sparkle.",
     brand: "ILNP",
     effect: "sheermag",
     effects: ["magtopper"],
@@ -707,6 +752,7 @@ const POLISHES = [
   {
     id: "anp-peachy",
     name: "Peachy",
+    desc: "Sheer peach with warm shifting shimmer and pale yellow magnetic.",
     brand: "Awesome Nail Polish",
     effect: "sheermag",
     effects: ["magtopper"],
@@ -721,6 +767,7 @@ const POLISHES = [
   {
     id: "ilnp-moonlit",
     name: "Moonlit",
+    desc: "Charcoal with silver magnetic sparkle and scattered holo.",
     brand: "ILNP",
     effect: "sheermag",
     effects: ["magtopper"],
@@ -737,6 +784,7 @@ const POLISHES = [
   {
     id: "prettydiva-sunset-chrome-powder",
     name: "Sunset",
+    desc: "Icy pearl chrome powder with warm gold and peach streaks.",
     brand: "Pretty Diva",
     effect: "powder",
     effects: ["powder"],
@@ -753,6 +801,7 @@ const POLISHES = [
   {
     id: "prettydiva-mermaid-pink-chrome-powder",
     name: "Mermaid Pink",
+    desc: "Pink chrome powder with mint and lemon streaks.",
     brand: "Pretty Diva",
     effect: "powder",
     effects: ["powder"],
@@ -769,6 +818,7 @@ const POLISHES = [
   {
     id: "prettydiva-aurora-pink-chrome-powder",
     name: "Aurora Pink",
+    desc: "Pink-lavender chrome powder with gold and peach streaks.",
     brand: "Pretty Diva",
     effect: "powder",
     effects: ["powder"],
@@ -784,6 +834,7 @@ const POLISHES = [
   {
     id: "cracked-taro-milk-tea",
     name: "Taro Milk Tea",
+    desc: "Sheer, buildable lavender gray jelly.",
     brand: "Cracked Polish",
     effect: "sheer",           // drawn as a sheer, so what's underneath shows through when layered
     effects: ["jelly"],
@@ -796,6 +847,7 @@ const POLISHES = [
   {
     id: "mooncat-kafkaesque",
     name: "Kafkaesque",
+    desc: "Deep brown creme.",
     brand: "Mooncat",
     effect: "creme",
     effects: ["creme"],
@@ -808,6 +860,7 @@ const POLISHES = [
   {
     id: "mooncat-into-the-abyss",
     name: "Into The Abyss",
+    desc: "Deep midnight blue creme.",
     brand: "Mooncat",
     effect: "creme",
     effects: ["creme"],

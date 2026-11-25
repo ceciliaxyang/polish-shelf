@@ -1454,6 +1454,8 @@ function openDetail(p, card) {
   detail.p = p; detail.card = card;
   $("#mBrand").textContent = p.brand || "";
   $("#mName").textContent = p.name || "Untitled";
+  // One line on color and finish, from the product page (polishes.js desc), under the name.
+  $("#mDesc").textContent = p.desc || ""; $("#mDesc").hidden = !p.desc;
   // Effect pills under the name (Figma "Action Header Web", node 2189:92047), same labels as on the card.
   $("#mPills").innerHTML = "";
   labelsOf(p).forEach(k => { const t = document.createElement("span"); t.className = "pill tiny"; t.textContent = EFFECTS[k] || k; $("#mPills").appendChild(t); });
