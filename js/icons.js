@@ -22,8 +22,8 @@ const EFFECT_ICONS = {
   flakies: '<g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M3 5.25 9.75 3l1.5 6-6.75 2.25zM13.5 8.25l7.5 1.5-2.25 6.75-6-2.25zM4.5 15.75l6-.75 1.5 6-6 .75z"/></g>',
   // Dust
   powder: '<g fill="currentColor"><circle cx="12" cy="12" r="1.6"/><circle cx="7" cy="9" r="1.2"/><circle cx="17" cy="9.5" r="1.2"/><circle cx="8.5" cy="16" r="1.2"/><circle cx="16" cy="15.5" r="1.2"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19.5" r="1"/><circle cx="3.75" cy="13" r=".85"/><circle cx="20.25" cy="12.75" r=".85"/><circle cx="4.5" cy="5.25" r=".75"/><circle cx="19.5" cy="4.5" r=".75"/><circle cx="19.5" cy="20" r=".75"/><circle cx="4.5" cy="19.75" r=".75"/></g>',
-  // Drop with shine
-  jelly: '<g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M12 2.25c3.75 4.5 7.125 8.25 7.125 12.375a7.125 7.125 0 0 1-14.25 0C4.875 10.5 8.25 6.75 12 2.25z"/><path d="M8.25 14.25a3.75 3.75 0 0 0 3 3.75" stroke-linecap="butt"/></g>',
-  // Polish bottle (library)
-  creme: '<path fill="currentColor" d="M14.25 0C15.0785 0 15.75 0.671572 15.75 1.5V9H18.75C19.5785 9 20.25 9.67155 20.25 10.5V22.5C20.25 23.3284 19.5785 24 18.75 24H5.25C4.42157 24 3.75 23.3284 3.75 22.5V10.5C3.75 9.67155 4.42157 9 5.25 9H8.25V1.5C8.25 0.671573 8.92155 0 9.75 0H14.25ZM18.75 10.5H5.25V22.5H18.75V10.5ZM17.25 12V16.5C17.25 18.5711 15.571 20.25 13.5 20.25H10.5C8.42895 20.25 6.75 18.5711 6.75 16.5V12H17.25ZM15.75 13.5H8.25V16.5C8.25 17.7427 9.25733 18.75 10.5 18.75H13.5C14.7427 18.75 15.75 17.7427 15.75 16.5V13.5ZM14.25 1.5H9.75V9H14.25V1.5Z"/>',
+  // Gumdrop
+  jelly: '<g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"><path d="M5.25 20.25h13.5a1.5 1.5 0 0 0 1.49-1.69C19.9 12 17.25 3.75 12 3.75S4.1 12 3.76 18.56a1.5 1.5 0 0 0 1.49 1.69z"/><path d="M1.125 10.5c.75.75.75 2.25 0 3M22.875 10.5c-.75.75-.75 2.25 0 3M7.875 13.5c.375-2.25 1.125-3.75 2.25-4.875"/></g>',
+  // Drop
+  creme: '<g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"><path d="M12 2.25c3.75 4.5 7.125 8.25 7.125 12.375a7.125 7.125 0 0 1-14.25 0C4.875 10.5 8.25 6.75 12 2.25z"/></g>',
 };
