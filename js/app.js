@@ -973,7 +973,7 @@ function glowSwatch(cv, p, W, H) {
 
 /* ---------- state ---------- */
 const $ = s => document.querySelector(s);
-const KEY = { combos: "polish-shelf:combos", saved: "polish-shelf:saved-combos", bench: "polish-shelf:bench", zoom: "polish-shelf:zoom" };
+const KEY = { combos: "polish-shelf:combos", saved: "polish-shelf:saved-combos", bench: "polish-shelf:bench", zoom: "polish-shelf:zoom-v2" }; // zoom-v2: 3 per row became the default, so earlier saved choices start over
 function load(key, fallback) { try { const v = JSON.parse(localStorage.getItem(key)); return v ?? fallback; } catch (e) { return fallback; } }
 function save(key, value) {
   try { localStorage.setItem(key, JSON.stringify(value)); }
@@ -1693,7 +1693,7 @@ function renderBench() {
 const GAP = 40, MAX_CARD = 336;
 // Zoom levels (see "zoom" below): swatches per row on a phone, and how much smaller desktop cards get.
 const ZOOMS = [2, 3, 4], ZOOM_SCALE = { 2: 1, 3: 2 / 3, 4: 1 / 2 };
-const zoom = { level: ZOOMS.includes(load(KEY.zoom, 2)) ? load(KEY.zoom, 2) : 2, open: false, drag: null, closeT: 0 };
+const zoom = { level: ZOOMS.includes(load(KEY.zoom, 3)) ? load(KEY.zoom, 3) : 3, open: false, drag: null, closeT: 0 };
 // Card swatches are drawn at the size they're actually shown (cards grow on bigger screens), so they
 // stay sharp instead of being stretched.
 // Cards rise into view as they're scrolled to. Cards arriving together (a new row, or the first screen)
@@ -1833,7 +1833,7 @@ let shapeRaf = 0;
 addEventListener("scroll", () => { if (!shapeRaf) shapeRaf = requestAnimationFrame(() => { shapeRaf = 0; shapeForScroll(); }); }, { passive: true });
 
 /* ---------- zoom ---------- */
-// The zoom control at the end of the effect pills: 2 (default), 3 or 4 swatches per row on a phone. Closed,
+// The zoom control at the end of the effect pills: 2, 3 (default) or 4 swatches per row on a phone. Closed,
 // it shows only the current size; tapping it opens all three, and you can tap one or slide your finger
 // across them (the shelf follows as you slide). It closes when you let go on a size, tap outside or press
 // Escape. Each icon is a tiny shelf made of real swatches. At 3 per row the cards show only the name; at 4,
