@@ -1158,7 +1158,7 @@ function renderShelf() {
   // Every polish gets a card; ones the effect filters leave out are hidden (see filterShelf).
   if (!state.polishes.some(matchesFx)) grid.innerHTML = emptyMsg("No matches", "No polishes with that effect yet.");
   for (const p of state.polishes) {
-    const card = document.createElement("article"); card.className = "card rise"; riseIn(card);
+    const card = document.createElement("article"); card.className = "card";
     card._p = p; card.hidden = !matchesFx(p);
     const wrap = document.createElement("div"); wrap.className = "swatch-wrap";
     const sw = document.createElement("canvas"); sw.className = "swatch";
@@ -1185,6 +1185,8 @@ function renderShelf() {
     });
     text.append(title, fx);
     card.append(wrap, text); grid.appendChild(card);
+    // Droplets pour in as they come on screen; rectangles rise in.
+    if (!pourIn(card, p.id, p.baseColor || p.colors[0])) { card.classList.add("rise"); riseIn(card); }
     sw._p = p; queueDraw(sw);
     if (autoIO) autoIO.observe(sw);
   }
@@ -1862,6 +1864,7 @@ function drawCard(cv) {
   cv._w = w;
   if (cv._combo) drawStack(cv, cv._combo.layers, w, Math.round(w * 260 / 240));
   else renderSwatch(cv, cv._p, w, Math.round(w * 260 / 240));
+  if (cv._p) pourDrawn(cv); // its drop may be waiting to fade the swatch in (see pourIn)
 }
 let redrawTimer = 0;
 // After a resize, only swatches on screen are redrawn right away; the others are marked undrawn and
