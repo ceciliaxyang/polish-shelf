@@ -1702,7 +1702,7 @@ function renderBench() {
 const GAP = 40, MAX_CARD = 336;
 // Zoom levels (see "zoom" below): swatches per row on a phone, and how much smaller desktop cards get.
 const ZOOMS = [2, 3, 4], ZOOM_SCALE = { 2: 1, 3: 2 / 3, 4: 1 / 2 };
-const zoom = { level: ZOOMS.includes(load(KEY.zoom, 3)) ? load(KEY.zoom, 3) : 3, drag: null };
+const zoom = { level: ZOOMS.includes(load(KEY.zoom, 3)) ? load(KEY.zoom, 3) : 3 };
 // Card swatches are drawn at the size they're actually shown (cards grow on bigger screens), so they
 // stay sharp instead of being stretched.
 // Cards rise into view as they're scrolled to. Cards arriving together (a new row, or the first screen)
@@ -1842,13 +1842,11 @@ let shapeRaf = 0;
 addEventListener("scroll", () => { if (!shapeRaf) shapeRaf = requestAnimationFrame(() => { shapeRaf = 0; shapeForScroll(); }); }, { passive: true });
 
 /* ---------- zoom ---------- */
-// The zoom control is a floating slider at the bottom of the screen: 2 (big, left), 3 (default) or 4
-// (dense, right) swatches per row on a phone. Drag the knob along the track (it snaps to the nearest
-// size and the shelf follows as you drag), tap a spot on the track, or tap the icon at either end to step
-// one size that way. Each icon is a grid of dots (droplet swatches) or rounded squares (rectangles). At 3
-// per row the cards show the name and effect types; at 4, only the swatch (no + button: add from the
+// The zoom control is a floating bar at the bottom of the screen with three icons: 2 (big), 3 (default) and
+// 4 (dense) swatches per row on a phone. Tap one to switch; the selected one sits on a dark circle. Arrow
+// keys move between them. Each icon is a grid of dots (droplet swatches) or rounded squares (rectangles).
+// At 3 per row the cards show the name and effect types; at 4, only the swatch (no + button: add from the
 // polish's page). The choice is kept in this browser.
-const ZOOM_STOPS = [2, 3, 4]; // left to right along the track
 function zoomIcon(n) {
   const icon = document.createElement("span"); icon.className = "zi"; icon.style.setProperty("--n", n); icon.dataset.n = n; icon.setAttribute("aria-hidden", "true");
   for (let i = 0; i < n * n; i++) icon.appendChild(document.createElement("i"));
@@ -1857,42 +1855,28 @@ function zoomIcon(n) {
 function buildZoom() {
   const box = $("#zoom"); box.innerHTML = "";
   box.classList.toggle("dots", typeof DROPS !== "undefined" && DROPS);
-  const end = (n, step, label) => {
-    const b = document.createElement("button"); b.type = "button"; b.className = "z-end"; b.setAttribute("aria-label", label);
+  box.appendChild(Object.assign(document.createElement("span"), { className: "z-thumb" }));
+  ZOOMS.forEach(n => {
+    const b = document.createElement("button"); b.type = "button"; b.className = "z-opt"; b.dataset.n = n;
+    b.setAttribute("role", "radio"); b.setAttribute("aria-label", `${n} per row`);
     b.appendChild(zoomIcon(n));
-    b.onclick = () => setZoom(ZOOM_STOPS[Math.max(0, Math.min(ZOOM_STOPS.length - 1, ZOOM_STOPS.indexOf(zoom.level) + step))]);
-    return b;
-  };
-  const track = document.createElement("div"); track.className = "z-track"; track.id = "zoomTrack"; track.tabIndex = 0;
-  track.setAttribute("role", "slider"); track.setAttribute("aria-label", "Swatches per row");
-  track.setAttribute("aria-valuemin", 2); track.setAttribute("aria-valuemax", 4);
-  track.innerHTML = '<span class="z-line"></span><span class="z-knob"></span>';
-  box.append(end(2, -1, "Bigger swatches"), track, end(4, 1, "Smaller swatches"));
-  // Which stop is nearest the finger.
-  const stopAt = x => { const r = track.getBoundingClientRect(); return ZOOM_STOPS[Math.round(Math.max(0, Math.min(1, (x - r.left) / r.width)) * (ZOOM_STOPS.length - 1))]; };
-  track.addEventListener("pointerdown", e => {
-    if (e.button > 0) return;
-    zoom.drag = e.pointerId; box.classList.add("dragging");
-    try { track.setPointerCapture(e.pointerId); } catch (err) {}
-    setZoom(stopAt(e.clientX));
+    b.onclick = () => setZoom(n);
+    box.appendChild(b);
   });
-  track.addEventListener("pointermove", e => { if (zoom.drag === e.pointerId) setZoom(stopAt(e.clientX)); });
-  const up = e => { if (zoom.drag === e.pointerId) { zoom.drag = null; box.classList.remove("dragging"); } };
-  track.addEventListener("pointerup", up); track.addEventListener("pointercancel", up);
-  track.addEventListener("keydown", e => {
-    const step = e.key === "ArrowRight" || e.key === "ArrowUp" ? 1 : e.key === "ArrowLeft" || e.key === "ArrowDown" ? -1 : 0;
+  box.addEventListener("keydown", e => {
+    const step = e.key === "ArrowRight" || e.key === "ArrowDown" ? 1 : e.key === "ArrowLeft" || e.key === "ArrowUp" ? -1 : 0;
     if (!step) return;
     e.preventDefault();
-    setZoom(ZOOM_STOPS[Math.max(0, Math.min(ZOOM_STOPS.length - 1, ZOOM_STOPS.indexOf(zoom.level) + step))]);
+    setZoom(ZOOMS[Math.max(0, Math.min(ZOOMS.length - 1, ZOOMS.indexOf(zoom.level) + step))]);
+    box.querySelector('[aria-checked="true"]').focus();
   });
   setZoom(zoom.level, true);
 }
 function setZoom(n, quiet) {
   const changed = n !== zoom.level; zoom.level = n;
   $("#grid").dataset.zoom = n;
-  const track = $("#zoomTrack");
-  track.style.setProperty("--p", ZOOM_STOPS.indexOf(n) / (ZOOM_STOPS.length - 1));
-  track.setAttribute("aria-valuenow", n); track.setAttribute("aria-valuetext", `${n} per row`);
+  const box = $("#zoom"); box.style.setProperty("--i", ZOOMS.indexOf(n));
+  box.querySelectorAll(".z-opt").forEach(b => { const on = +b.dataset.n === n; b.setAttribute("aria-checked", on); b.tabIndex = on ? 0 : -1; });
   if (changed && !quiet) { save(KEY.zoom, n); fitGrid(); }
 }
 
