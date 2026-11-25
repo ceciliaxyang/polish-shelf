@@ -1039,6 +1039,7 @@ function renderComboThumbs() {
     const c = document.createElement("canvas");
     if (pick.p) renderSwatch(c, pick.p, 40, 40); else drawStack(c, pick.layers, 40, 40);
     box.appendChild(c);
+    dropify(box, pick.p ? pick.p.id : dropKeyFor(pick.layers), 1, { small: true });
   });
 }
 
@@ -1074,6 +1075,7 @@ function renderShelf() {
     add.dataset.name = p.name;
     add.onclick = () => bench.layers.some(l => l.pid === p.id) ? removePolish(p) : addLayer(p);
     wrap.append(sw, add);
+    dropify(wrap, p.id, 260 / 240);
     sw.tabIndex = 0; sw.setAttribute("role", "button"); sw.setAttribute("aria-label", `View ${p.name}`);
     sw.onclick = () => openDetail(p, wrap);
     sw.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openDetail(p, wrap); } };
@@ -1115,6 +1117,7 @@ function renderCombos() {
       const p = pool.splice(Math.floor(Math.random() * pool.length), 1)[0];
       const w = Math.round(card.getBoundingClientRect().width) || 235, cv = document.createElement("canvas");
       renderSwatch(cv, p, w, w); card.appendChild(cv);
+      dropify(card, p.id, 1);
     });
     return;
   }
@@ -1124,6 +1127,7 @@ function renderCombos() {
     const wrap = document.createElement("div"); wrap.className = "swatch-wrap";
     const sw = document.createElement("canvas"); sw.className = "swatch";
     wrap.append(sw);
+    dropify(wrap, dropKeyFor(c.layers), 260 / 240);
     sw.tabIndex = 0; sw.setAttribute("role", "button"); sw.setAttribute("aria-label", `Open ${c.name} in Layers`);
     sw.onclick = () => loadCombo(c);
     sw.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); loadCombo(c); } };
@@ -1134,7 +1138,8 @@ function renderCombos() {
     title.append(nm, when);
     const stack = document.createElement("div"); stack.className = "combo-stack";
     liveLayers(c.layers).reverse().forEach(L => {
-      const t = document.createElement("canvas"); t.title = L.polish.name || ""; renderSwatch(t, L.polish, 40, 40); stack.appendChild(t);
+      const t = document.createElement("canvas"); t.title = L.polish.name || ""; renderSwatch(t, L.polish, 40, 40);
+      stack.appendChild(dropThumb(t, L.polish.id, { ring: 15 })); // a 3px ring, like the rectangles' border
     });
     text.append(title, stack);
     card.append(wrap, text); grid.appendChild(card);
@@ -1263,14 +1268,15 @@ function flyToCombos(layers) {
   if (sheetMQ.matches) setSheet(false);
   const cv = document.createElement("canvas");
   if (!drawStack(cv, layers, Math.round(from.width), Math.round(from.height))) return;
-  const radius = parseFloat(getComputedStyle(src).borderTopLeftRadius) || 12;
+  const radius = DROPS ? 0 : parseFloat(getComputedStyle(src).borderTopLeftRadius) || 12;
   cv.className = "fly-swatch";
+  if (DROPS) cv.style.webkitMaskImage = cv.style.maskImage = dropShape(dropKeyFor(layers), 100 * from.height / from.width).mask;
   Object.assign(cv.style, { left: from.left + "px", top: from.top + "px", width: from.width + "px", height: from.height + "px", borderRadius: radius + "px" });
   document.body.appendChild(cv);
   renderComboThumbs.hold = true;
   const s = target.width / from.width;
   const dx = target.left + target.width / 2 - (from.left + from.width / 2), dy = target.top + target.height / 2 - (from.top + from.height / 2);
-  const end = 4 / s; // the thumbnails' 4px corners, measured before scaling
+  const end = DROPS ? 0 : 4 / s; // the thumbnails' 4px corners, measured before scaling
   // One continuous motion that heads for the button from the first frame: a curve that rises toward the
   // button's height first and then sweeps across into it (never above it and back), sampled into keyframes,
   // with a single ease over the whole flight. It shrinks at an even visual rate (geometrically) while its
@@ -1319,6 +1325,7 @@ function openDetail(p, card) {
   const stage = $("#mStage"); stage.innerHTML = "";
   const cv = document.createElement("canvas"); cv.className = "swatch";
   stage.appendChild(cv); detail.cv = cv;
+  dropify(stage, p.id, 1);
   const sr = stage.getBoundingClientRect();
   renderSwatch(cv, p, Math.round(sr.width), Math.round(sr.height));
   if (autoIO) autoIO.observe(cv);
@@ -1558,6 +1565,7 @@ function renderStage() {
     const holder = document.createElement("div"); holder.className = "stage-layers"; holder.setAttribute("aria-hidden", "true");
     ops.forEach(o => o.cv && holder.appendChild(o.cv));
     box.append(holder, out);
+    dropify(box, dropKeyFor(bench.layers), box.clientHeight / box.clientWidth || 360 / 348);
     composeOps(ctx, ops, out.width, out.height);
     let until = 0, raf = 0;
     const loop = now => { composeOps(ctx, ops, out.width, out.height); raf = now < until ? requestAnimationFrame(loop) : 0; };
@@ -1577,11 +1585,11 @@ function renderPeek() {
   if (!sheetMQ.matches) return;
   const n = bench.layers.length, mini = $("#peekMini"); mini.innerHTML = "";
   $("#peekSub").textContent = n ? `${n} layer${n > 1 ? "s" : ""}` : "Start adding polishes to see how they layer together.";
-  const cv = stackCanvas(44, 44); if (cv) mini.appendChild(cv);
+  const cv = stackCanvas(44, 44); if (cv) { mini.appendChild(cv); dropify(mini, dropKeyFor(bench.layers), 1, { small: true }); }
   const th = $("#peekThumbs"); th.innerHTML = "";
   [...bench.layers].reverse().slice(0, 4).forEach(l => {
     const p = polishById(l.pid); if (!p) return;
-    const c = document.createElement("canvas"); renderSwatch(c, p, 24, 24); th.appendChild(c);
+    const c = document.createElement("canvas"); renderSwatch(c, p, 24, 24); th.appendChild(dropThumb(c, p.id, { ring: 16 })); // a 2px ring
   });
 }
 function setSheet(expanded) {
@@ -1674,7 +1682,7 @@ function renderBench() {
     del.setAttribute("aria-label", `Remove ${p ? p.name : "layer"}`);
     del.onclick = () => { bench.layers.splice(i, 1); saveBench(); renderBench(); };
     const grip = document.createElement("span"); grip.className = "layer-grip"; grip.innerHTML = GRIP; grip.setAttribute("aria-hidden", "true");
-    li.append(grip, th, mid, del); ol.appendChild(li);
+    li.append(grip, dropThumb(th, p ? p.id : "removed"), mid, del); ol.appendChild(li);
     if (p) renderSwatch(th, p, 48, 48);
   });
 }
