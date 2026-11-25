@@ -34,6 +34,6 @@ npm run previews -- <id>    # just one
 
 ## Notes
 
-- The floating zoom button at the bottom right switches between 2, 3 (default) and 4 swatches per row on a phone (desktop cards shrink to match). At 3 each card shows the name and its effect types in small text, centered (switch to left-aligned in developer settings: tap the title 5 times); at 4 only swatches. The choice is kept in this browser.
+- The floating zoom slider at the bottom switches between 2, 3 (default) and 4 swatches per row on a phone (desktop cards shrink to match). At 3 each card shows the name and its effect types in small text, centered (switch to left-aligned in developer settings: tap the title 5 times); at 4 only swatches. The choice is kept in this browser.
 - Polishes live in `js/polishes.js`. The current layers are stored in this browser's localStorage, so they stay on this computer and browser only.
 - Swatches show as droplets (poured puddles with a soft sheen) by default, everywhere: shelf, polish page, Layers, combos and thumbnails. A developer setting switches back to rectangles: tap the "Polish shelf" title five times, or add `?swatch=rect` (or `?swatch=drop`) to the address. The choice is kept in this browser. Link preview images are still drawn as rectangles.

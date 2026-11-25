@@ -1695,7 +1695,7 @@ function renderBench() {
 const GAP = 40, MAX_CARD = 336;
 // Zoom levels (see "zoom" below): swatches per row on a phone, and how much smaller desktop cards get.
 const ZOOMS = [2, 3, 4], ZOOM_SCALE = { 2: 1, 3: 2 / 3, 4: 1 / 2 };
-const zoom = { level: ZOOMS.includes(load(KEY.zoom, 3)) ? load(KEY.zoom, 3) : 3, open: false, drag: null, closeT: 0 };
+const zoom = { level: ZOOMS.includes(load(KEY.zoom, 3)) ? load(KEY.zoom, 3) : 3, drag: null };
 // Card swatches are drawn at the size they're actually shown (cards grow on bigger screens), so they
 // stay sharp instead of being stretched.
 // Cards rise into view as they're scrolled to. Cards arriving together (a new row, or the first screen)
@@ -1831,19 +1831,17 @@ function shapeForScroll(instant) {
     cv.setRest(d * d * (3 - 2 * d), instant);
   });
 }
-// The sticky top nav gets smaller, with a soft line under it, once the page is scrolled.
-const markScrolled = () => document.body.classList.toggle("scrolled", scrollY > 4);
-addEventListener("scroll", markScrolled, { passive: true }); markScrolled();
 let shapeRaf = 0;
 addEventListener("scroll", () => { if (!shapeRaf) shapeRaf = requestAnimationFrame(() => { shapeRaf = 0; shapeForScroll(); }); }, { passive: true });
 
 /* ---------- zoom ---------- */
-// The zoom control, a floating button at the bottom right: 2, 3 (default) or 4 swatches per row on a phone. Closed,
-// it shows only the current size; tapping it opens all three, and you can tap one or slide your finger
-// across them (the shelf follows as you slide). It closes when you let go on a size, tap outside or press
-// Escape. Each icon is a tiny shelf made of real swatches. At 3 per row the cards show only the name; at 4,
-// only the swatch (no + button: add from the polish's page). The choice is kept in this browser.
-// Each icon is a plain n x n grid of rounded squares in the button's text color.
+// The zoom control is a floating slider at the bottom of the screen: 4 (dense, left), 3 (default) or 2
+// (big, right) swatches per row on a phone. Drag the small knob along the track (it snaps to the nearest
+// size and the shelf follows as you drag), tap a spot on the track, or tap the icon at either end to step
+// one size that way. Each icon is a grid of dots (droplet swatches) or rounded squares (rectangles). At 3
+// per row the cards show the name and effect types; at 4, only the swatch (no + button: add from the
+// polish's page). The choice is kept in this browser.
+const ZOOM_STOPS = [4, 3, 2]; // left to right along the track
 function zoomIcon(n) {
   const icon = document.createElement("span"); icon.className = "zi"; icon.style.setProperty("--n", n); icon.dataset.n = n; icon.setAttribute("aria-hidden", "true");
   for (let i = 0; i < n * n; i++) icon.appendChild(document.createElement("i"));
@@ -1851,75 +1849,45 @@ function zoomIcon(n) {
 }
 function buildZoom() {
   const box = $("#zoom"); box.innerHTML = "";
-  const track = document.createElement("span"); track.className = "z-track";
-  ZOOMS.forEach(n => {
-    const b = document.createElement("button"); b.type = "button"; b.className = "z-opt"; b.dataset.n = n;
-    b.setAttribute("role", "radio"); b.setAttribute("aria-label", `${n} per row`);
+  box.classList.toggle("dots", typeof DROPS !== "undefined" && DROPS);
+  const end = (n, step, label) => {
+    const b = document.createElement("button"); b.type = "button"; b.className = "z-end"; b.setAttribute("aria-label", label);
     b.appendChild(zoomIcon(n));
-    track.appendChild(b);
+    b.onclick = () => setZoom(ZOOM_STOPS[Math.max(0, Math.min(ZOOM_STOPS.length - 1, ZOOM_STOPS.indexOf(zoom.level) + step))]);
+    return b;
+  };
+  const track = document.createElement("div"); track.className = "z-track"; track.id = "zoomTrack"; track.tabIndex = 0;
+  track.setAttribute("role", "slider"); track.setAttribute("aria-label", "Swatches per row");
+  track.setAttribute("aria-valuemin", 2); track.setAttribute("aria-valuemax", 4);
+  track.innerHTML = '<span class="z-line"></span>' + ZOOM_STOPS.map((_, i) => `<span class="z-stop" style="--p:${i / (ZOOM_STOPS.length - 1)}"></span>`).join("") + '<span class="z-knob"></span>';
+  box.append(end(4, -1, "Smaller swatches"), track, end(2, 1, "Bigger swatches"));
+  // Which stop is nearest the finger.
+  const stopAt = x => { const r = track.getBoundingClientRect(); return ZOOM_STOPS[Math.round(Math.max(0, Math.min(1, (x - r.left) / r.width)) * (ZOOM_STOPS.length - 1))]; };
+  track.addEventListener("pointerdown", e => {
+    if (e.button > 0) return;
+    zoom.drag = e.pointerId; box.classList.add("dragging");
+    try { track.setPointerCapture(e.pointerId); } catch (err) {}
+    setZoom(stopAt(e.clientX));
   });
-  box.append(Object.assign(document.createElement("span"), { className: "z-thumb" }), track);
-  box.addEventListener("pointerdown", zoomDown);
-  box.addEventListener("pointermove", zoomMove);
-  box.addEventListener("pointerup", zoomUp);
-  box.addEventListener("pointercancel", () => { zoom.drag = null; });
-  box.addEventListener("click", e => e.preventDefault());
-  box.addEventListener("keydown", zoomKey);
+  track.addEventListener("pointermove", e => { if (zoom.drag === e.pointerId) setZoom(stopAt(e.clientX)); });
+  const up = e => { if (zoom.drag === e.pointerId) { zoom.drag = null; box.classList.remove("dragging"); } };
+  track.addEventListener("pointerup", up); track.addEventListener("pointercancel", up);
+  track.addEventListener("keydown", e => {
+    const step = e.key === "ArrowRight" || e.key === "ArrowUp" ? 1 : e.key === "ArrowLeft" || e.key === "ArrowDown" ? -1 : 0;
+    if (!step) return;
+    e.preventDefault();
+    setZoom(ZOOM_STOPS[Math.max(0, Math.min(ZOOM_STOPS.length - 1, ZOOM_STOPS.indexOf(zoom.level) + step))]);
+  });
   setZoom(zoom.level, true);
 }
 function setZoom(n, quiet) {
   const changed = n !== zoom.level; zoom.level = n;
   $("#grid").dataset.zoom = n;
-  const box = $("#zoom"); box.style.setProperty("--i", ZOOMS.indexOf(n));
-  box.querySelectorAll(".z-opt").forEach(b => {
-    const on = +b.dataset.n === n; b.setAttribute("aria-checked", on); b.classList.toggle("on", on);
-    b.tabIndex = on || zoom.open ? 0 : -1;
-  });
+  const track = $("#zoomTrack");
+  track.style.setProperty("--p", ZOOM_STOPS.indexOf(n) / (ZOOM_STOPS.length - 1));
+  track.setAttribute("aria-valuenow", n); track.setAttribute("aria-valuetext", `${n} per row`);
   if (changed && !quiet) { save(KEY.zoom, n); fitGrid(); }
 }
-function openZoom(v) {
-  zoom.open = v; clearTimeout(zoom.closeT);
-  const box = $("#zoom"); box.classList.toggle("open", v);
-  box.querySelectorAll(".z-opt").forEach(b => { b.tabIndex = v || b.classList.contains("on") ? 0 : -1; });
-}
-// Which size sits under the finger: the open control is three equal slots.
-function zoomAt(x) {
-  const r = $("#zoom").getBoundingClientRect();
-  return ZOOMS[Math.max(0, Math.min(ZOOMS.length - 1, Math.floor((x - r.left) / (r.width / ZOOMS.length))))];
-}
-function zoomDown(e) {
-  if (e.button > 0) return;
-  const box = $("#zoom");
-  zoom.drag = { id: e.pointerId, x: e.clientX, wasOpen: zoom.open, moved: false };
-  try { box.setPointerCapture(e.pointerId); } catch (err) {}
-  if (!zoom.open) openZoom(true);
-  else setZoom(zoomAt(e.clientX));
-}
-function zoomMove(e) {
-  const d = zoom.drag; if (!d || d.id !== e.pointerId) return;
-  if (Math.abs(e.clientX - d.x) > 6) d.moved = true;
-  // Wait for the control to finish opening before following the finger, so a tap doesn't land on a size.
-  if (d.moved && $("#zoom").classList.contains("open")) setZoom(zoomAt(e.clientX));
-}
-function zoomUp(e) {
-  const d = zoom.drag; if (!d || d.id !== e.pointerId) return;
-  zoom.drag = null;
-  // A plain tap on the closed control just opens it; anything else picks a size and closes.
-  if (!d.wasOpen && !d.moved) return;
-  clearTimeout(zoom.closeT); zoom.closeT = setTimeout(() => openZoom(false), 280);
-}
-function zoomKey(e) {
-  const i = ZOOMS.indexOf(zoom.level);
-  if (e.key === "Escape" && zoom.open) { openZoom(false); e.target.blur?.(); $("#zoom .z-opt.on")?.focus(); return; }
-  if (e.key === "Enter" || e.key === " ") { e.preventDefault(); if (!zoom.open) { openZoom(true); return; } const n = +e.target.dataset.n; if (n) setZoom(n); openZoom(false); $("#zoom .z-opt.on")?.focus(); return; }
-  const step = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
-  if (!step) return;
-  e.preventDefault();
-  const n = ZOOMS[Math.max(0, Math.min(ZOOMS.length - 1, i + step))];
-  setZoom(n); $("#zoom .z-opt.on")?.focus();
-}
-document.addEventListener("pointerdown", e => { if (zoom.open && !e.target.closest("#zoom")) openZoom(false); });
-document.addEventListener("focusin", e => { if (zoom.open && !e.target.closest("#zoom")) openZoom(false); });
 
 /* ---------- boot ---------- */
 buildPills();
