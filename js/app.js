@@ -1056,8 +1056,8 @@ function effectsOf(p) {
   return fx.length ? fx : ["shimmer"];
 }
 // What a polish is called on its card, detail view and layer: a magnetic polish's shimmer is part of being
-// magnetic, so "Magnetic · Shimmer" reads just "Magnetic" (the same for Magnetic topper). It still shows up
-// under the Shimmer filter.
+// magnetic, so "Magnetic · Shimmer" reads just "Magnetic" (the same for Magnetic topper), and it is left out
+// of the Shimmer filter.
 function labelsOf(p) {
   const fx = effectsOf(p);
   return fx.includes("magnetic") || fx.includes("magtopper") ? fx.filter(k => k !== "shimmer") : fx;
@@ -1072,7 +1072,7 @@ function renderShelf() {
   if (state.view === "combos") return renderCombos();
   const grid = $("#grid"); grid.innerHTML = "";
   if (!state.polishes.length) { grid.innerHTML = emptyMsg("Your shelf is empty", "Add your polishes to js/polishes.js and they will show up here."); return; }
-  const list = state.polishes.filter(p => !state.fx.size || effectsOf(p).some(k => state.fx.has(k)));
+  const list = state.polishes.filter(p => !state.fx.size || labelsOf(p).some(k => state.fx.has(k)));
   if (!list.length) { grid.innerHTML = emptyMsg("No matches", "No polishes with that effect yet."); return; }
   for (const p of list) {
     const card = document.createElement("article"); card.className = "card rise"; riseIn(card);
