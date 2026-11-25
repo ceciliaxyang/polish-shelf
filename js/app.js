@@ -1517,7 +1517,31 @@ function openDetail(p, card) {
   document.title = `${p.name} · ${p.brand} · ${SITE_TITLE}`;
 }
 
-$("#modal").addEventListener("scroll", e => e.currentTarget.classList.toggle("scrolled", e.currentTarget.scrollTop > 4), { passive: true });
+// As the page scrolls, the swatch shrinks and moves into the top-left corner (in step with the scroll, over
+// the first DOCK_SCROLL px): 96px wide, 32px down and 36px in on desktop, lined up with the buttons; 64px
+// wide, 16px down and in on a phone. It stays sticky there while the photos run under it.
+const DOCK_SCROLL = 160;
+const phoneMQ = matchMedia("(max-width: 600px)");
+// Where the swatch sits when not docked (its sticky spot), in window coordinates.
+function swatchHome() {
+  const stage = $("#mStage"), body = $(".modal-body").getBoundingClientRect();
+  return { left: body.left + (body.width - stage.offsetWidth) / 2, top: parseFloat(getComputedStyle(stage).top) || 0, width: stage.offsetWidth, height: stage.offsetHeight };
+}
+function dockTransform(t) {
+  const home = swatchHome(), phone = phoneMQ.matches;
+  const safeTop = home.top - (phone ? 72 : 60); // env(safe-area-inset-top), from the sticky top
+  const w = phone ? 64 : 96, x = phone ? 16 : 36, y = (phone ? 16 : 32) + safeTop;
+  const k = 1 + (w / home.width - 1) * t;
+  return `translate(${((x - home.left) * t).toFixed(2)}px, ${((y - home.top) * t).toFixed(2)}px) scale(${k.toFixed(4)})`;
+}
+function dockSwatch() {
+  const m = $("#modal"); if (m.hidden || !m.classList.contains("open")) return;
+  const stage = $("#mStage"), t = Math.min(1, Math.max(0, m.scrollTop / DOCK_SCROLL));
+  stage.style.transition = "filter .25s ease, box-shadow .25s ease"; stage.style.transformOrigin = "0 0"; // the move follows the scroll exactly
+  stage.style.transform = t ? dockTransform(t) : "";
+}
+$("#modal").addEventListener("scroll", e => { e.currentTarget.classList.toggle("scrolled", e.currentTarget.scrollTop > 4); dockSwatch(); }, { passive: true });
+addEventListener("resize", dockSwatch);
 
 function closeDetail() {
   const m = $("#modal"); if (m.hidden) return;
@@ -1526,7 +1550,9 @@ function closeDetail() {
   m.classList.remove("open"); document.body.classList.remove("detail-open");
   history.replaceState(null, "", SITE_ROOT); document.title = SITE_TITLE;
   if (card && card.isConnected) {
-    const from = stage.getBoundingClientRect(), to = card.getBoundingClientRect();
+    // From wherever it is (docked or not) back into its card; the move is measured from its undocked spot.
+    const from = swatchHome(), to = card.getBoundingClientRect();
+    stage.style.transition = `transform .45s ${EASE}`; stage.style.transformOrigin = "0 0";
     stage.style.transform = `translate(${to.left - from.left}px, ${to.top - from.top}px) scale(${to.width / from.width}, ${to.height / from.height})`;
     setTimeout(done, 450);
   } else done();
