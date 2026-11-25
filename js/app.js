@@ -1409,10 +1409,9 @@ function flyToCombos(layers) {
   const src = [$("#stage"), $("#peekMini")].find(el => { const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0; });
   if (reduceMotion || !src || !tr.width) return;
   const from = src.getBoundingClientRect();
-  // The button has to be in sight to catch it: scroll the page back up if it's scrolled away, and on
-  // phones let the expanded sheet drop back to its peek bar.
-  let target = tr;
-  if (tr.top < 0) { target = { left: tr.left, top: tr.top + scrollY, width: tr.width, height: tr.height }; scrollTo({ top: 0, behavior: "smooth" }); }
+  // The button floats beside the zoom bar, so it's always in sight; on phones let the expanded sheet
+  // drop back to its peek bar first.
+  const target = tr;
   if (sheetMQ.matches) setSheet(false);
   const cv = document.createElement("canvas");
   if (!drawStack(cv, layers, Math.round(from.width), Math.round(from.height))) return;
