@@ -1083,7 +1083,9 @@ function renderShelf() {
     const title = document.createElement("div"); title.className = "card-title";
     const br = document.createElement("p"); br.className = "brand"; br.textContent = p.brand || ""; br.title = br.textContent;
     const nm = document.createElement("p"); nm.className = "name"; nm.textContent = p.name || "Untitled"; nm.title = nm.textContent;
-    title.append(br, nm);
+    // The effect types as one line of small text (shown at 3 per row, in place of the pills).
+    const ty = document.createElement("p"); ty.className = "card-type"; ty.textContent = effectsOf(p).map(k => EFFECTS[k] || k).join(" · "); ty.title = ty.textContent;
+    title.append(br, nm, ty);
     const fx = document.createElement("div"); fx.className = "card-fx";
     effectsOf(p).forEach(k => {
       const b = document.createElement("button"); b.type = "button"; b.className = "pill tiny"; b.textContent = EFFECTS[k] || k;

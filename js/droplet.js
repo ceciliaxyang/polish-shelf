@@ -127,7 +127,14 @@ function dropThumb(cv, key, opt = {}) {
 // a saved combo's card and its thumbnail on the Favorite combos button share it, so a combo keeps its shape.
 function dropKeyFor(layers) { return "combo:" + (layers || []).map(l => l.pid).join("+"); }
 
-/* Developer setting: five quick taps on the page title open a small panel to switch the swatch shape. */
+/* Card text alignment at 3 per row: centered under the swatch (default) or left-aligned. */
+const ALIGN_KEY = "polish-shelf:card-align";
+let CARD_ALIGN = "center";
+try { if (JSON.parse(localStorage.getItem(ALIGN_KEY)) === "left") CARD_ALIGN = "left"; } catch (e) {}
+document.documentElement.dataset.cardAlign = CARD_ALIGN;
+
+/* Developer settings: five quick taps on the page title open a small panel to switch the swatch shape
+   and the card text alignment. */
 (() => {
   const title = document.getElementById("shelfTitle");
   if (!title) return;
@@ -147,7 +154,22 @@ function dropKeyFor(layers) { return "combo:" + (layers || []).map(l => l.pid).j
             <button type="button" role="radio" data-shape="drop">Droplet</button>
             <button type="button" role="radio" data-shape="rect">Rectangle</button>
           </div></div>
+        <div class="dev-row"><span id="devAlignLabel">Card text</span>
+          <div class="dev-seg" role="radiogroup" aria-labelledby="devAlignLabel">
+            <button type="button" role="radio" data-align="left">Left</button>
+            <button type="button" role="radio" data-align="center">Center</button>
+          </div></div>
         <button type="button" class="dev-close">Done</button>`;
+      // Alignment applies right away (no reload).
+      const alignBtns = panel.querySelectorAll("[data-align]");
+      const syncAlign = () => alignBtns.forEach(b => b.setAttribute("aria-checked", b.dataset.align === CARD_ALIGN));
+      alignBtns.forEach(b => {
+        b.onclick = () => {
+          CARD_ALIGN = b.dataset.align; document.documentElement.dataset.cardAlign = CARD_ALIGN; syncAlign();
+          try { localStorage.setItem(ALIGN_KEY, JSON.stringify(CARD_ALIGN)); } catch (e) {}
+        };
+      });
+      syncAlign();
       panel.querySelectorAll("[data-shape]").forEach(b => {
         b.setAttribute("aria-checked", b.dataset.shape === SHAPE);
         b.onclick = () => {
@@ -161,6 +183,6 @@ function dropKeyFor(layers) { return "combo:" + (layers || []).map(l => l.pid).j
       document.body.appendChild(panel);
     }
     panel.hidden = false;
-    panel.querySelector('[aria-checked="true"]').focus();
+    panel.querySelector('[data-shape][aria-checked="true"]').focus();
   }
 })();
