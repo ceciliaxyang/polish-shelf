@@ -1088,7 +1088,7 @@ $("#comboBtn").onclick = () => {
 // there are any.
 // Favorite combos only appears once a combo is saved, rising in the first time.
 // Deleting the last combo while on the combos page goes back to the shelf.
-// The filters belong to the shelf: on the combos page they fade out and can't be used (and don't
+// The filters belong to the shelf: on the combos page they're hidden (and don't
 // filter the combos); the picks come back when you return to the shelf.
 function setView(v) {
   state.view = v;
@@ -1096,6 +1096,8 @@ function setView(v) {
   $(".shelf-head").classList.toggle("combos-view", v === "combos");
   $("#shelfTitle").textContent = v === "combos" ? "Favorite combos" : "My polish shelf";
   $("#filters").inert = v === "combos";
+  $("#grid").classList.toggle("combos-grid", v === "combos");
+  fitGrid();
 }
 function syncComboBtn() {
   const btn = $("#comboBtn"), none = !combos.length;
@@ -1248,11 +1250,31 @@ function renderShelf() {
 }
 
 /* ---------- saved combos ---------- */
-// Combos page (Figma node 2201:98964): one card per saved combo, newest first, with the layered swatch
-// (no button on it), the name and the month it was made, and its polishes as overlapping thumbnails. A
-// combo is deleted from the Layers pane once it's loaded there.
-// Tapping a combo's swatch loads it into the Layers pane.
-const MONTH = new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric" });
+// Combos page (Figma node 2406:3621): one card per saved combo, newest first. The layered swatch sits in
+// the middle with the combo's polishes scattered around it as smaller droplets, then the name and the
+// polishes it's made of (base first). Every combo scatters its polishes a little differently: which side
+// each one lands on, how far out, how high and how big are picked from the combo's id, so a combo always
+// looks the same from one visit to the next.
+// Tapping a combo's swatch loads it into the Layers pane, where it can be deleted.
+// The scattered polishes, in units of the middle swatch's width, measured from its center: x, y (down) and
+// size s. They sit off the swatch's left and right edges (above would run into the row above, below into
+// the name), the big ones 27% of the swatch's width and the small ones 21% (Figma: 84px and 64px drops
+// beside a 310px one), never on top of each other.
+function comboScatter(c, n) {
+  const R = dropRand(dropHash("scatter:" + (c.id || layerKey(c.layers)))), out = [];
+  for (let i = 0; i < n; i++) {
+    let pick;
+    for (let t = 0; t < 60; t++) {
+      const right = R() < .5, deg = right ? -40 + R() * 85 : 135 + R() * 90, a = deg * Math.PI / 180;
+      const s = R() < .5 ? .27 : .21, r = .64 + R() * .14;
+      pick = { x: Math.cos(a) * r, y: Math.sin(a) * r * .95, s };
+      if (out.every(o => Math.hypot(o.x - pick.x, o.y - pick.y) > (o.s + pick.s) * .6 + .03)) break;
+    }
+    out.push(pick);
+  }
+  return out;
+}
+const SAT_PX = 96; // scattered polishes are drawn once at this size and scaled down to fit their card
 function renderCombos() {
   const grid = $("#grid"); grid.innerHTML = "";
   // Empty state (Figma node 2212:1478): three cards (the outer two tilted) over a line of copy, each showing
@@ -1269,28 +1291,37 @@ function renderCombos() {
     });
     return;
   }
-  const list = [...combos].reverse();
+  const list = [...combos].reverse(), H = 260 / 240;
   for (const c of list) {
     const card = document.createElement("article"); card.className = "card rise combo-card"; riseIn(card);
+    const art = document.createElement("div"); art.className = "combo-art";
     const wrap = document.createElement("div"); wrap.className = "swatch-wrap";
     const sw = document.createElement("canvas"); sw.className = "swatch";
     wrap.append(sw);
-    dropify(wrap, dropKeyFor(c.layers), 260 / 240);
+    dropify(wrap, dropKeyFor(c.layers), H);
     sw.tabIndex = 0; sw.setAttribute("role", "button"); sw.setAttribute("aria-label", `Open ${c.name} in Layers`);
     sw.onclick = () => loadCombo(c);
     sw.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); loadCombo(c); } };
+    art.append(wrap);
+    // Each polish once, base first (a polish used in two layers shows once).
+    const polishes = [...new Map(liveLayers(c.layers).map(L => [L.polish.id, L.polish])).values()];
+    comboScatter(c, polishes.length).forEach((at, i) => {
+      const p = polishes[i], sat = document.createElement("span"); sat.className = "combo-sat";
+      sat.style.left = (50 + (at.x - at.s / 2) * 100).toFixed(2) + "%";
+      sat.style.top = (50 + (at.y - at.s * H / 2) / H * 100).toFixed(2) + "%";
+      sat.style.width = (at.s * 100).toFixed(2) + "%";
+      const t = document.createElement("canvas"); renderSwatch(t, p, SAT_PX, Math.round(SAT_PX * H));
+      sat.append(t); dropify(sat, p.id, H);
+      art.append(sat);
+    });
     const text = document.createElement("div"); text.className = "card-text";
     const title = document.createElement("div"); title.className = "card-title";
     const nm = document.createElement("p"); nm.className = "name"; nm.textContent = c.name; nm.title = c.name;
-    const when = document.createElement("p"); when.className = "combo-date"; when.textContent = c.createdAt ? `Created ${MONTH.format(new Date(c.createdAt))}` : "";
-    title.append(nm, when);
-    const stack = document.createElement("div"); stack.className = "combo-stack";
-    liveLayers(c.layers).reverse().forEach(L => {
-      const t = document.createElement("canvas"); t.title = L.polish.name || ""; renderSwatch(t, L.polish, 40, 40);
-      stack.appendChild(dropThumb(t, L.polish.id, { ring: 15 })); // a 3px ring, like the rectangles' border
-    });
-    text.append(title, stack);
-    card.append(wrap, text); grid.appendChild(card);
+    const made = document.createElement("p"); made.className = "combo-polishes";
+    made.textContent = polishes.map(p => p.name).join(", "); made.title = made.textContent;
+    title.append(nm, made);
+    text.append(title);
+    card.append(art, text); grid.appendChild(card);
     sw._combo = c; queueDraw(sw);
   }
   fillIdle();
@@ -1884,7 +1915,7 @@ function renderBench() {
 /* ---------- grid fit ---------- */
 // Fill the full width: use the column count whose cards come closest to the breakpoint size, then
 // size the cards to exactly fill the row (never above 1.4x the design, 336px). Phones use CSS.
-const GAP = 40, MAX_CARD = 336;
+const GAP = 40, MAX_CARD = 336, COMBO_CARD = 600;
 // Zoom levels (see "zoom" below): swatches per row on a phone, and how much smaller desktop cards get.
 const ZOOMS = [2, 3, 4], ZOOM_SCALE = { 2: 1, 3: 2 / 3, 4: 1 / 2 };
 // The shelf opens at the middle zoom (3 per row) on larger screens and the most zoomed out (4 per row) on
@@ -1986,9 +2017,13 @@ function fitGrid() {
   // Zooming out (3 or 4 per row on a phone) makes desktop cards 2/3 or 1/2 their usual size.
   const cs = getComputedStyle(grid), scale = ZOOM_SCALE[zoom.level] || 1;
   const base = (parseFloat(cs.getPropertyValue("--card-base")) || 240) * scale, gap = parseFloat(cs.columnGap) || GAP, avail = grid.clientWidth;
-  const n = Math.max(1, Math.round((avail + gap) / (base + gap)));
-  const card = Math.min(MAX_CARD * scale, (avail - (n - 1) * gap) / n);
+  // Favorite combos: cards are 600px across at 2 per row (Figma node 2406:3621, room for the polishes
+  // scattered around each swatch), 2/3 and 1/2 of that zoomed out, spread across the row.
+  const combos = grid.classList.contains("combos-grid"), size = combos ? COMBO_CARD * scale : base;
+  const n = Math.max(1, Math.round((avail + gap) / (size + gap)));
+  const card = Math.min(combos ? size : MAX_CARD * scale, (avail - (n - 1) * gap) / n);
   grid.style.setProperty("--card", Math.floor(card) + "px");
+  grid.style.setProperty("--cols", n);
   redrawCards();
 }
 new ResizeObserver(fitGrid).observe($("#grid"));
