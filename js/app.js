@@ -224,8 +224,17 @@ function magneticSwatch(cv, p, W, H) {
   const ctx = cv.getContext("2d");
   // The polish body is computed pixel by pixel on an offscreen canvas, then drawn slightly softened
   // so the crisp sparkles on top read as sitting under a clear top coat.
-  const body = document.createElement("canvas"); body.width = cw; body.height = ch;
-  const bctx = body.getContext("2d", { willReadFrequently: true });
+  // The body is softened anyway, so it's computed below the canvas's own resolution: at rest about 1.5
+  // pixels per CSS pixel on 3x screens (full resolution on 2x), and coarser still while it moves. Each
+  // resolution has its own offscreen canvas of exactly that size, drawn scaled up in one piece. (Drawing
+  // a corner of one shared full-size canvas scaled up showed a square of stale pixels in Safari.)
+  const restStep = Math.max(1, Math.floor(dpr / 1.5)), fastStep = restStep + 1;
+  const bodies = {};
+  const bodyAt = st => bodies[st] || (bodies[st] = (() => {
+    const c = document.createElement("canvas"); c.width = Math.ceil(cw / st); c.height = Math.ceil(ch / st);
+    const x = c.getContext("2d", { willReadFrequently: true });
+    return { c, x, img: x.createImageData(c.width, c.height) };
+  })());
   const base = rgb(p.colors[0]), flashes = p.colors.length > 1 ? p.colors.slice(1) : [shade(p.colors[0], .65)];
   const sh = p.shimmer ? rgb(p.shimmer) : null; // optional shimmer suspended in the base
   // Color the polish falls into at the edges of the dome: the polish's own deep shade, not black.
@@ -294,8 +303,7 @@ function magneticSwatch(cv, p, W, H) {
   const ELUT = 1024, eI = new Float32Array(ELUT), eT = new Float32Array(ELUT);
   const PLUT = 256, pal = new Float32Array(PLUT * 3);
   for (let i = 0; i < PLUT; i++) pal.set(rgb(palette(flashes, i / (PLUT - 1))), i * 3);
-  const imgFull = bctx.createImageData(cw, ch), imgHalf = bctx.createImageData(Math.ceil(cw / 2), Math.ceil(ch / 2));
-  let raf = 0;
+  let raf = 0, skip = false, hovering = false;
 
   function draw(fast = false) {
     const h = cur.h, k = 1 - h;
@@ -323,9 +331,7 @@ function magneticSwatch(cv, p, W, H) {
       return [Math.min(1, eI[ki] * (.62 + .76 * c)), t];
     };
 
-    // While animating, the body is computed at half resolution (it's softened anyway); the final
-    // resting frame is computed at full resolution.
-    const st = fast ? 2 : 1, img = fast ? imgHalf : imgFull, px8 = img.data;
+    const st = fast ? fastStep : restStep, B = bodyAt(st), img = B.img, px8 = img.data;
     // A sparkle's color and opacity: tinted by the flash around it, bright near the flash, faint in the base.
     const sparkColor = (x, y, r, b, c) => {
       const [I, t] = field(x * dpr, y * dpr), pi = ((t * (PLUT - 1)) | 0) * 3;
@@ -369,10 +375,13 @@ function magneticSwatch(cv, p, W, H) {
         px8[o] += (q[0] - px8[o]) * A; px8[o + 1] += (q[1] - px8[o + 1]) * A; px8[o + 2] += (q[2] - px8[o + 2]) * A;
       }
     }
-    bctx.putImageData(img, 0, 0);
+    B.x.putImageData(img, 0, 0);
     ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.filter = `blur(${.8 * dpr}px)`;
-    if (fast) ctx.drawImage(body, 0, 0, img.width, img.height, 0, 0, cw, ch); else ctx.drawImage(body, 0, 0);
+    // Softened slightly. A body computed at lower resolution is already softened by being scaled up
+    // smoothly, so only a full-resolution body needs the blur filter, which is slow to apply every frame.
+    if (st === 1) ctx.filter = `blur(${.8 * dpr}px)`;
+    ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(B.c, 0, 0, cw, ch);
     ctx.filter = "none";
 
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -443,7 +452,10 @@ function magneticSwatch(cv, p, W, H) {
   function tick() {
     cur.x += (target.x - cur.x) * .2; cur.y += (target.y - cur.y) * .2; cur.h += (target.h - cur.h) * .14;
     const moving = Math.abs(target.x - cur.x) + Math.abs(target.y - cur.y) + Math.abs(target.h - cur.h) > .002;
-    draw(moving);
+    // The slow touch-screen drift is redrawn every other frame (30 a second is plenty for it, and
+    // several swatches drift at once); a finger or mouse on the swatch, and the final frame, every frame.
+    skip = moving && !hovering && !skip;
+    if (!skip) draw(moving);
     raf = moving ? requestAnimationFrame(tick) : 0;
   }
   function aim(x, y, hh) {
@@ -452,7 +464,6 @@ function magneticSwatch(cv, p, W, H) {
   }
   // Hovering moves the glow with the pointer. With no finish picked it also tightens into a cat eye;
   // with Glass bead or Cat eye picked it keeps that shape.
-  let hovering = false;
   // With a mouse, the shape follows the pointer's height on the swatch: cat eye near the top and bottom
   // edges, glass bead through the middle, so sweeping across it plays cat eye > glass bead > cat eye
   // (phones get the same sequence from scrolling instead; see shapeForScroll).
@@ -469,6 +480,9 @@ function magneticSwatch(cv, p, W, H) {
     cv.setRest = (hh, instant) => {
       if (hovering && !cv.matches(":hover")) hovering = false; // the pointer left while the page scrolled under it
       restH = hh; if (hovering) return;
+      // Already resting in that shape: nothing to redraw (this runs for every swatch on screen each time
+      // more swatches finish drawing, so redrawing here made loading much slower).
+      if (!raf && Math.abs(cur.h - hh) < .004 && Math.abs(target.h - hh) < .004) return;
       if (instant) { cur.h = target.h = hh; draw(); } else aim(target.x, target.y, hh);
     };
     // The touch-screen drift moves the glow around without forcing it into a cat eye.
@@ -1279,7 +1293,7 @@ function flyToCombos(layers) {
   if (!drawStack(cv, layers, Math.round(from.width), Math.round(from.height))) return;
   const radius = DROPS ? 0 : parseFloat(getComputedStyle(src).borderTopLeftRadius) || 12;
   cv.className = "fly-swatch";
-  if (DROPS) cv.style.webkitMaskImage = cv.style.maskImage = dropShape(dropKeyFor(layers), 100 * from.height / from.width).mask;
+  if (DROPS) cv.style.clipPath = dropShape(dropKeyFor(layers), 100 * from.height / from.width).clip(from.width, from.height);
   Object.assign(cv.style, { left: from.left + "px", top: from.top + "px", width: from.width + "px", height: from.height + "px", borderRadius: radius + "px" });
   document.body.appendChild(cv);
   renderComboThumbs.hold = true;
