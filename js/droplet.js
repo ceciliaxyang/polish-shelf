@@ -227,14 +227,8 @@ function pourDone(card) {
   const base = card.querySelector(".pour-base"); if (base) base.remove();
 }
 
-/* Card text alignment at 3 per row: centered under the swatch (default) or left-aligned. */
-const ALIGN_KEY = "polish-shelf:card-align";
-let CARD_ALIGN = "center";
-try { if (JSON.parse(localStorage.getItem(ALIGN_KEY)) === "left") CARD_ALIGN = "left"; } catch (e) {}
-document.documentElement.dataset.cardAlign = CARD_ALIGN;
-
-/* Developer settings: five quick taps on the page title open a small panel to switch the swatch shape
-   and the card text alignment. */
+/* Developer settings: five quick taps on the page title open a small panel to switch the swatch shape.
+   (Card text follows the shape: centered under droplets, left-aligned under rectangles.) */
 (() => {
   const title = document.getElementById("shelfTitle");
   if (!title) return;
@@ -254,22 +248,7 @@ document.documentElement.dataset.cardAlign = CARD_ALIGN;
             <button type="button" role="radio" data-shape="drop">Droplet</button>
             <button type="button" role="radio" data-shape="rect">Rectangle</button>
           </div></div>
-        <div class="dev-row"><span id="devAlignLabel">Card text</span>
-          <div class="dev-seg" role="radiogroup" aria-labelledby="devAlignLabel">
-            <button type="button" role="radio" data-align="left">Left</button>
-            <button type="button" role="radio" data-align="center">Center</button>
-          </div></div>
         <button type="button" class="dev-close">Done</button>`;
-      // Alignment applies right away (no reload).
-      const alignBtns = panel.querySelectorAll("[data-align]");
-      const syncAlign = () => alignBtns.forEach(b => b.setAttribute("aria-checked", b.dataset.align === CARD_ALIGN));
-      alignBtns.forEach(b => {
-        b.onclick = () => {
-          CARD_ALIGN = b.dataset.align; document.documentElement.dataset.cardAlign = CARD_ALIGN; syncAlign();
-          try { localStorage.setItem(ALIGN_KEY, JSON.stringify(CARD_ALIGN)); } catch (e) {}
-        };
-      });
-      syncAlign();
       panel.querySelectorAll("[data-shape]").forEach(b => {
         b.setAttribute("aria-checked", b.dataset.shape === SHAPE);
         b.onclick = () => {

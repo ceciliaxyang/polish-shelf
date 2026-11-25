@@ -181,18 +181,17 @@ body.detail-open .zoom { opacity: 0; pointer-events: none; }
 @media (prefers-reduced-motion: reduce) { .swatch-btn .plus, .swatch-btn .check, .swatch-btn.on .check, .m-add .plus, .m-add .check, .m-add.on .check { transition: none; } }
 /* Zoom: 3 per row shows the name and, under it, the effect types as one line of small grey text instead of
    pills (pills would stack and make rows uneven); 4 per row is swatches only, without the + button (add
-   from the polish's page). Combo cards follow the same rules. At 3 per row the text is centered under the
-   swatch, or left-aligned with the developer setting (html[data-card-align="left"], set in droplet.js). */
+   from the polish's page). Combo cards follow the same rules. */
 .grid[data-zoom="3"] .brand, .grid[data-zoom="3"] .card-fx, .grid[data-zoom="3"] .combo-date, .grid[data-zoom="3"] .combo-stack { display: none; }
 .grid[data-zoom="3"] .card { gap: 12px; }
 .grid[data-zoom="3"] .name { font-size: 16px; }
 .card-type { display: none; }
 .grid[data-zoom="3"] .card-title { gap: 4px; }
 .grid[data-zoom="3"] .card-type { display: block; font-size: 13px; line-height: 16px; color: #7a7a7a; }
-.grid[data-zoom="3"] .card { align-items: center; }
-.grid[data-zoom="3"] .card-text { text-align: center; }
-html[data-card-align="left"] .grid[data-zoom="3"] .card { align-items: flex-start; }
-html[data-card-align="left"] .grid[data-zoom="3"] .card-text { text-align: left; }
+/* Card text follows the swatch's shape at every zoom: centered under droplets, left-aligned under rectangles. */
+.drops .grid .card { align-items: center; }
+.drops .grid .card-text { text-align: center; }
+.drops .grid .card-fx, .drops .grid .combo-stack { justify-content: center; }
 .grid[data-zoom="3"] .swatch-btn { top: 12px; right: 12px; width: 36px; height: 36px; padding: 8px; }
 .grid[data-zoom="4"] .card-text, .grid[data-zoom="4"] .swatch-btn { display: none; }
 .grid[data-zoom="4"] { gap: 24px; }
