@@ -54,8 +54,10 @@ button, input, select { font: inherit; color: inherit; }
 /* Shelf header (Figma "Action Header Web", node 2180:15410): title with the layering button on the right,
    then a single row of filled filter pills ("Scoping Bar") that scrolls sideways when it runs out of room. */
 .shelf-head { display: flex; flex-direction: column; gap: 24px; margin: 0 0 24px; padding: 0 8px; }
-.shelf-top { display: flex; align-items: flex-start; gap: 16px; }
-.shelf-title { flex: 1; min-width: 0; margin: 0; font-size: 40px; line-height: 40px; font-weight: 500; letter-spacing: -1.2px; color: #000; }
+/* The title is centered on the page; the Favorite combos button sits at the right in the same row. */
+.shelf-top { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px; }
+.shelf-top .combo-btn { grid-column: 3; justify-self: end; }
+.shelf-title { grid-column: 2; min-width: 0; text-align: center; text-wrap: balance; margin: 0; font-size: 40px; line-height: 40px; font-weight: 500; letter-spacing: -1.2px; color: #000; }
 .scopes { display: flex; gap: 8px; padding: 8px 0; margin: -8px -8px; padding-inline: 8px; overflow-x: auto; scrollbar-width: none; }
 .scopes::-webkit-scrollbar { display: none; }
 .scope { flex-shrink: 0; min-width: 56px; padding: 12px 16px; border: 0; border-radius: 32px; background: #f7f7f7; mix-blend-mode: multiply; color: var(--text); font-size: 12px; line-height: 16px; font-weight: 500; white-space: nowrap; cursor: pointer; transition: background .15s ease, color .15s ease; }
@@ -119,6 +121,9 @@ body.detail-open .zoom { opacity: 0; pointer-events: none; }
 @media (max-width: 600px) {
   .shelf-head { gap: 16px; margin-bottom: 16px; padding: 0; }
   .shelf-title { font-size: 32px; line-height: 40px; letter-spacing: -.9px; }
+  /* Phones: the button shows just its two combo thumbnails, so a centered title has room. */
+  .combo-btn { padding: 4px 10px; }
+  .combo-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .scopes { margin-inline: -16px; padding-inline: 16px; }
 }
 /* Sticky filters: the effect pills stay pinned near the top of the window as the shelf scrolls (the title
@@ -136,7 +141,7 @@ body.detail-open .zoom { opacity: 0; pointer-events: none; }
 /* Card size steps up at the large, XL and XXL breakpoints (--card-base): 240px (the design) up to
    1.4x (336px). js/app.js then picks the column count closest to that size and stretches the cards
    so the row fills the full width (see fitGrid). On phones it switches to two per row. */
-.grid { --card-base: 240px; --card: var(--card-base); display: grid; grid-template-columns: repeat(auto-fill, var(--card)); justify-content: space-between; gap: 40px; }
+.grid { position: relative; --card-base: 240px; --card: var(--card-base); display: grid; grid-template-columns: repeat(auto-fill, var(--card)); justify-content: space-between; gap: 40px; }
 @media (min-width: 1024px) { .grid { --card-base: 272px; } }  /* L:   1.13x */
 @media (min-width: 1280px) { .grid { --card-base: 304px; } }  /* XL:  1.27x */
 @media (min-width: 1536px) { .grid { --card-base: 336px; } }  /* XXL: 1.4x  */
@@ -450,3 +455,9 @@ body.detail-open .page::after { opacity: 1; }
 .dev-close { align-self: flex-end; border: 0; padding: 10px 16px; border-radius: 100px; background: #f2f2f2; font-weight: 500; cursor: pointer; }
 .dev-seg button:focus-visible, .dev-close:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
 .shelf-title { touch-action: manipulation; -webkit-user-select: none; user-select: none; } /* five quick taps open developer settings without zooming */
+
+/* Pouring in (see pourIn in js/droplet.js): the base-color puddle lands first; the swatch, gloss,
+   shadow, button and text fade in over it. The puddle layer is 10% larger on every side for the overshoot. */
+.pour-base { position: absolute; inset: -10%; z-index: 1; pointer-events: none; }
+.pour-wait .pour-base, .pour-wait .drop-under, .pour-wait .drop-gloss, .pour-wait .swatch-btn, .pour-wait .card-text { opacity: 0; }
+.drops .pour-wait .swatch-wrap > canvas.swatch, .drops .pouring:not(.pour-lit) .swatch-wrap > canvas.swatch { opacity: 0; }

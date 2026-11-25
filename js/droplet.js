@@ -141,6 +141,92 @@ function dropThumb(cv, key, opt = {}) {
 // a saved combo's card and its thumbnail on the Favorite combos button share it, so a combo keeps its shape.
 function dropKeyFor(layers) { return "combo:" + (layers || []).map(l => l.pid).join("+"); }
 
+/* ---------- pouring in ---------- */
+// As droplets, each swatch lands like a drop of polish as it comes on screen. First a puddle in the
+// polish's base color: one flat layer, so it costs nothing and shows right away. It lands in one springy
+// motion, starting small, swelling about 6% past its size and settling back, its edge jiggling unevenly
+// before it calms into the drop's exact outline. The real swatch (shimmer, magnetic flash...) fades in on
+// top while it's still settling, as soon as it has been drawn. Drops land loosely from top to bottom:
+// each row a beat after the one above, and every drop with its own extra wait and speed, fixed per polish.
+const POUR = DROPS && !matchMedia("(prefers-reduced-motion: reduce)").matches;
+const POUR_MS = 1300;
+const pourSpring = t => t >= 1 ? 1 : 1 - Math.exp(-7 * t) * Math.cos(8 * t); // from nothing, so drops still waiting show no dot
+function pourRand(key) { const h = [...String(key)].reduce((a, ch) => a * 31 + ch.charCodeAt(0) >>> 0, 11); return [(h % 1000) / 1000, ((h >> 10) % 1000) / 1000]; }
+
+// The puddle's outline at each moment, as clip-path keyframes. Every frame is the drop's own outline
+// pulled toward its middle by a different amount at each angle, with the spring baked in (the
+// keyframes play linearly), so the motion is one smooth curve. The puddle layer is 10% larger than the
+// swatch on every side so the overshoot isn't cut off.
+function pourFrames(s, key, w, h) {
+  const d = s.clip(w, h).slice(6, -2), nums = d.match(/-?\d+(\.\d+)?/g).map(Number), cmds = d.replace(/-?\d+(\.\d+)?/g, "#");
+  const lx = s.cx / 100 * w, ly = s.cy / s.vh * h, R = dropRand(dropHash(key + "#pour")), ph = [R(), R(), R()].map(v => v * 6.28);
+  const frames = [];
+  for (let i = 0, N = 48; i <= N; i++) {
+    const t = i / N, e = pourSpring(t), lump = .2 * Math.exp(-3.2 * t) * (1 - t), out = [];
+    for (let j = 0; j < nums.length; j += 2) {
+      const dx = nums[j] - lx, dy = nums[j + 1] - ly, a = Math.atan2(dy, dx);
+      const n = .55 * Math.sin(2 * a + ph[0] + 1.6 * t) + .3 * Math.sin(3 * a + ph[1] - 2.1 * t) + .15 * Math.sin(5 * a + ph[2] + 3 * t);
+      const f = Math.min(1.09, Math.max(0, e * (1 + lump * n)));
+      out.push((lx + dx * f + w * .1).toFixed(2), (ly + dy * f + h * .1).toFixed(2));
+    }
+    let k = 0;
+    frames.push({ clipPath: `path("${cmds.replace(/#/g, () => out[k++])}")`, offset: t });
+  }
+  return frames;
+}
+
+let pourIO = null, pourFirst = true;
+// app.js calls this for each shelf card (droplets only). Returns false if cards should just appear.
+function pourIn(card, key, color) {
+  if (!POUR) return false;
+  const wrap = card.querySelector(".swatch-wrap"), base = document.createElement("div");
+  base.className = "pour-base"; base.style.backgroundColor = color;
+  base.style.backgroundImage = `radial-gradient(120% 120% at 38% 32%, color-mix(in srgb, ${color} 84%, white), ${color} 55%, color-mix(in srgb, ${color} 82%, black))`;
+  wrap.insertBefore(base, wrap.querySelector("canvas"));
+  card._pourKey = String(key); card.classList.add("pour-wait");
+  if (!pourIO) pourIO = new IntersectionObserver(entries => {
+    const cards = entries.filter(e => e.isIntersecting).map(e => e.target);
+    if (!cards.length) return;
+    const top = c => Math.round(c.getBoundingClientRect().top);
+    cards.sort((a, b) => top(a) - top(b) || a.getBoundingClientRect().left - b.getBoundingClientRect().left);
+    const rows = [...new Set(cards.map(top))];
+    // The first screen lands at a relaxed pace; drops scrolled into view later land a bit sooner.
+    const [rowGap, wait] = pourFirst ? [150, 380] : [110, 220];
+    pourFirst = false;
+    cards.forEach(c => { pourIO.unobserve(c); const [r1, r2] = pourRand(c._pourKey); pourStart(c, rows.indexOf(top(c)) * rowGap + r1 * wait, POUR_MS * (.85 + r2 * .3)); });
+  }, { threshold: .2 });
+  pourIO.observe(card);
+  return true;
+}
+
+function pourStart(card, delay, dur) {
+  const wrap = card.querySelector(".swatch-wrap"), base = wrap.querySelector(".pour-base");
+  card.classList.replace("pour-wait", "pouring");
+  const anim = base.animate(pourFrames(wrap._drop, card._pourKey, wrap.clientWidth, wrap.clientHeight), { duration: dur, delay, easing: "linear", fill: "both" });
+  const fade = (el, at, from = { opacity: 0 }, to = { opacity: 1 }, ms = 650) =>
+    el && el.animate([from, to], { duration: ms, delay: delay + dur * at, easing: "cubic-bezier(.4, 0, .2, 1)", fill: "backwards" });
+  wrap.querySelectorAll(".drop-under, .drop-gloss").forEach(el => fade(el, .22));
+  fade(wrap.querySelector(".swatch-btn"), .45);
+  fade(card.querySelector(".card-text"), .35, { opacity: 0, transform: "translateY(6px)" }, { opacity: 1, transform: "none" }, 700);
+  // The real swatch fades in once the drop has mostly landed and the swatch has been drawn, whichever is later.
+  setTimeout(() => { card._pourLanded = true; pourLight(card); }, delay + dur * .28);
+  anim.onfinish = () => { card._pourSettled = true; pourDone(card); };
+}
+// app.js calls this after drawing a swatch.
+function pourDrawn(cv) { const card = cv.closest(".card"); if (card && card.classList.contains("pouring")) pourLight(card); }
+function pourLight(card) {
+  const cv = card.querySelector("canvas.swatch");
+  if (!card._pourLanded || !cv._w || card.classList.contains("pour-lit")) return;
+  card.classList.add("pour-lit");
+  cv.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 650, easing: "cubic-bezier(.4, 0, .2, 1)" }).onfinish = () => { card._pourShown = true; pourDone(card); };
+}
+// Once the drop has settled and the swatch is fully shown, the puddle underneath is no longer needed.
+function pourDone(card) {
+  if (!card._pourSettled || !card._pourShown) return;
+  card.classList.remove("pouring", "pour-lit");
+  const base = card.querySelector(".pour-base"); if (base) base.remove();
+}
+
 /* Card text alignment at 3 per row: centered under the swatch (default) or left-aligned. */
 const ALIGN_KEY = "polish-shelf:card-align";
 let CARD_ALIGN = "center";
