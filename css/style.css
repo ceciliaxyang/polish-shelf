@@ -72,6 +72,10 @@ button, input, select { font: inherit; color: inherit; }
 .fx-row .scope { background: #f2f2f2; }
 .fx-row .scope:hover { background: #e8e8e8; }
 .fx-row .scope[aria-pressed="true"] { background: var(--text); }
+/* Effect pills with icons (Figma "Filters", node 2383:2326): a 24px icon, 8px gap, then 14px regular text;
+   11px top and bottom, 16px sides, so each pill is 46px tall. */
+.fx-row .scope { display: inline-flex; align-items: center; gap: 8px; padding: 11px 16px; font-size: 14px; line-height: 18px; font-weight: 400; }
+.scope-icon { flex-shrink: 0; display: block; width: 24px; height: 24px; }
 /* Zoom control: a see-through frosted floating bar low at the bottom center with three icons, 2, 3 and 4 per row (big to
    dense, left to right). The selected one sits on a dark circle that slides between them. It moves up above
    the Layers peek bar on phones, centers on the shelf beside the Layers pane on wider screens, and hides
