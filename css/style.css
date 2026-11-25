@@ -161,16 +161,22 @@ body.detail-open .mini-nav { opacity: 0; visibility: hidden; pointer-events: non
   .dock { bottom: calc(16px + env(safe-area-inset-bottom)); }
   body.bench-open .dock { left: calc((100% - 28px - 348px - 40px - env(safe-area-inset-right)) / 2); }
 }
-/* Favorite combos FAB: a 48px frosted circle, the same glass and height as the zoom bar, 8px to its right,
-   showing the two newest combos as a thumbnail pair. It turns dark while the combos page is open. */
-.combo-fab { position: absolute; top: 0; left: calc(100% + 8px); width: 48px; height: 48px; padding: 0; border: 0; border-radius: 50%;
-  display: flex; align-items: center; justify-content: center; cursor: pointer; color: #222;
+/* Favorite combos FAB: a 48px frosted pill, the same glass and height as the zoom bar, 8px to its right,
+   showing the two newest combos as a thumbnail pair and the label "Combos". It turns dark while the combos
+   page is open. */
+.combo-fab { position: absolute; top: 0; left: calc(100% + 8px); height: 48px; padding: 0 18px 0 10px; border: 0; border-radius: 100px;
+  display: flex; align-items: center; gap: 6px; white-space: nowrap; cursor: pointer; color: #222; font-size: 14px; line-height: 18px; font-weight: 500;
   background: rgba(255, 255, 255, .32); -webkit-backdrop-filter: blur(16px) saturate(1.8); backdrop-filter: blur(16px) saturate(1.8);
   box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .6), 0 0 0 .5px rgba(0, 0, 0, .08), 0 6px 20px rgba(0, 0, 0, .12);
   -webkit-tap-highlight-color: transparent; transition: background .15s ease; }
 .combo-fab[hidden] { display: none; }
 .combo-fab:hover { background: rgba(255, 255, 255, .5); }
-.combo-fab[aria-pressed="true"] { background: #222; }
+.combo-fab[aria-pressed="true"] { background: #222; color: #fff; }
+/* On phones the zoom bar and the pill are centered together as one group so the pill stays inside the screen. */
+@media (max-width: 600px) {
+  .dock { display: flex; gap: 8px; }
+  .combo-fab { position: static; }
+}
 .combo-fab:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
 /* The dark circle carries a white copy of the three icons, shifted back by the same amount it moves, so the
    white icon is always exactly over the grey one under it. As the circle slides, the selected icon turns
