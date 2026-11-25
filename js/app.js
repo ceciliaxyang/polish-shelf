@@ -1445,20 +1445,28 @@ function flyToCombos(layers) {
 }
 
 /* ---------- detail view ---------- */
-// Tapping a swatch opens the detail view over a blurred shelf: the live swatch moves into the header's
-// upper-left slot and the product photos run in a row across the page; the link button opens the product page.
+// Tapping a swatch opens the detail view over a blurred shelf (Figma "Polish detail / Desktop (1440)",
+// node 2398:3167): the live swatch grows out of its card into a centered hero, with "Brand — Name" in
+// Instrument Serif, the one-line description and the effect pills under it, then the product photos.
+// The add / link / close buttons stay pinned to the top right; the link button opens the product page.
 const detail = { p: null, card: null, cv: null };
 const EASE = "cubic-bezier(.2, .8, .2, 1)";
 
 function openDetail(p, card) {
   detail.p = p; detail.card = card;
-  $("#mBrand").textContent = p.brand || "";
-  $("#mName").textContent = p.name || "Untitled";
+  // One line: the brand's short name (as on its filter pill), an em dash, then the polish's name.
+  const brand = BRAND_LABELS[p.brand] || p.brand || "";
+  $("#mName").textContent = (brand ? brand + " — " : "") + (p.name || "Untitled");
   // One line on color and finish, from the product page (polishes.js desc), under the name.
   $("#mDesc").textContent = p.desc || ""; $("#mDesc").hidden = !p.desc;
-  // Effect pills under the name (Figma "Action Header Web", node 2189:92047), same labels as on the card.
+  // Effect pills under the description (Figma "Pill / Magnetic"): the filter pill's icon and label, same
+  // labels as on the card. Not clickable here. Icons are fitted once the dialog is showing (see below).
   $("#mPills").innerHTML = "";
-  labelsOf(p).forEach(k => { const t = document.createElement("span"); t.className = "pill tiny"; t.textContent = EFFECTS[k] || k; $("#mPills").appendChild(t); });
+  labelsOf(p).forEach(k => {
+    const t = document.createElement("span"); t.className = "mh-pill";
+    if (EFFECT_ICONS[k]) t.innerHTML = `<svg class="scope-icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><g>${EFFECT_ICONS[k]}</g></svg>`;
+    t.append(EFFECTS[k] || k); $("#mPills").appendChild(t);
+  });
   // The dialog's add button does what the swatch's + does, and shows the same + / check state.
   const addBtn = $("#mAdd");
   if (!addBtn.firstChild) addBtn.innerHTML = PLUS_CHECK;
@@ -1470,12 +1478,12 @@ function openDetail(p, card) {
 
   // Show the dialog first so the swatch can be drawn at the size it will actually appear.
   const m = $("#modal"); m.hidden = false; document.body.style.overflow = "hidden"; document.body.classList.add("detail-open");
-  m.scrollTop = 0; m.classList.remove("scrolled");
-  sizeDetail();
+  m.scrollTop = 0;
+  $("#mPills").querySelectorAll(".scope-icon").forEach(fitIcon);
   const stage = $("#mStage"); stage.innerHTML = "";
   const cv = document.createElement("canvas"); cv.className = "swatch";
   stage.appendChild(cv); detail.cv = cv;
-  dropify(stage, p.id, 1);
+  dropify(stage, p.id, 260 / 240); // the card's shape (180 x 195 here), so it grows out of the card cleanly
   const sr = stage.getBoundingClientRect();
   renderSwatch(cv, p, Math.round(sr.width), Math.round(sr.height));
   if (autoIO) autoIO.observe(cv);
@@ -1507,11 +1515,6 @@ function openDetail(p, card) {
   history.replaceState(null, "", SITE_ROOT + "p/" + encodeURIComponent(p.id) + "/");
   document.title = `${p.name} · ${p.brand} · ${SITE_TITLE}`;
 }
-
-// The photo row must stay below the header, whose height depends on the text; measure it.
-$("#modal").addEventListener("scroll", e => e.currentTarget.classList.toggle("scrolled", e.currentTarget.scrollTop > 4), { passive: true });
-function sizeDetail() { $("#modal").style.setProperty("--head", $(".modal-head").offsetHeight + "px"); }
-addEventListener("resize", () => { if (!$("#modal").hidden) sizeDetail(); });
 
 function closeDetail() {
   const m = $("#modal"); if (m.hidden) return;
