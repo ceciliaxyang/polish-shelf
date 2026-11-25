@@ -78,7 +78,7 @@ button, input, select { font: inherit; color: inherit; }
 /* Title in Instrument Serif, 128px on 100px with -3px tracking, 48px below the top of the page (Figma node
    2384:82780). It scales down with the window, to 64px on a phone. */
 .shelf-head { padding-top: 48px; }
-.shelf-title { flex: 1; min-width: 0; margin: 0; font-family: "Instrument Serif", Georgia, serif; font-size: clamp(64px, 10vw - 16px, 128px); line-height: .78125; font-weight: 400; letter-spacing: -.0234em; color: #000; }
+.shelf-title { flex: 1; min-width: 0; margin: 0; font-family: "Instrument Serif", Georgia, serif; font-size: clamp(64px, 10vw - 16px, 128px); line-height: .78125; font-weight: 400; letter-spacing: -.0234em; color: #222; }
 .shelf-top { align-items: center; }
 .scopes { display: flex; gap: 8px; padding: 8px 0; margin: -8px -8px; padding-inline: 8px; overflow-x: auto; scrollbar-width: none; }
 .scopes::-webkit-scrollbar { display: none; }
