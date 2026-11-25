@@ -97,6 +97,7 @@ button, input, select { font: inherit; color: inherit; }
 .filter-rows { display: flex; flex-direction: column; }
 .filter-row { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 20px 0; border-bottom: 1px solid #ebebeb; }
 .filter-row:first-child { padding-top: 0; }
+.filter-row:last-child { border-bottom: 0; } /* no divider under the last row (Brands) */
 /* On desktop, keep at least 300px between the label and its pills, growing with the window on wider screens
    (about 350px at 1280, 400px at 1440, 490px at 1728, 550px at 1920, up to 640px). */
 @media (min-width: 761px) { .filter-row { gap: clamp(300px, 32vw - 60px, 640px); } }
