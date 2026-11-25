@@ -1274,7 +1274,6 @@ function comboScatter(c, n) {
   }
   return out;
 }
-const SAT_PX = 96; // scattered polishes are drawn once at this size and scaled down to fit their card
 function renderCombos() {
   const grid = $("#grid"); grid.innerHTML = "";
   // Empty state (Figma node 2212:1478): three cards (the outer two tilted) over a line of copy, each showing
@@ -1310,9 +1309,12 @@ function renderCombos() {
       sat.style.left = (50 + (at.x - at.s / 2) * 100).toFixed(2) + "%";
       sat.style.top = (50 + (at.y - at.s * H / 2) / H * 100).toFixed(2) + "%";
       sat.style.width = (at.s * 100).toFixed(2) + "%";
-      const t = document.createElement("canvas"); renderSwatch(t, p, SAT_PX, Math.round(SAT_PX * H));
+      // Drawn like a shelf swatch (lazily, at its real size), so it shimmers on hover and drifts on touch screens.
+      const t = document.createElement("canvas"); t.className = "swatch";
       sat.append(t); dropify(sat, p.id, H);
       art.append(sat);
+      t._p = p; queueDraw(t);
+      if (autoIO) autoIO.observe(t);
     });
     const text = document.createElement("div"); text.className = "card-text";
     const title = document.createElement("div"); title.className = "card-title";
@@ -1323,6 +1325,7 @@ function renderCombos() {
     text.append(title);
     card.append(art, text); grid.appendChild(card);
     sw._combo = c; queueDraw(sw);
+    if (autoIO) autoIO.observe(sw);
   }
   fillIdle();
 }
@@ -1776,6 +1779,31 @@ function drawStack(out, layers, W, H) {
   composeOps(out.getContext("2d"), ops, out.width, out.height);
   return true;
 }
+// A saved combo's swatch on the combos page moves like the shelf's: each layer is its own live swatch (hidden
+// under the card's canvas at the same size, so their pointer maths work), the pointer or the touch-screen
+// drift is passed to all of them, and the stack is recomposed every frame while any of them is moving.
+function liveStack(out, layers, W, H) {
+  const ops = stackOps(W, H, layers), box = out.parentElement;
+  box.querySelectorAll(":scope > .stage-layers").forEach(el => el.remove());
+  if (!ops) return false;
+  const dpr = swatchDpr(W);
+  out.width = Math.round(W * dpr); out.height = Math.round(H * dpr);
+  const ctx = out.getContext("2d"), mine = claim(out);
+  const holder = document.createElement("div"); holder.className = "stage-layers"; holder.setAttribute("aria-hidden", "true");
+  ops.forEach(o => o.cv && holder.appendChild(o.cv));
+  box.append(holder);
+  composeOps(ctx, ops, out.width, out.height);
+  let until = 0, raf = 0;
+  const loop = now => { if (!mine()) { raf = 0; return; } composeOps(ctx, ops, out.width, out.height); raf = now < until ? requestAnimationFrame(loop) : 0; };
+  const kick = () => { until = performance.now() + 3500; if (!raf) raf = requestAnimationFrame(loop); };
+  out.onpointermove = e => { ops.forEach(o => o.cv && o.cv.onpointermove && o.cv.onpointermove(e)); kick(); };
+  out.onpointerleave = e => { ops.forEach(o => o.cv && o.cv.onpointerleave && o.cv.onpointerleave(e)); kick(); };
+  // Magnetic layers turn from cat eye to glass bead with their place on screen while scrolling (touch screens).
+  const resting = ops.filter(o => o.cv && o.cv.setRest);
+  out.setRest = resting.length ? (h, instant) => { resting.forEach(o => o.cv.setRest(h, instant)); kick(); } : null;
+  out.classList.add("interactive");
+  return true;
+}
 // The big preview is interactive: the pointer (or the touch-screen drift) is passed to every layer's own
 // swatch, each animates the way it does on the shelf (magnetic glow following, thermal shifting, glints
 // flashing), and the stack is recomposed every frame while any of them is moving.
@@ -1975,7 +2003,7 @@ function drawCard(cv) {
   // Redrawn at a new size (after a zoom or resize): the old picture fades out over the new one, so the
   // swatch sharpens up instead of popping (glitter and sparkles land in new places at each size).
   const ghost = cv._soft && cv.width && !reduceMotion ? ghostOf(cv) : null; cv._soft = false;
-  if (cv._combo) drawStack(cv, cv._combo.layers, w, Math.round(w * 260 / 240));
+  if (cv._combo) liveStack(cv, cv._combo.layers, w, Math.round(w * 260 / 240));
   else renderSwatch(cv, cv._p, w, Math.round(w * 260 / 240));
   if (cv._p) pourDrawn(cv); // its drop may be waiting to fade the swatch in (see pourIn)
   if (ghost) ghost.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 280, easing: "ease-out", fill: "forwards" }).onfinish = () => ghost.remove();
