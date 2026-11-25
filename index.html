@@ -22,6 +22,23 @@
        fonts/ (see the @font-face rules at the top of css/style.css). -->
   <link rel="preload" href="fonts/instrument-serif-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="css/style.css">
+  <!-- Is SF Pro (installed, or the Apple system font) available? If not, the page falls back to Inter and
+       html gets "no-sf", which tightens Inter's letter spacing (see css/style.css). Checked by comparing
+       text widths against a font that doesn't exist. -->
+  <script>
+    (function () {
+      try {
+        var c = document.createElement("canvas").getContext("2d"), s = "Magnetic topper Glow-in-the-dark 0123";
+        // A made-up family shows what the browser substitutes for a font it doesn't have (monospace, or on
+        // Linux whatever font it matches instead); SF measuring the same means it isn't there either.
+        c.font = '40px "No Such Font 7f3a", monospace'; var none = c.measureText(s).width;
+        // Some Linux setups quietly map "SF Pro Display" to an installed Inter, so match against that too.
+        c.font = '40px "Inter", "No Such Font 7f3a", monospace'; var inter = c.measureText(s).width;
+        c.font = '40px "SF Pro Display", -apple-system, BlinkMacSystemFont, "No Such Font 7f3a", monospace'; var sf = c.measureText(s).width;
+        if (Math.abs(sf - none) < 0.5 || Math.abs(sf - inter) < 0.5) document.documentElement.classList.add("no-sf");
+      } catch (e) {}
+    })();
+  </script>
 </head>
 <body>
   <div class="page">
