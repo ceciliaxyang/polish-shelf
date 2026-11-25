@@ -412,10 +412,9 @@ body.detail-open .page::after { opacity: 1; }
 
 /* ---------- droplet swatches (see js/droplet.js) ---------- */
 /* As droplets, a swatch box loses its card (fill, rounded corners, clipping): its canvas and the gloss
-   on top are masked to the drop's outline (--drop-mask), with the contact shadow underneath. */
+   are clipped to the drop's outline (--drop-clip, set from js/droplet.js), with the contact shadow underneath. */
 .drops .drop { background: none !important; border-radius: 0 !important; overflow: visible !important; box-shadow: none; isolation: isolate; }
-.drops .drop > canvas, .drops .drop > .drop-gloss { -webkit-mask-image: var(--drop-mask); mask-image: var(--drop-mask);
-  -webkit-mask-size: 100% 100%; mask-size: 100% 100%; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; }
+.drops .drop > canvas { clip-path: var(--drop-clip, circle(50%)); }
 .drops .drop > canvas { position: relative; z-index: 1; background: var(--swatch); }
 .drop-under, .drop-gloss { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
 .drop-under { z-index: 0; }
