@@ -1004,7 +1004,7 @@ function glowSwatch(cv, p, W, H) {
 
 /* ---------- state ---------- */
 const $ = s => document.querySelector(s);
-const KEY = { combos: "polish-shelf:combos", saved: "polish-shelf:saved-combos", bench: "polish-shelf:bench", zoom: "polish-shelf:zoom-v2" }; // zoom-v2: 3 per row became the default, so earlier saved choices start over
+const KEY = { combos: "polish-shelf:combos", saved: "polish-shelf:saved-combos", bench: "polish-shelf:bench", zoom: "polish-shelf:zoom-v3" }; // zoom-v3: 4 per row (the most zoomed out) became the default, so earlier saved choices start over
 function load(key, fallback) { try { const v = JSON.parse(localStorage.getItem(key)); return v ?? fallback; } catch (e) { return fallback; } }
 function save(key, value) {
   try { localStorage.setItem(key, JSON.stringify(value)); }
@@ -1811,7 +1811,7 @@ function renderBench() {
 const GAP = 40, MAX_CARD = 336;
 // Zoom levels (see "zoom" below): swatches per row on a phone, and how much smaller desktop cards get.
 const ZOOMS = [2, 3, 4], ZOOM_SCALE = { 2: 1, 3: 2 / 3, 4: 1 / 2 };
-const zoom = { level: ZOOMS.includes(load(KEY.zoom, 3)) ? load(KEY.zoom, 3) : 3 };
+const zoom = { level: ZOOMS.includes(load(KEY.zoom, 4)) ? load(KEY.zoom, 4) : 4 };
 // Card swatches are drawn at the size they're actually shown (cards grow on bigger screens), so they
 // stay sharp instead of being stretched.
 // Cards rise into view as they're scrolled to. Cards arriving together (a new row, or the first screen)
@@ -1953,8 +1953,8 @@ let shapeRaf = 0;
 addEventListener("scroll", () => { if (!shapeRaf) shapeRaf = requestAnimationFrame(() => { shapeRaf = 0; shapeForScroll(); }); }, { passive: true });
 
 /* ---------- zoom ---------- */
-// The zoom control is a floating bar at the bottom of the screen with three icons: 2 (big), 3 (default) and
-// 4 (dense) swatches per row on a phone. Tap one to switch; the selected one sits on a dark circle. Arrow
+// The zoom control is a floating bar at the bottom of the screen with three icons: 2 (big), 3 and
+// 4 (dense, the default) swatches per row on a phone. Tap one to switch; the selected one sits on a dark circle. Arrow
 // keys move between them. Each icon is a grid of dots (droplet swatches) or rounded squares (rectangles).
 // At 3 per row the cards show the name and effect types; at 4, only the swatch (no + button: add from the
 // polish's page). The choice is kept in this browser.
