@@ -33,7 +33,7 @@ const EFFECTS = {
 const CATEGORY = { chrome: "multichrome", glitter: "shimmer", sheermag: "magtopper" };
 const category = k => CATEGORY[k] || k;
 // Filter pills always shown, in this order; other effects get a pill once a polish uses them.
-const PILL_EFFECTS = ["sheer", "magnetic", "holo", "shimmer"];
+const PILL_EFFECTS = ["magnetic", "holo", "shimmer"];
 const NATURAL = "#f2d6cf";
 
 /* ---------- color helpers ---------- */
@@ -1079,7 +1079,9 @@ function toggleFx(k) {
   document.querySelectorAll("#fxPills .scope").forEach(b => b.setAttribute("aria-pressed", state.fx.has(b.dataset.fx)));
   filterShelf();
 }
-const matchesFx = p => !state.fx.size || labelsOf(p).some(k => state.fx.has(k));
+// A magnetic topper also counts as Magnetic for the filter (its card still reads just "Magnetic topper").
+const filterKeysOf = p => { const l = labelsOf(p); return l.includes("magtopper") ? [...l, "magnetic"] : l; };
+const matchesFx = p => !state.fx.size || filterKeysOf(p).some(k => state.fx.has(k));
 
 /* Filtering keeps the shelf as it is: no card is rebuilt and no swatch redrawn. Polishes that don't
    match fade and shrink away where they stand, the ones that stay glide to their new places, and ones
@@ -1134,8 +1136,9 @@ function filterShelf() {
 // A polish's rendering uses `effect`; `effects` (optional) lists everything it should be found under.
 // There's no Multichrome category (chrome counts as multichrome): those labels are dropped, and a polish
 // left with no label is filed under Shimmer.
+// Sheer isn't a category (no filter pill or label); a sheer polish still layers as one (see isSheer).
 function effectsOf(p) {
-  const fx = [...new Set((p.effects || [p.effect]).map(category))].filter(k => k !== "multichrome");
+  const fx = [...new Set((p.effects || [p.effect]).map(category))].filter(k => k !== "multichrome" && k !== "sheer");
   return fx.length ? fx : ["shimmer"];
 }
 // What a polish is called on its card, detail view and layer: a magnetic polish's shimmer is part of being
@@ -1527,7 +1530,7 @@ function syncSwatchButtons() {
 
 const TRASH = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 4h11M6.25 4V2.5h3.5V4M4 4l.6 9.1a1 1 0 0 0 1 .9h4.8a1 1 0 0 0 1-.9L12 4M6.75 6.75v4.5M9.25 6.75v4.5"/></svg>`;
 // A sheer polish lets what's underneath show through; anything else covers it completely.
-const isSheer = p => p.sheer || p.effect === "sheer" || p.effect === "sheermag" || effectsOf(p).includes("sheer");
+const isSheer = p => p.sheer || p.effect === "sheer" || p.effect === "sheermag";
 // Chrome powders are rubbed onto the top of a manicure: always the topmost layer, over whatever is below.
 const isPowder = p => p.effect === "powder";
 const isOverlay = p => isSheer(p) || isPowder(p);

@@ -14,7 +14,7 @@
     shimmer: "#b0308a",        // optional: shimmer color suspended in the base
     shadow: "#2a1232",         // optional, magnetic: the deep color the edges fall into (default: darker base)
     clear: true,               // optional: a clear topper; on top of other layers only its shimmer and sparkle show
-    sheer: true,               // optional: layers as a sheer (what's underneath shows through) without showing the Sheer pill
+    sheer: true,               // optional: layers as a sheer (what's underneath shows through); Sheer isn't a shown effect
   },
 
   Colors per effect:
@@ -465,7 +465,8 @@ const POLISHES = [
     name: "Sand Viper",
     brand: "Mooncat",
     effect: "shimmer",
-    effects: ["shimmer", "sheer"],
+    effects: ["shimmer"],
+    sheer: true,               // still layers as a sheer: what's underneath shows through
     tone: "neutral",
     // Sheer light pink-beige jelly with orange-red shimmer (from the product page and photos)
     baseColor: "#cc8e8c",
@@ -549,7 +550,8 @@ const POLISHES = [
     name: "Petals for a Narcissist",
     brand: "Mooncat",
     effect: "shimmer",
-    effects: ["shimmer", "sheer"],
+    effects: ["shimmer"],
+    sheer: true,               // still layers as a sheer: what's underneath shows through
     tone: "neutral",
     // Sheer white-gray with violet-pink shimmer (from the product page and photos)
     baseColor: "#fbf9fa",      // white base (per your request)
@@ -599,7 +601,8 @@ const POLISHES = [
     name: "The Avatar State",
     brand: "Mooncat",
     effect: "glow",
-    effects: ["glow", "shimmer", "sheer"],
+    effects: ["glow", "shimmer"],
+    sheer: true,               // still layers as a sheer: what's underneath shows through
     tone: "neutral",
     // Sheer milky white with blue shimmer by day; glows bright aqua in the dark (from the product page and photos)
     colors: ["#eef0f6", "#8ab6f2", "#a8cbff", "#c9dcff"], // [daylight base, shimmer...]
