@@ -423,7 +423,7 @@ body.detail-open .page::after { opacity: 1; }
    Left: 17px past the swatch. */
 /* The nav (header and swatch) is fixed, so it stays put while the photos scroll underneath. Once the
    photos start to scroll, the brand and name fade away; the swatch and buttons stay. */
-.modal-head { position: fixed; z-index: 2; top: 0; left: 0; right: 0; display: flex; align-items: center; gap: 16px; box-sizing: content-box; height: 96px; padding: calc(32px + env(safe-area-inset-top)) 48px 16px calc(36px + 96px + 17px); }
+.modal-head { position: fixed; z-index: 2; top: 0; left: 0; right: 0; display: flex; align-items: center; gap: 16px; box-sizing: content-box; height: auto; min-height: 96px; padding: calc(32px + env(safe-area-inset-top)) 48px 16px calc(36px + 96px + 17px); }
 .mh-trail { display: flex; align-items: center; justify-content: flex-end; gap: 8px; width: 97px; flex-shrink: 0; }
 .mh-content { transition: opacity .2s ease; }
 .modal.scrolled .mh-content { opacity: 0; pointer-events: none; } /* once the photos scroll, only the swatch and buttons stay */
@@ -436,6 +436,9 @@ body.detail-open .page::after { opacity: 1; }
 .mh-brand, .mh-name { margin: 0; color: #000; overflow-wrap: anywhere; }
 .mh-brand { font-size: 14px; }
 .mh-name { font-size: 20px; font-weight: 500; }
+/* One-line description under the name (polishes.js desc) */
+.mh-desc { margin: -4px 0 0; font-size: 14px; line-height: 18px; color: #555; overflow-wrap: anywhere; }
+.mh-desc[hidden] { display: none; }
 /* Material buttons: translucent, blurring whatever passes behind them (photos, as they scroll) */
 .mh-btn { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; padding: 12px; border: 0; border-radius: 100px;
   background: rgba(242, 242, 242, .7); -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6);
