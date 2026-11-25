@@ -30,11 +30,13 @@ body {
   /* SF Pro Display first (the project's default face, as in Figma), then the system font where it isn't installed. */
   font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Inter Fallback", system-ui, sans-serif;
 }
-/* When Inter stands in (html.no-sf, set in index.html), tighten it by 1px so it reads closer to SF Pro
-   Display. The serif title and labels keep their own spacing. */
-html.no-sf body { letter-spacing: -1px; }
+/* When Inter stands in (html.no-sf, set in index.html), tighten it so it reads closer to SF Pro Display:
+   -0.5px at 14px and smaller (the pills), -1px from 15px up. Set per element so each uses its own size;
+   :where() keeps it weaker than any letter spacing an element sets itself. The serif title and labels
+   keep their own spacing. */
+:where(html.no-sf) :where(*) { letter-spacing: clamp(-1px, calc(6.5px - .5em), -.5px); }
 html.no-sf .filter-label { letter-spacing: normal; }
-button, input, select { font: inherit; color: inherit; letter-spacing: inherit; }
+button, input, select { font: inherit; color: inherit; }
 /* viewport-fit=cover lets the page (and the dialog) draw under the phone's status bar; the safe-area
    insets keep content clear of the notch. */
 .page { padding: calc(64px + env(safe-area-inset-top)) calc(40px + env(safe-area-inset-right)) 60px calc(40px + env(safe-area-inset-left)); }
