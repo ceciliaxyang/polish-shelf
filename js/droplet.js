@@ -1,7 +1,7 @@
 /* ---------- droplet swatches ---------- */
 // Swatches can be drawn as rectangles (the original cards) or as droplets: each one a small poured puddle
 // of polish, round but a little irregular, the shape picked from the polish (or combo) so it stays the
-// same every visit. The live swatch canvas is masked to the drop, so every effect (magnetic flash,
+// same every visit. The live swatch canvas is clipped to the drop, so every effect (magnetic flash,
 // multichrome shift, holo, shimmer...) still moves. On top sits a "soft sheen": the polish lies flat, so
 // there's no dome shading, just a faint broad sheen, a few swirl marks where it settled, a thin bright
 // line where the edge catches the light (from the upper left) and a hairline meniscus; a tight contact
@@ -44,17 +44,30 @@ function dropShape(key, vh) {
   const k = Math.min(99 / (x1 - x0), (vh - 1) / (y1 - y0)), mx = (x0 + x1) / 2, my = (y0 + y1) / 2;
   pts.forEach(p => { p[0] = 50 + (p[0] - mx) * k; p[1] = vh / 2 + (p[1] - my) * k; });
   // Catmull-Rom through the points, as cubic Béziers
-  const f = v => v.toFixed(2);
-  let d = `M${f(pts[0][0])} ${f(pts[0][1])}`;
+  // segs: each curve's two control points and end point, in the 100 x vh box.
+  const segs = [];
   for (let i = 0; i < N; i++) {
     const p0 = pts[(i - 1 + N) % N], p1 = pts[i], p2 = pts[(i + 1) % N], p3 = pts[(i + 2) % N];
-    d += `C${f(p1[0] + (p2[0] - p0[0]) / 6)} ${f(p1[1] + (p2[1] - p0[1]) / 6)} ${f(p2[0] - (p3[0] - p1[0]) / 6)} ${f(p2[1] - (p3[1] - p1[1]) / 6)} ${f(p2[0])} ${f(p2[1])}`;
+    segs.push([p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6, p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6, p2[0], p2[1]]);
   }
-  const shape = { d: d + "Z", cx: 50 - mx * k, cy: vh / 2 - my * k, vh, R,
-    mask: `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns='${DROP_NS}' viewBox='0 0 100 ${vh}' preserveAspectRatio='none'><path d='${d}Z'/></svg>`)}")` };
+  const path = (sx, sy) => {
+    const f = (v, i) => (v * (i % 2 ? sy : sx)).toFixed(2);
+    return `M${f(pts[0][0], 0)} ${f(pts[0][1], 1)}` + segs.map(c => "C" + c.map(f).join(" ")).join("") + "Z";
+  };
+  const shape = { d: path(1, 1), cx: 50 - mx * k, cy: vh / 2 - my * k, vh, R,
+    // The outline in CSS pixels for an element w x h, as a clip-path. A clip-path (unlike a mask image)
+    // applies on the very first paint and is cheap for the browser to keep applying while the swatch animates.
+    clip: (w, h) => `path("${path(w / 100, h / vh)}")` };
   dropCache.set(id, shape);
   return shape;
 }
+
+// Keep each drop's clip-path in step with its box's size (cards resize with the zoom and the screen).
+function dropClip(box) {
+  const w = box.clientWidth, h = box.clientHeight;
+  if (w && h && box._drop) box.style.setProperty("--drop-clip", box._drop.clip(w, h));
+}
+const dropRO = new ResizeObserver(entries => entries.forEach(e => dropClip(e.target)));
 
 let dropUid = 0;
 function dropSvg(cls, vh, inner) {
@@ -71,7 +84,8 @@ function dropify(box, key, aspect = 1, opt = {}) {
   if (!DROPS || !box) return box;
   const vh = 100 * aspect, s = dropShape(String(key), vh), id = "dp" + (++dropUid);
   box.classList.add("drop");
-  box.style.setProperty("--drop-mask", s.mask);
+  box._drop = s; dropClip(box);
+  if (!box._dropSized) { box._dropSized = true; dropRO.observe(box); }
   box.querySelectorAll(":scope > .drop-under, :scope > .drop-gloss").forEach(el => el.remove());
   // Seeded per drop (the same each time), but not from the outline's own random stream.
   const R = dropRand(dropHash(key + "#gloss")), sc = (k, dx = 0, dy = 0) => `translate(${(s.cx * (1 - k) + dx).toFixed(2)} ${(s.cy * (1 - k) + dy).toFixed(2)}) scale(${k})`;
