@@ -23,7 +23,7 @@ const EFFECT_ICONS = {
   // Dust
   powder: '<g fill="currentColor"><circle cx="12" cy="12" r="1.6"/><circle cx="7" cy="9" r="1.2"/><circle cx="17" cy="9.5" r="1.2"/><circle cx="8.5" cy="16" r="1.2"/><circle cx="16" cy="15.5" r="1.2"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19.5" r="1"/><circle cx="3.75" cy="13" r=".85"/><circle cx="20.25" cy="12.75" r=".85"/><circle cx="4.5" cy="5.25" r=".75"/><circle cx="19.5" cy="4.5" r=".75"/><circle cx="19.5" cy="20" r=".75"/><circle cx="4.5" cy="19.75" r=".75"/></g>',
   // Gumdrop
-  jelly: '<g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"><path d="M5.25 20.25h13.5a1.5 1.5 0 0 0 1.49-1.69C19.9 12 17.25 3.75 12 3.75S4.1 12 3.76 18.56a1.5 1.5 0 0 0 1.49 1.69z"/><path d="M1.125 10.5c.75.75.75 2.25 0 3M22.875 10.5c-.75.75-.75 2.25 0 3M7.875 13.5c.375-2.25 1.125-3.75 2.25-4.875"/></g>',
+  jelly: '<g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"><path d="M7.125 20.25h9.75a3.375 3.375 0 0 0 3.35-3.8C19.6 11.25 17.25 3.75 12 3.75S4.4 11.25 3.78 16.45a3.375 3.375 0 0 0 3.35 3.8z"/><path d="M1.125 10.5c.75.75.75 2.25 0 3M22.875 10.5c-.75.75-.75 2.25 0 3M7.875 13.5c.375-2.25 1.125-3.75 2.25-4.875"/></g>',
   // Drop
   creme: '<g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"><path d="M12 2.25c3.75 4.5 7.125 8.25 7.125 12.375a7.125 7.125 0 0 1-14.25 0C4.875 10.5 8.25 6.75 12 2.25z"/></g>',
 };
