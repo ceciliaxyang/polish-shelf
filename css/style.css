@@ -119,11 +119,11 @@ body.show-mini .mini-nav { opacity: 1; transform: none; visibility: visible; tra
 .mini-row { display: flex; gap: 8px; margin: -12px -40px 0; padding: 12px 40px 16px; overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain; pointer-events: auto; }
 .mini-row::-webkit-scrollbar { display: none; }
 .mini-row .mini-gap { flex: 0 0 4px; } /* a little more room between effects and brands */
-/* Over the swatches the mini nav's pills turn to glass: see-through white, blurring and brightening what
-   passes under them, with a light rim and a soft shadow. The pills in the filters stay grey. */
-.mini-row.fx-row .scope:not([aria-pressed="true"]) { background: rgba(255, 255, 255, .42); -webkit-backdrop-filter: blur(18px) saturate(1.8) brightness(1.08); backdrop-filter: blur(18px) saturate(1.8) brightness(1.08);
-  box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .7), inset 0 1px 0 rgba(255, 255, 255, .55), 0 0 0 .5px rgba(0, 0, 0, .06), 0 4px 16px rgba(0, 0, 0, .1); }
-.mini-row.fx-row .scope:not([aria-pressed="true"]):hover { background: rgba(255, 255, 255, .58); }
+/* Over the swatches the mini nav's pills turn frosted: a mostly opaque light grey that still blurs what passes
+   under it, with a soft shadow and no rim. The pills in the filters stay grey. */
+.mini-row.fx-row .scope:not([aria-pressed="true"]) { background: rgba(242, 242, 242, .82); -webkit-backdrop-filter: blur(14px) saturate(1.3); backdrop-filter: blur(14px) saturate(1.3);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, .08); }
+.mini-row.fx-row .scope:not([aria-pressed="true"]):hover { background: rgba(232, 232, 232, .9); }
 .mini-row.fx-row .scope[aria-pressed="true"] { box-shadow: 0 4px 16px rgba(0, 0, 0, .18); }
 @media (prefers-reduced-motion: reduce) { .mini-nav, body.show-mini .mini-nav { transition: none; transform: none; } }
 .fx-row .scope { background: #f2f2f2; }
@@ -188,6 +188,16 @@ body.detail-open .zoom { opacity: 0; pointer-events: none; }
   .scopes { margin-inline: -16px; padding-inline: 16px; }
   .mini-nav { padding-top: calc(8px + env(safe-area-inset-top)); }
   .mini-row { margin-inline: -16px; padding-inline: 16px; }
+  /* Native phone reference (Figma node 2401:20488): each label sits beside its pills, 48px apart, and the pills
+     run off the right edge and scroll sideways. 16px between the rows, a line only under Effects. */
+  .filter-row { flex-direction: row; align-items: center; gap: 48px; padding: 16px 0; }
+  .filter-row:first-child { padding-top: 0; }
+  .filter-row .scopes { margin-left: 0; margin-right: -16px; padding-left: 0; padding-right: 16px; }
+  /* Smaller pills: a 20px icon, 4px gap, 12/18 text, 8px top and bottom, 12px sides (34px tall), 4px apart. */
+  .scopes, .mini-row { gap: 4px; }
+  .fx-row .scope { gap: 4px; min-width: 0; padding: 8px 12px; font-size: 12px; line-height: 18px; }
+  html:not(.no-sf) .fx-row .scope { letter-spacing: -.3px; }
+  .fx-row .scope-icon { width: 20px; height: 20px; }
 }
 .fx-row .scope { mix-blend-mode: normal; }
 .pill.small { padding: 6px 12px; font-size: 13px; line-height: 16px; }
