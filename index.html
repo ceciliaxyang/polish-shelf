@@ -18,6 +18,10 @@
   <meta property="og:image:alt" content="An animated nail polish bottle slowly rotating, its green and gold magnetic polish shimmering">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:image" content="https://ceciliayang.com/polish-shelf/images/og-7.gif">
+  <!-- The title is set in Hedvig Letters Serif (Figma node 2383:2325). -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hedvig+Letters+Serif:opsz@12..24&display=swap">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -25,15 +29,24 @@
     <div class="layout closed" id="layout">
       <main>
         <header class="shelf-head">
-          <!-- Figma "Action Header Web", node 2218:2270: the title with the Favorite combos tab in the upper right,
-               then (just below the header) the effect pills in a sideways-scrolling row. -->
+          <!-- Title row (Figma node 2383:2324), with the Favorite combos tab in the upper right. -->
           <div class="shelf-top">
             <h1 class="shelf-title" id="shelfTitle">Polish shelf</h1>
             <button type="button" class="scope combo-btn" id="comboBtn" aria-pressed="false" aria-controls="grid"><span class="thumb-pair" id="comboThumbs" aria-hidden="true"><span class="tp tp-back"></span><span class="tp tp-front"></span></span>Favorite combos</button>
           </div>
         </header>
-        <!-- The effect pills sit outside the header so they can stay pinned at the top as the shelf scrolls. -->
-        <div class="scopes fx-row" id="fxPills" role="group" aria-label="Filter by effect"></div>
+        <!-- Filters (Figma node 2384:82776): a labeled row each for effects and brands, pills on the right,
+             with a hairline under each row. -->
+        <div class="filters" id="filters">
+          <div class="filter-row">
+            <h2 class="filter-label" id="fxLabel">Effects</h2>
+            <div class="scopes fx-row" id="fxPills" role="group" aria-labelledby="fxLabel"></div>
+          </div>
+          <div class="filter-row">
+            <h2 class="filter-label" id="brandLabel">Brands</h2>
+            <div class="scopes fx-row" id="brandPills" role="group" aria-labelledby="brandLabel"></div>
+          </div>
+        </div>
         <div class="grid" id="grid"></div>
       </main>
 
@@ -82,6 +95,7 @@
   <script src="js/polishes.js"></script>
   <script src="js/droplet.js"></script>
   <script src="js/icons.js"></script>
+  <script src="js/brand-icons.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

@@ -53,9 +53,10 @@ button, input, select { font: inherit; color: inherit; }
 .pill[aria-pressed="true"] { border-color: var(--text); box-shadow: inset 0 0 0 .5px var(--text); }
 /* Shelf header (Figma "Action Header Web", node 2180:15410): title with the layering button on the right,
    then a single row of filled filter pills ("Scoping Bar") that scrolls sideways when it runs out of room. */
-.shelf-head { display: flex; flex-direction: column; gap: 24px; margin: 0 0 24px; padding: 0 8px; }
+.shelf-head { display: flex; flex-direction: column; gap: 24px; margin: 0 0 64px; padding: 0 8px; }
 .shelf-top { display: flex; align-items: flex-start; gap: 16px; }
-.shelf-title { flex: 1; min-width: 0; margin: 0; font-size: 40px; line-height: 40px; font-weight: 500; letter-spacing: -1.2px; color: #000; }
+/* Title in Hedvig Letters Serif, 48/48 (Figma node 2383:2325). */
+.shelf-title { flex: 1; min-width: 0; margin: 0; font-family: "Hedvig Letters Serif", Georgia, serif; font-size: 48px; line-height: 48px; font-weight: 400; letter-spacing: -1.2px; color: #000; }
 .scopes { display: flex; gap: 8px; padding: 8px 0; margin: -8px -8px; padding-inline: 8px; overflow-x: auto; scrollbar-width: none; }
 .scopes::-webkit-scrollbar { display: none; }
 .scope { flex-shrink: 0; min-width: 56px; padding: 12px 16px; border: 0; border-radius: 32px; background: #f7f7f7; mix-blend-mode: multiply; color: var(--text); font-size: 12px; line-height: 16px; font-weight: 500; white-space: nowrap; cursor: pointer; transition: background .15s ease, color .15s ease; }
@@ -66,9 +67,20 @@ button, input, select { font: inherit; color: inherit; }
 .combo-btn { flex-shrink: 0; display: flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 4px 16px; border-radius: 100px; background: #f7f7f7; }
 .combo-btn:hover { background: #ededed; }
 .combo-btn[aria-pressed="true"] { background: var(--text); }
-/* On the combos page the effect pills fade out (the filters only apply to the shelf). */
-.fx-row { transition: opacity .25s ease; }
-.shelf-head.combos-view + .fx-row { opacity: 0; pointer-events: none; }
+/* Filters (Figma node 2384:82776): a row each for Effects and Brands, the label on the left (20/24) and
+   the pills on the right, with a 1px #ebebeb line under each row and 20px around it. If the pills run out
+   of room they scroll sideways (the auto margin keeps them right-aligned without cutting off the start). */
+.filters { display: flex; flex-direction: column; margin: 0 0 56px; padding: 0 8px; transition: opacity .25s ease; }
+.filter-row { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 20px 0; border-bottom: 1px solid #ebebeb; }
+.filter-row:first-child { padding-top: 0; }
+.filter-label { flex-shrink: 0; margin: 0; font-size: 20px; line-height: 24px; font-weight: 400; color: #222; }
+.filter-row .scopes { min-width: 0; margin: -8px 0; padding: 8px 0; }
+.filter-row .scope:first-child { margin-left: auto; }
+.filter-row .scopes.more-end { -webkit-mask-image: linear-gradient(to left, transparent, #000 48px); mask-image: linear-gradient(to left, transparent, #000 48px); }
+.filter-row .scopes.more-start { -webkit-mask-image: linear-gradient(to right, transparent, #000 48px); mask-image: linear-gradient(to right, transparent, #000 48px); }
+.filter-row .scopes.more-start.more-end { -webkit-mask-image: linear-gradient(to right, transparent, #000 48px, #000 calc(100% - 48px), transparent); mask-image: linear-gradient(to right, transparent, #000 48px, #000 calc(100% - 48px), transparent); }
+/* On the combos page the filters fade out (they only apply to the shelf). */
+.shelf-head.combos-view + .filters { opacity: 0; pointer-events: none; }
 .fx-row .scope { background: #f2f2f2; }
 .fx-row .scope:hover { background: #e8e8e8; }
 .fx-row .scope[aria-pressed="true"] { background: var(--text); }
@@ -121,17 +133,16 @@ body.detail-open .zoom { opacity: 0; pointer-events: none; }
    around the swatch's rounded corners. */
 .tp:has(canvas) { background: none; }
 @media (max-width: 600px) {
-  .shelf-head { gap: 16px; margin-bottom: 16px; padding: 0; }
-  .shelf-title { font-size: 32px; line-height: 40px; letter-spacing: -.9px; }
+  .shelf-head { gap: 16px; margin-bottom: 40px; padding: 0; }
+  .shelf-title { font-size: 40px; line-height: 40px; letter-spacing: -1px; }
+  /* On a phone each label sits above its pills, which run edge to edge and scroll sideways. */
+  .filters { margin-bottom: 32px; padding: 0; }
+  .filter-row { flex-direction: column; align-items: stretch; gap: 12px; padding: 16px 0; }
+  .filter-row .scopes { margin-inline: -16px; padding-inline: 16px; }
+  .filter-row .scope:first-child { margin-left: 0; }
   .scopes { margin-inline: -16px; padding-inline: 16px; }
 }
-/* Sticky filters: the effect pills stay pinned near the top of the window as the shelf scrolls (the title
-   scrolls away). There's no bar behind them; each pill is frosted, so it stays readable over the swatches.
-   Pills are #f2f2f2 at rest, as before. */
-.fx-row { position: sticky; z-index: 40; top: calc(8px + env(safe-area-inset-top)); margin-bottom: 56px; }
-.fx-row .scope { mix-blend-mode: normal; background: rgba(242, 242, 242, .78); -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); }
-.fx-row .scope:not([aria-pressed="true"]):hover { background: rgba(232, 232, 232, .85); }
-@media (max-width: 600px) { .fx-row { margin-bottom: 32px; } }
+.fx-row .scope { mix-blend-mode: normal; }
 .pill.small { padding: 6px 12px; font-size: 13px; line-height: 16px; }
 
 /* Shelf grid */
