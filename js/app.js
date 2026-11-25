@@ -32,7 +32,7 @@ const EFFECTS = {
 // topper. Swatches still draw by the polish's own effect.
 const CATEGORY = { chrome: "multichrome", glitter: "shimmer", sheermag: "magtopper" };
 const category = k => CATEGORY[k] || k;
-// Filter pills always shown, in this order; other effects get a pill once a polish uses them.
+// Filter pills always shown; other effects get a pill once a polish uses them (see buildPills for the order).
 const PILL_EFFECTS = ["magnetic", "holo", "shimmer"];
 // Brand filter pills come first in this order (Figma node 2384:82743), then any other brand on the shelf,
 // most polishes first. A few brands go by a shorter name on their pill.
@@ -1029,9 +1029,11 @@ const saveBench = () => save(KEY.bench, bench.layers);
 // How magnetic swatches rest: 0 = glass bead, 1 = cat eye, in between when no finish is picked (the finish pills were removed, so always in between).
 function finishH() { return state.finish === "bead" ? 0 : state.finish === "cat" ? 1 : .5; }
 function buildPills() {
-  const used = state.polishes.flatMap(effectsOf).filter(k => EFFECTS[k] && !PILL_EFFECTS.includes(k));
+  // Effects in the order they first turn up on the shelf, so the pills read like the swatches below them
+  // (the always-shown ones go last if no polish has them yet).
+  const used = state.polishes.flatMap(filterKeysOf).filter(k => EFFECTS[k]);
   const box = $("#fxPills");
-  [...new Set([...PILL_EFFECTS, ...used])].forEach(k => {
+  [...new Set([...used, ...PILL_EFFECTS])].forEach(k => {
     const b = document.createElement("button"); b.type = "button"; b.className = "scope"; b.setAttribute("aria-pressed", "false");
     // Icon first, then the label (Figma "Filters", node 2383:2326); see js/icons.js.
     if (EFFECT_ICONS[k]) b.innerHTML = `<svg class="scope-icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">${EFFECT_ICONS[k]}</svg>`;
