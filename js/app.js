@@ -1036,7 +1036,7 @@ function buildPills() {
   [...new Set([...used, ...PILL_EFFECTS])].forEach(k => {
     const b = document.createElement("button"); b.type = "button"; b.className = "scope"; b.setAttribute("aria-pressed", "false");
     // Icon first, then the label (Figma "Filters", node 2383:2326); see js/icons.js.
-    if (EFFECT_ICONS[k]) b.innerHTML = `<svg class="scope-icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">${EFFECT_ICONS[k]}</svg>`;
+    if (EFFECT_ICONS[k]) b.innerHTML = `<svg class="scope-icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><g>${EFFECT_ICONS[k]}</g></svg>`;
     b.append(EFFECTS[k]);
     b.dataset.fx = k; b.onclick = () => toggleFx(k);
     box.appendChild(b);
@@ -1047,13 +1047,37 @@ function buildPills() {
   const brands = [...PILL_BRANDS.filter(b => count[b]), ...Object.keys(count).filter(b => !PILL_BRANDS.includes(b)).sort((a, b) => count[b] - count[a])];
   brands.forEach(k => {
     const b = document.createElement("button"); b.type = "button"; b.className = "scope"; b.setAttribute("aria-pressed", "false");
-    if (typeof BRAND_ICONS !== "undefined" && BRAND_ICONS[k]) b.innerHTML = `<svg class="scope-icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">${BRAND_ICONS[k]}</svg>`;
+    if (typeof BRAND_ICONS !== "undefined" && BRAND_ICONS[k]) b.innerHTML = `<svg class="scope-icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><g>${BRAND_ICONS[k]}</g></svg>`;
     b.append(BRAND_LABELS[k] || k);
     b.dataset.brand = k; b.onclick = () => toggleBrand(k);
     $("#brandPills").appendChild(b);
   });
 }
 
+// Pill icons are drawn to fill their 24px box in different ways (a tall thermometer, a wide prism, a full
+// circle), so side by side some looked much bigger than others. Each one is scaled and centered so its
+// drawing has about the same visual size as the Magnetic icon: close to the same area (about 15.7px
+// square), and no taller or wider than 19px. Lines keep their 1.5px weight: stroke widths are scaled back up, and
+// solid shapes (the Figma icons are drawn as outlines filled in) get a thin stroke to make up for shrinking.
+const ICON_SIZE = 15.7, ICON_MAX = 19, ICON_LINE = 1.5, ICON_EASE = .6;
+function fitIcon(svg) {
+  const g = svg.firstElementChild; if (!g) return;
+  let bb; try { bb = g.getBBox(); } catch { return; }
+  if (!bb.width || !bb.height) return;
+  const stroked = !!g.querySelector("[stroke]:not([stroke=none])"), pad = stroked ? ICON_LINE : 0;
+  const w = bb.width + pad, h = bb.height + pad;
+  // Shrinking all the way to the same area made open, airy drawings (Flakies, the two ANLAC hearts) look
+  // smaller than the solid Magnetic one, so big icons come only most of the way down.
+  const k = Math.min((ICON_SIZE / Math.sqrt(w * h)) ** ICON_EASE, ICON_MAX / Math.max(w, h));
+  const cx = bb.x + bb.width / 2, cy = bb.y + bb.height / 2;
+  g.setAttribute("transform", `translate(12 12) scale(${k.toFixed(4)}) translate(${(-cx).toFixed(3)} ${(-cy).toFixed(3)})`);
+  g.querySelectorAll("[stroke-width]").forEach(el => el.setAttribute("stroke-width", (+el.getAttribute("stroke-width") / k).toFixed(3)));
+  if (k < 1) g.querySelectorAll('[fill="currentColor"]').forEach(el => {
+    if (el.closest("[stroke]")) return;
+    el.setAttribute("stroke", "currentColor"); el.setAttribute("stroke-linejoin", "round");
+    el.setAttribute("stroke-width", (ICON_LINE * (1 - k) / k).toFixed(3));
+  });
+}
 // Favorite combos switches the page between the shelf and your saved combos (Figma node 2201:98964).
 $("#comboBtn").onclick = () => {
   setView(state.view === "combos" ? "shelf" : "combos");
@@ -2094,6 +2118,7 @@ function zoomFlip() {
 
 /* ---------- boot ---------- */
 buildPills();
+document.querySelectorAll("#filters .scope-icon").forEach(fitIcon);
 // A filter row with more pills than fit fades out at the edge that has more to scroll to.
 function fadeScopes() {
   document.querySelectorAll(".filter-row .scopes").forEach(el => {
@@ -2105,6 +2130,29 @@ function fadeScopes() {
 document.querySelectorAll(".filter-row .scopes").forEach(el => el.addEventListener("scroll", fadeScopes, { passive: true }));
 addEventListener("resize", fadeScopes);
 fadeScopes();
+// Once the filters stick to the top, they collapse into one row (see .filters.collapsed in style.css). They
+// keep their full height while collapsed, so the shelf under them doesn't jump; that height is measured
+// with the filters open, and again on resize.
+const filtersEl = $("#filters");
+function measureFilters() {
+  const was = filtersEl.classList.contains("collapsed");
+  filtersEl.classList.remove("collapsed");
+  filtersEl.style.setProperty("--fh", filtersEl.offsetHeight + "px");
+  filtersEl.classList.toggle("collapsed", was);
+}
+function collapseFilters() {
+  const c = filtersEl.getBoundingClientRect().top <= 1 && scrollY > 0;
+  if (c === filtersEl.classList.contains("collapsed")) return;
+  if (c) measureFilters();
+  filtersEl.classList.toggle("collapsed", c);
+  filtersEl.classList.remove("swapping"); void filtersEl.offsetWidth; filtersEl.classList.add("swapping");
+  if (!c) fadeScopes();
+}
+filtersEl.addEventListener("animationend", () => filtersEl.classList.remove("swapping"));
+let collapseRaf = 0;
+addEventListener("scroll", () => { if (!collapseRaf) collapseRaf = requestAnimationFrame(() => { collapseRaf = 0; collapseFilters(); }); }, { passive: true });
+addEventListener("resize", () => { if (filtersEl.classList.contains("collapsed")) measureFilters(); collapseFilters(); });
+collapseFilters();
 buildZoom();
 renderShelf();
 renderBench();
