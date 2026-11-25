@@ -1448,7 +1448,8 @@ function flyToCombos(layers) {
 // Tapping a swatch opens the detail view over a blurred shelf (Figma "Polish detail / Desktop (1440)",
 // node 2398:3167): the live swatch grows out of its card into a centered hero, with "Brand — Name" in
 // Instrument Serif, the one-line description and the effect pills under it, then the product photos.
-// The add / link / close buttons stay pinned to the top right; the link button opens the product page.
+// The swatch and the add / link / close buttons stay pinned while the photos scroll under them; the name,
+// description and pills fade away once the page scrolls. The link button opens the product page.
 const detail = { p: null, card: null, cv: null };
 const EASE = "cubic-bezier(.2, .8, .2, 1)";
 
@@ -1478,7 +1479,7 @@ function openDetail(p, card) {
 
   // Show the dialog first so the swatch can be drawn at the size it will actually appear.
   const m = $("#modal"); m.hidden = false; document.body.style.overflow = "hidden"; document.body.classList.add("detail-open");
-  m.scrollTop = 0;
+  m.scrollTop = 0; m.classList.remove("scrolled");
   $("#mPills").querySelectorAll(".scope-icon").forEach(fitIcon);
   const stage = $("#mStage"); stage.innerHTML = "";
   const cv = document.createElement("canvas"); cv.className = "swatch";
@@ -1515,6 +1516,8 @@ function openDetail(p, card) {
   history.replaceState(null, "", SITE_ROOT + "p/" + encodeURIComponent(p.id) + "/");
   document.title = `${p.name} · ${p.brand} · ${SITE_TITLE}`;
 }
+
+$("#modal").addEventListener("scroll", e => e.currentTarget.classList.toggle("scrolled", e.currentTarget.scrollTop > 4), { passive: true });
 
 function closeDetail() {
   const m = $("#modal"); if (m.hidden) return;

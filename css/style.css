@@ -431,10 +431,17 @@ body.detail-open .page::after { opacity: 1; }
 /* Page column: 60px down, 36px in on the left and 48px on the right. A centered hero (swatch, then the
    titles 24px below it), then the photos 76px further down, two squares a row 24px apart. The dialog
    scrolls when the photos run past the screen. */
-.modal-body { position: absolute; left: 36px; right: 48px; top: calc(60px + env(safe-area-inset-top)); display: flex; flex-direction: column; align-items: center; gap: 76px; padding-bottom: calc(48px + env(safe-area-inset-bottom)); }
-.mh-hero { display: flex; flex-direction: column; align-items: center; gap: 24px; max-width: 100%; }
-/* The live swatch, in the card's shape (240 x 260), at 180 x 195 */
-.m-swatch { position: relative; z-index: 3; flex-shrink: 0; width: 180px; height: 195px; border-radius: 36px; overflow: hidden; background: var(--swatch); }
+.modal-body { position: absolute; left: 36px; right: 48px; top: calc(60px + env(safe-area-inset-top)); display: flex; flex-direction: column; align-items: center; padding-bottom: calc(48px + env(safe-area-inset-bottom)); }
+.mh-content { margin-top: 24px; }
+.m-photos { margin-top: 76px; }
+/* The live swatch, in the card's shape (240 x 260), at 180 x 195. It is sticky: it stays where it opened
+   while the photos scroll under it, and lifts off them with a shadow in its own shape. */
+.m-swatch { position: sticky; top: calc(60px + env(safe-area-inset-top)); z-index: 3; flex-shrink: 0; width: 180px; height: 195px; border-radius: 36px; overflow: hidden; background: var(--swatch); transition: box-shadow .25s ease; }
+.modal.scrolled .m-swatch { box-shadow: 0 10px 28px rgba(0, 0, 0, .22), 0 2px 6px rgba(0, 0, 0, .14); }
+.drops .m-swatch { transition: filter .25s ease; }
+.drops .modal.scrolled .m-swatch { box-shadow: none; filter: drop-shadow(0 8px 14px rgba(0, 0, 0, .2)) drop-shadow(0 2px 3px rgba(0, 0, 0, .12)); }
+/* Once the photos start to scroll, the name, description and pills fade away; the swatch and buttons stay. */
+.modal.open.scrolled .mh-content { opacity: 0; pointer-events: none; transition-delay: 0s; transition-duration: .2s; }
 .m-swatch canvas { display: block; width: 100%; height: 100%; }
 /* Titles: name, description and pills, centered, 24px apart */
 .mh-content { display: flex; flex-direction: column; align-items: center; gap: 24px; max-width: 100%; text-align: center; }
@@ -456,10 +463,10 @@ body.detail-open .page::after { opacity: 1; }
   /* Phones: the buttons sit 16px in from the top right, and the hero starts 16px under them so the
      swatch never runs into them. A smaller swatch and title; one photo a row. */
   .modal-head { top: calc(16px + env(safe-area-inset-top)); right: 16px; }
-  .modal-body { left: 16px; right: 16px; top: calc(72px + env(safe-area-inset-top)); gap: 40px; padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
-  .mh-hero { gap: 20px; }
-  .m-swatch { width: 144px; height: 156px; border-radius: 29px; }
-  .mh-content { gap: 16px; }
+  .modal-body { left: 16px; right: 16px; top: calc(72px + env(safe-area-inset-top)); padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
+  .m-swatch { top: calc(72px + env(safe-area-inset-top)); width: 144px; height: 156px; border-radius: 29px; }
+  .mh-content { gap: 16px; margin-top: 20px; }
+  .m-photos { margin-top: 40px; }
   .mh-name { font-size: 32px; line-height: 34px; letter-spacing: -1.2px; }
   .m-photos { grid-template-columns: 1fr; gap: 12px; }
   .m-photos img { border-radius: 24px; }
