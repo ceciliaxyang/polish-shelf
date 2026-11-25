@@ -174,8 +174,8 @@ function dropify(box, key, aspect = 1, opt = {}) {
     const look = pouredLook(key);
     if (opt.shadow !== false) under += `<defs><filter id="${id}u" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation=".7"/></filter>
         <filter id="${id}v" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="2.4"/></filter></defs>
-      <path d="${s.d}" transform="translate(.2 1.1)" fill="rgba(40,30,20,.05)" filter="url(#${id}v)"/>
-      <path d="${s.d}" transform="translate(.15 .45)" fill="rgba(40,30,20,.14)" filter="url(#${id}u)"/>`;
+      <path d="${s.d}" transform="translate(.2 1.1)" fill="rgba(40,30,20,.125)" filter="url(#${id}v)"/>
+      <path d="${s.d}" transform="translate(.15 .45)" fill="rgba(40,30,20,.35)" filter="url(#${id}u)"/>`;
     // Light streaks: each is three overlapping strokes along the outline (pulled in a little), shorter
     // and bolder toward the middle, so it tapers at both ends.
     const streak = (c, len, k, w, op, f) => [1, .6, .3].map((m, i) =>
@@ -185,7 +185,7 @@ function dropify(box, key, aspect = 1, opt = {}) {
     const R = dropRand(dropHash(key + "#spec")), c1 = .6 + (R() - .5) * .06, l1 = (9 + R() * 6) * .78, c2 = .12 + (R() - .5) * .06, l2 = (3 + R() * 3) * .78;
     gloss = `<defs>
         <clipPath id="${id}c"><path d="${s.d}"/></clipPath>
-        <radialGradient id="${id}h" cx=".34" cy=".26" r=".55"><stop offset="0" stop-color="#fff" stop-opacity=".07"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+        <radialGradient id="${id}h" cx=".34" cy=".26" r=".55"><stop offset="0" stop-color="#fff" stop-opacity=".03"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
         <filter id="${id}r" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="2.2"/></filter>
         <filter id="${id}k"><feGaussianBlur stdDeviation=".215"/></filter>
         <filter id="${id}w"><feGaussianBlur stdDeviation=".85"/></filter>
@@ -199,7 +199,6 @@ function dropify(box, key, aspect = 1, opt = {}) {
         ${streak(c2, l2, .94, .88, .7, "k")}
         <path d="${s.d}" transform="${sc(.975)}" pathLength="100" fill="none" stroke="#fff" stroke-opacity=".2" stroke-width=".45"
           stroke-dasharray="17.16 200" stroke-dashoffset="${(-(c1 * 100 - 8.58)).toFixed(2)}" filter="url(#${id}l)"/>
-        <path d="${s.d}" fill="none" stroke="#000" stroke-opacity=".22" stroke-width=".6" filter="url(#${id}l)"/>
       </g>`;
     if (look && look.swirly) swirlInto(box, key, s);
   }
