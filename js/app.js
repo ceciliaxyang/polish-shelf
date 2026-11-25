@@ -33,7 +33,7 @@ const EFFECTS = {
 const CATEGORY = { chrome: "multichrome", glitter: "shimmer", sheermag: "magtopper" };
 const category = k => CATEGORY[k] || k;
 // Filter pills always shown, in this order; other effects get a pill once a polish uses them.
-const PILL_EFFECTS = ["sheer", "magnetic", "holo", "shimmer"];
+const PILL_EFFECTS = ["magnetic", "holo", "shimmer"];
 const NATURAL = "#f2d6cf";
 
 /* ---------- color helpers ---------- */
@@ -1004,7 +1004,7 @@ function glowSwatch(cv, p, W, H) {
 
 /* ---------- state ---------- */
 const $ = s => document.querySelector(s);
-const KEY = { combos: "polish-shelf:combos", saved: "polish-shelf:saved-combos", bench: "polish-shelf:bench", zoom: "polish-shelf:zoom-v2" }; // zoom-v2: 3 per row became the default, so earlier saved choices start over
+const KEY = { combos: "polish-shelf:combos", saved: "polish-shelf:saved-combos", bench: "polish-shelf:bench", zoom: "polish-shelf:zoom-v3" }; // zoom-v3: 4 per row (the most zoomed out) became the default, so earlier saved choices start over
 function load(key, fallback) { try { const v = JSON.parse(localStorage.getItem(key)); return v ?? fallback; } catch (e) { return fallback; } }
 function save(key, value) {
   try { localStorage.setItem(key, JSON.stringify(value)); }
@@ -1079,7 +1079,9 @@ function toggleFx(k) {
   document.querySelectorAll("#fxPills .scope").forEach(b => b.setAttribute("aria-pressed", state.fx.has(b.dataset.fx)));
   filterShelf();
 }
-const matchesFx = p => !state.fx.size || labelsOf(p).some(k => state.fx.has(k));
+// A magnetic topper also counts as Magnetic for the filter (its card still reads just "Magnetic topper").
+const filterKeysOf = p => { const l = labelsOf(p); return l.includes("magtopper") ? [...l, "magnetic"] : l; };
+const matchesFx = p => !state.fx.size || filterKeysOf(p).some(k => state.fx.has(k));
 
 /* Filtering keeps the shelf as it is: no card is rebuilt and no swatch redrawn. Polishes that don't
    match fade and shrink away where they stand, the ones that stay glide to their new places, and ones
@@ -1134,8 +1136,9 @@ function filterShelf() {
 // A polish's rendering uses `effect`; `effects` (optional) lists everything it should be found under.
 // There's no Multichrome category (chrome counts as multichrome): those labels are dropped, and a polish
 // left with no label is filed under Shimmer.
+// Sheer isn't a category (no filter pill or label); a sheer polish still layers as one (see isSheer).
 function effectsOf(p) {
-  const fx = [...new Set((p.effects || [p.effect]).map(category))].filter(k => k !== "multichrome");
+  const fx = [...new Set((p.effects || [p.effect]).map(category))].filter(k => k !== "multichrome" && k !== "sheer");
   return fx.length ? fx : ["shimmer"];
 }
 // What a polish is called on its card, detail view and layer: a magnetic polish's shimmer is part of being
@@ -1527,7 +1530,7 @@ function syncSwatchButtons() {
 
 const TRASH = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 4h11M6.25 4V2.5h3.5V4M4 4l.6 9.1a1 1 0 0 0 1 .9h4.8a1 1 0 0 0 1-.9L12 4M6.75 6.75v4.5M9.25 6.75v4.5"/></svg>`;
 // A sheer polish lets what's underneath show through; anything else covers it completely.
-const isSheer = p => p.sheer || p.effect === "sheer" || p.effect === "sheermag" || effectsOf(p).includes("sheer");
+const isSheer = p => p.sheer || p.effect === "sheer" || p.effect === "sheermag";
 // Chrome powders are rubbed onto the top of a manicure: always the topmost layer, over whatever is below.
 const isPowder = p => p.effect === "powder";
 const isOverlay = p => isSheer(p) || isPowder(p);
@@ -1811,7 +1814,7 @@ function renderBench() {
 const GAP = 40, MAX_CARD = 336;
 // Zoom levels (see "zoom" below): swatches per row on a phone, and how much smaller desktop cards get.
 const ZOOMS = [2, 3, 4], ZOOM_SCALE = { 2: 1, 3: 2 / 3, 4: 1 / 2 };
-const zoom = { level: ZOOMS.includes(load(KEY.zoom, 3)) ? load(KEY.zoom, 3) : 3 };
+const zoom = { level: ZOOMS.includes(load(KEY.zoom, 4)) ? load(KEY.zoom, 4) : 4 };
 // Card swatches are drawn at the size they're actually shown (cards grow on bigger screens), so they
 // stay sharp instead of being stretched.
 // Cards rise into view as they're scrolled to. Cards arriving together (a new row, or the first screen)
@@ -1953,8 +1956,8 @@ let shapeRaf = 0;
 addEventListener("scroll", () => { if (!shapeRaf) shapeRaf = requestAnimationFrame(() => { shapeRaf = 0; shapeForScroll(); }); }, { passive: true });
 
 /* ---------- zoom ---------- */
-// The zoom control is a floating bar at the bottom of the screen with three icons: 2 (big), 3 (default) and
-// 4 (dense) swatches per row on a phone. Tap one to switch; the selected one sits on a dark circle. Arrow
+// The zoom control is a floating bar at the bottom of the screen with three icons: 2 (big), 3 and
+// 4 (dense, the default) swatches per row on a phone. Tap one to switch; the selected one sits on a dark circle. Arrow
 // keys move between them. Each icon is a grid of dots (droplet swatches) or rounded squares (rectangles).
 // At 3 per row the cards show the name and effect types; at 4, only the swatch (no + button: add from the
 // polish's page). The choice is kept in this browser.

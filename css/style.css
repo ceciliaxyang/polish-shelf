@@ -216,6 +216,10 @@ body.detail-open .zoom { opacity: 0; pointer-events: none; }
 .combo-stack canvas { width: 40px; height: 40px; border: 3px solid #fff; border-radius: 8px; background: #d9d9d9; }
 .combo-stack canvas + canvas { margin-left: -11px; }
 .pill.tiny { padding: 6px 12px; font-size: 12px; line-height: 18px; } /* card effect pills (Figma: smaller pill) */
+/* Card effect pills: no stroke, the same frosted fill as the filter pills; pressed fills dark like a filter. */
+.card-fx .pill { border: 0; padding: 7px 13px; background: rgba(242, 242, 242, .78); -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); transition: background .15s ease, color .15s ease; }
+.card-fx .pill:not([aria-pressed="true"]):hover { background: rgba(232, 232, 232, .85); }
+.card-fx .pill[aria-pressed="true"] { background: var(--text); color: #fff; box-shadow: none; }
 .empty { grid-column: 1 / -1; border: 1px dashed var(--line); border-radius: 24px; padding: 1.5rem; text-align: center; color: var(--muted); font-size: 14px; }
 .empty strong { display: block; color: var(--fg); font-weight: normal; font-size: 18px; margin-bottom: 4px; }
 /* Combos page empty state (Figma node 2212:1478): three 336px cards, the outer two turned -11.6 and 8 degrees (the middle one straight),
@@ -363,9 +367,8 @@ body.detail-open .page::after { opacity: 1; }
 .mh-title { padding: 2px 0; }
 /* Effect pills under the name: 12px below it, like the card's pills but not clickable here */
 .mh-pills { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
-/* Like the card pills (grey border) but transparent, and not clickable here */
-.mh-pills .pill { cursor: default; background: transparent; border-color: #b0b0b0; } /* a darker stroke so it holds up over the blur */
-.mh-pills .pill:hover { border-color: #b0b0b0; }
+/* Frosted glass with no stroke (the same material as the zoom toggle), so it sits on the tinted blur; not clickable here */
+.mh-pills .pill { cursor: default; border: 0; padding: 7px 13px; background: rgba(255, 255, 255, .4); -webkit-backdrop-filter: blur(16px) saturate(1.4); backdrop-filter: blur(16px) saturate(1.4); }
 .mh-brand, .mh-name { margin: 0; color: #000; overflow-wrap: anywhere; }
 .mh-brand { font-size: 14px; }
 .mh-name { font-size: 20px; font-weight: 500; }
