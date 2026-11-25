@@ -1055,6 +1055,13 @@ function effectsOf(p) {
   const fx = [...new Set((p.effects || [p.effect]).map(category))].filter(k => k !== "multichrome");
   return fx.length ? fx : ["shimmer"];
 }
+// What a polish is called on its card, detail view and layer: a magnetic polish's shimmer is part of being
+// magnetic, so "Magnetic · Shimmer" reads just "Magnetic" (the same for Magnetic topper). It still shows up
+// under the Shimmer filter.
+function labelsOf(p) {
+  const fx = effectsOf(p);
+  return fx.includes("magnetic") || fx.includes("magtopper") ? fx.filter(k => k !== "shimmer") : fx;
+}
 
 // Plus while the polish is off the bench; it spins away and a checkmark draws in once it's added.
 const PLUS_CHECK = `<svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><path class="plus" d="M10 3.5v13M3.5 10h13"/><path class="check" pathLength="1" d="M4.5 10.5l3.5 3.5 7.5-8"/></svg>`;
@@ -1084,10 +1091,10 @@ function renderShelf() {
     const br = document.createElement("p"); br.className = "brand"; br.textContent = p.brand || ""; br.title = br.textContent;
     const nm = document.createElement("p"); nm.className = "name"; nm.textContent = p.name || "Untitled"; nm.title = nm.textContent;
     // The effect types as one line of small text (shown at 3 per row, in place of the pills).
-    const ty = document.createElement("p"); ty.className = "card-type"; ty.textContent = effectsOf(p).map(k => EFFECTS[k] || k).join(" · "); ty.title = ty.textContent;
+    const ty = document.createElement("p"); ty.className = "card-type"; ty.textContent = labelsOf(p).map(k => EFFECTS[k] || k).join(" · "); ty.title = ty.textContent;
     title.append(br, nm, ty);
     const fx = document.createElement("div"); fx.className = "card-fx";
-    effectsOf(p).forEach(k => {
+    labelsOf(p).forEach(k => {
       const b = document.createElement("button"); b.type = "button"; b.className = "pill tiny"; b.textContent = EFFECTS[k] || k;
       b.setAttribute("aria-pressed", state.fx.has(k)); b.onclick = () => toggleFx(k);
       fx.appendChild(b);
@@ -1310,7 +1317,7 @@ function openDetail(p, card) {
   $("#mName").textContent = p.name || "Untitled";
   // Effect pills under the name (Figma "Action Header Web", node 2189:92047), same labels as on the card.
   $("#mPills").innerHTML = "";
-  effectsOf(p).forEach(k => { const t = document.createElement("span"); t.className = "pill tiny"; t.textContent = EFFECTS[k] || k; $("#mPills").appendChild(t); });
+  labelsOf(p).forEach(k => { const t = document.createElement("span"); t.className = "pill tiny"; t.textContent = EFFECTS[k] || k; $("#mPills").appendChild(t); });
   // The dialog's add button does what the swatch's + does, and shows the same + / check state.
   const addBtn = $("#mAdd");
   if (!addBtn.firstChild) addBtn.innerHTML = PLUS_CHECK;
@@ -1678,7 +1685,7 @@ function renderBench() {
     const th = document.createElement("canvas"); th.className = "layer-thumb";
     const mid = document.createElement("div"); mid.className = "layer-text";
     const nm = document.createElement("p"); nm.className = "layer-name"; nm.textContent = p ? (p.name || "Untitled") : "Removed polish";
-    const fx = document.createElement("p"); fx.className = "layer-fx"; fx.textContent = p ? effectsOf(p).map(k => EFFECTS[k] || k).join(" · ") : "No longer on your shelf";
+    const fx = document.createElement("p"); fx.className = "layer-fx"; fx.textContent = p ? labelsOf(p).map(k => EFFECTS[k] || k).join(" · ") : "No longer on your shelf";
     mid.append(nm, fx);
     const del = document.createElement("button"); del.type = "button"; del.className = "layer-del"; del.innerHTML = TRASH;
     del.setAttribute("aria-label", `Remove ${p ? p.name : "layer"}`);
