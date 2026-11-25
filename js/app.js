@@ -24,7 +24,7 @@ const EFFECTS = {
   multichrome: "Multichrome",
   thermal:   "Thermal",
   solar:     "Solar",
-  glow:      "Glow in the dark",
+  glow:      "Glow-in-the-dark",
   powder:    "Chrome powder",
 };
 // Some effects share a category (one filter pill and one card label): chrome counts as multichrome
@@ -1028,7 +1028,10 @@ function buildPills() {
   const used = state.polishes.flatMap(effectsOf).filter(k => EFFECTS[k] && !PILL_EFFECTS.includes(k));
   const box = $("#fxPills");
   [...new Set([...PILL_EFFECTS, ...used])].forEach(k => {
-    const b = document.createElement("button"); b.type = "button"; b.className = "scope"; b.textContent = EFFECTS[k]; b.setAttribute("aria-pressed", "false");
+    const b = document.createElement("button"); b.type = "button"; b.className = "scope"; b.setAttribute("aria-pressed", "false");
+    // Icon first, then the label (Figma "Filters", node 2383:2326); see js/icons.js.
+    if (EFFECT_ICONS[k]) b.innerHTML = `<svg class="scope-icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">${EFFECT_ICONS[k]}</svg>`;
+    b.append(EFFECTS[k]);
     b.dataset.fx = k; b.onclick = () => toggleFx(k);
     box.appendChild(b);
   });
