@@ -73,6 +73,8 @@ button, input, select { font: inherit; color: inherit; }
 .filters { display: flex; flex-direction: column; margin: 0 0 56px; padding: 0 8px; transition: opacity .25s ease; }
 .filter-row { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 20px 0; border-bottom: 1px solid #ebebeb; }
 .filter-row:first-child { padding-top: 0; }
+/* On desktop, keep at least 300px between the label and its pills; the pills scroll sideways instead. */
+@media (min-width: 761px) { .filter-row { gap: 300px; } }
 .filter-label { flex-shrink: 0; margin: 0; font-size: 20px; line-height: 24px; font-weight: 400; color: #222; }
 .filter-row .scopes { min-width: 0; margin: -8px 0; padding: 8px 0; }
 .filter-row .scope:first-child { margin-left: auto; }
