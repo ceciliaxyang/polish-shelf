@@ -119,11 +119,11 @@ body.show-mini .mini-nav { opacity: 1; transform: none; visibility: visible; tra
 .mini-row { display: flex; gap: 8px; margin: -12px -40px 0; padding: 12px 40px 16px; overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain; pointer-events: auto; }
 .mini-row::-webkit-scrollbar { display: none; }
 .mini-row .mini-gap { flex: 0 0 4px; } /* a little more room between effects and brands */
-/* Over the swatches the mini nav's pills turn to glass: see-through white, blurring and brightening what
-   passes under them, with a light rim and a soft shadow. The pills in the filters stay grey. */
-.mini-row.fx-row .scope:not([aria-pressed="true"]) { background: rgba(255, 255, 255, .42); -webkit-backdrop-filter: blur(18px) saturate(1.8) brightness(1.08); backdrop-filter: blur(18px) saturate(1.8) brightness(1.08);
-  box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .7), inset 0 1px 0 rgba(255, 255, 255, .55), 0 0 0 .5px rgba(0, 0, 0, .06), 0 4px 16px rgba(0, 0, 0, .1); }
-.mini-row.fx-row .scope:not([aria-pressed="true"]):hover { background: rgba(255, 255, 255, .58); }
+/* Over the swatches the mini nav's pills turn frosted: a mostly opaque light grey that still blurs what passes
+   under it, with a soft shadow and no rim. The pills in the filters stay grey. */
+.mini-row.fx-row .scope:not([aria-pressed="true"]) { background: rgba(242, 242, 242, .82); -webkit-backdrop-filter: blur(14px) saturate(1.3); backdrop-filter: blur(14px) saturate(1.3);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, .08); }
+.mini-row.fx-row .scope:not([aria-pressed="true"]):hover { background: rgba(232, 232, 232, .9); }
 .mini-row.fx-row .scope[aria-pressed="true"] { box-shadow: 0 4px 16px rgba(0, 0, 0, .18); }
 @media (prefers-reduced-motion: reduce) { .mini-nav, body.show-mini .mini-nav { transition: none; transform: none; } }
 .fx-row .scope { background: #f2f2f2; }
