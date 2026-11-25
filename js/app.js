@@ -1695,7 +1695,7 @@ function renderBench() {
 const GAP = 40, MAX_CARD = 336;
 // Zoom levels (see "zoom" below): swatches per row on a phone, and how much smaller desktop cards get.
 const ZOOMS = [2, 3, 4], ZOOM_SCALE = { 2: 1, 3: 2 / 3, 4: 1 / 2 };
-const zoom = { level: ZOOMS.includes(load(KEY.zoom, 3)) ? load(KEY.zoom, 3) : 3, open: false, drag: null, closeT: 0 };
+const zoom = { level: ZOOMS.includes(load(KEY.zoom, 3)) ? load(KEY.zoom, 3) : 3, drag: null };
 // Card swatches are drawn at the size they're actually shown (cards grow on bigger screens), so they
 // stay sharp instead of being stretched.
 // Cards rise into view as they're scrolled to. Cards arriving together (a new row, or the first screen)
@@ -1835,119 +1835,59 @@ let shapeRaf = 0;
 addEventListener("scroll", () => { if (!shapeRaf) shapeRaf = requestAnimationFrame(() => { shapeRaf = 0; shapeForScroll(); }); }, { passive: true });
 
 /* ---------- zoom ---------- */
-// The zoom control at the end of the effect pills: 2, 3 (default) or 4 swatches per row on a phone. Closed,
-// it shows only the current size; tapping it opens all three, and you can tap one or slide your finger
-// across them (the shelf follows as you slide). It closes when you let go on a size, tap outside or press
-// Escape. Each icon is a tiny shelf made of real swatches. At 3 per row the cards show only the name; at 4,
-// only the swatch (no + button: add from the polish's page). The choice is kept in this browser.
-// The icons aren't in shelf order: they're picked for looks. Each polish is boiled down to its most vivid
-// color, the most colorful polishes are spread evenly around the color wheel, and the tiles are laid out so
-// the hue flows diagonally across the grid. Each tile is the bright middle of that polish's real swatch.
-function heroHue(p) {
-  let best = null;
-  for (const c of [...(p.colors || []), p.shimmer].filter(Boolean)) {
-    const [r, g, b] = rgb(c).map(v => v / 255), mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
-    if (!best || d * mx > best.vivid) {
-      const h = !d ? 0 : mx === r ? ((g - b) / d + 6) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
-      best = { vivid: d * mx, hue: h * 60 };
-    }
-  }
-  return best;
-}
-function iconPolishes(count) {
-  const pool = state.polishes.map(p => ({ p, ...(heroHue(p) || { vivid: 0, hue: 0 }) })).sort((a, b) => b.vivid - a.vivid);
-  // Keep the more colorful half (at least enough to fill the grid), then take evenly spaced hues.
-  const vivid = pool.slice(0, Math.max(count, Math.ceil(pool.length / 2))).sort((a, b) => a.hue - b.hue);
-  return Array.from({ length: Math.min(count, vivid.length) }, (_, i) => vivid[Math.floor(i * vivid.length / count)].p);
-}
+// The zoom control is a floating slider at the bottom of the screen: 2 (big, left), 3 (default) or 4
+// (dense, right) swatches per row on a phone. Drag the knob along the track (it snaps to the nearest
+// size and the shelf follows as you drag), tap a spot on the track, or tap the icon at either end to step
+// one size that way. Each icon is a grid of dots (droplet swatches) or rounded squares (rectangles). At 3
+// per row the cards show the name and effect types; at 4, only the swatch (no + button: add from the
+// polish's page). The choice is kept in this browser.
+const ZOOM_STOPS = [2, 3, 4]; // left to right along the track
 function zoomIcon(n) {
   const icon = document.createElement("span"); icon.className = "zi"; icon.style.setProperty("--n", n); icon.dataset.n = n; icon.setAttribute("aria-hidden", "true");
-  const picks = iconPolishes(n * n), px = n === 2 ? 8 : n === 3 ? 5 : 4, dpr = Math.min(3, devicePixelRatio || 1);
-  // Diagonal order: tiles nearer the top left come first, so hues sweep from one corner to the other.
-  const cells = Array.from({ length: n * n }, (_, i) => i).sort((a, b) => ((a / n | 0) + a % n) - ((b / n | 0) + b % n) || (a / n | 0) - (b / n | 0));
-  const tiles = Array.from({ length: n * n }, () => document.createElement("canvas"));
-  cells.forEach((cell, k) => {
-    const p = picks[k], t = tiles[cell]; if (!p) return;
-    const big = document.createElement("canvas"), S = px * 4;
-    renderSwatch(big, p, S, S);
-    t.width = t.height = Math.round(px * dpr);
-    const bw = big.width, bh = big.height;
-    try { t.getContext("2d").drawImage(big, bw * .3, bh * .3, bw * .4, bh * .4, 0, 0, t.width, t.height); } catch (e) {}
-  });
-  icon.append(...tiles);
+  for (let i = 0; i < n * n; i++) icon.appendChild(document.createElement("i"));
   return icon;
 }
 function buildZoom() {
   const box = $("#zoom"); box.innerHTML = "";
-  const track = document.createElement("span"); track.className = "z-track";
-  ZOOMS.forEach(n => {
-    const b = document.createElement("button"); b.type = "button"; b.className = "z-opt"; b.dataset.n = n;
-    b.setAttribute("role", "radio"); b.setAttribute("aria-label", `${n} per row`);
+  box.classList.toggle("dots", typeof DROPS !== "undefined" && DROPS);
+  const end = (n, step, label) => {
+    const b = document.createElement("button"); b.type = "button"; b.className = "z-end"; b.setAttribute("aria-label", label);
     b.appendChild(zoomIcon(n));
-    track.appendChild(b);
+    b.onclick = () => setZoom(ZOOM_STOPS[Math.max(0, Math.min(ZOOM_STOPS.length - 1, ZOOM_STOPS.indexOf(zoom.level) + step))]);
+    return b;
+  };
+  const track = document.createElement("div"); track.className = "z-track"; track.id = "zoomTrack"; track.tabIndex = 0;
+  track.setAttribute("role", "slider"); track.setAttribute("aria-label", "Swatches per row");
+  track.setAttribute("aria-valuemin", 2); track.setAttribute("aria-valuemax", 4);
+  track.innerHTML = '<span class="z-line"></span><span class="z-knob"></span>';
+  box.append(end(2, -1, "Bigger swatches"), track, end(4, 1, "Smaller swatches"));
+  // Which stop is nearest the finger.
+  const stopAt = x => { const r = track.getBoundingClientRect(); return ZOOM_STOPS[Math.round(Math.max(0, Math.min(1, (x - r.left) / r.width)) * (ZOOM_STOPS.length - 1))]; };
+  track.addEventListener("pointerdown", e => {
+    if (e.button > 0) return;
+    zoom.drag = e.pointerId; box.classList.add("dragging");
+    try { track.setPointerCapture(e.pointerId); } catch (err) {}
+    setZoom(stopAt(e.clientX));
   });
-  box.append(Object.assign(document.createElement("span"), { className: "z-thumb" }), track);
-  box.addEventListener("pointerdown", zoomDown);
-  box.addEventListener("pointermove", zoomMove);
-  box.addEventListener("pointerup", zoomUp);
-  box.addEventListener("pointercancel", () => { zoom.drag = null; });
-  box.addEventListener("click", e => e.preventDefault());
-  box.addEventListener("keydown", zoomKey);
+  track.addEventListener("pointermove", e => { if (zoom.drag === e.pointerId) setZoom(stopAt(e.clientX)); });
+  const up = e => { if (zoom.drag === e.pointerId) { zoom.drag = null; box.classList.remove("dragging"); } };
+  track.addEventListener("pointerup", up); track.addEventListener("pointercancel", up);
+  track.addEventListener("keydown", e => {
+    const step = e.key === "ArrowRight" || e.key === "ArrowUp" ? 1 : e.key === "ArrowLeft" || e.key === "ArrowDown" ? -1 : 0;
+    if (!step) return;
+    e.preventDefault();
+    setZoom(ZOOM_STOPS[Math.max(0, Math.min(ZOOM_STOPS.length - 1, ZOOM_STOPS.indexOf(zoom.level) + step))]);
+  });
   setZoom(zoom.level, true);
 }
 function setZoom(n, quiet) {
   const changed = n !== zoom.level; zoom.level = n;
   $("#grid").dataset.zoom = n;
-  const box = $("#zoom"); box.style.setProperty("--i", ZOOMS.indexOf(n));
-  box.querySelectorAll(".z-opt").forEach(b => {
-    const on = +b.dataset.n === n; b.setAttribute("aria-checked", on); b.classList.toggle("on", on);
-    b.tabIndex = on || zoom.open ? 0 : -1;
-  });
+  const track = $("#zoomTrack");
+  track.style.setProperty("--p", ZOOM_STOPS.indexOf(n) / (ZOOM_STOPS.length - 1));
+  track.setAttribute("aria-valuenow", n); track.setAttribute("aria-valuetext", `${n} per row`);
   if (changed && !quiet) { save(KEY.zoom, n); fitGrid(); }
 }
-function openZoom(v) {
-  zoom.open = v; clearTimeout(zoom.closeT);
-  const box = $("#zoom"); box.classList.toggle("open", v);
-  box.querySelectorAll(".z-opt").forEach(b => { b.tabIndex = v || b.classList.contains("on") ? 0 : -1; });
-}
-// Which size sits under the finger: the open control is three equal slots.
-function zoomAt(x) {
-  const r = $("#zoom").getBoundingClientRect();
-  return ZOOMS[Math.max(0, Math.min(ZOOMS.length - 1, Math.floor((x - r.left) / (r.width / ZOOMS.length))))];
-}
-function zoomDown(e) {
-  if (e.button > 0) return;
-  const box = $("#zoom");
-  zoom.drag = { id: e.pointerId, x: e.clientX, wasOpen: zoom.open, moved: false };
-  try { box.setPointerCapture(e.pointerId); } catch (err) {}
-  if (!zoom.open) openZoom(true);
-  else setZoom(zoomAt(e.clientX));
-}
-function zoomMove(e) {
-  const d = zoom.drag; if (!d || d.id !== e.pointerId) return;
-  if (Math.abs(e.clientX - d.x) > 6) d.moved = true;
-  // Wait for the control to finish opening before following the finger, so a tap doesn't land on a size.
-  if (d.moved && $("#zoom").classList.contains("open")) setZoom(zoomAt(e.clientX));
-}
-function zoomUp(e) {
-  const d = zoom.drag; if (!d || d.id !== e.pointerId) return;
-  zoom.drag = null;
-  // A plain tap on the closed control just opens it; anything else picks a size and closes.
-  if (!d.wasOpen && !d.moved) return;
-  clearTimeout(zoom.closeT); zoom.closeT = setTimeout(() => openZoom(false), 280);
-}
-function zoomKey(e) {
-  const i = ZOOMS.indexOf(zoom.level);
-  if (e.key === "Escape" && zoom.open) { openZoom(false); e.target.blur?.(); $("#zoom .z-opt.on")?.focus(); return; }
-  if (e.key === "Enter" || e.key === " ") { e.preventDefault(); if (!zoom.open) { openZoom(true); return; } const n = +e.target.dataset.n; if (n) setZoom(n); openZoom(false); $("#zoom .z-opt.on")?.focus(); return; }
-  const step = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
-  if (!step) return;
-  e.preventDefault();
-  const n = ZOOMS[Math.max(0, Math.min(ZOOMS.length - 1, i + step))];
-  setZoom(n); $("#zoom .z-opt.on")?.focus();
-}
-document.addEventListener("pointerdown", e => { if (zoom.open && !e.target.closest("#zoom")) openZoom(false); });
-document.addEventListener("focusin", e => { if (zoom.open && !e.target.closest("#zoom")) openZoom(false); });
 
 /* ---------- boot ---------- */
 buildPills();

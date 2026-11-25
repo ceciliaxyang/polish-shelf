@@ -53,7 +53,7 @@ button, input, select { font: inherit; color: inherit; }
 .pill[aria-pressed="true"] { border-color: var(--text); box-shadow: inset 0 0 0 .5px var(--text); }
 /* Shelf header (Figma "Action Header Web", node 2180:15410): title with the layering button on the right,
    then a single row of filled filter pills ("Scoping Bar") that scrolls sideways when it runs out of room. */
-.shelf-head { display: flex; flex-direction: column; gap: 24px; margin: 0 0 64px; padding: 0 8px; }
+.shelf-head { display: flex; flex-direction: column; gap: 24px; margin: 0 0 24px; padding: 0 8px; }
 .shelf-top { display: flex; align-items: flex-start; gap: 16px; }
 .shelf-title { flex: 1; min-width: 0; margin: 0; font-size: 40px; line-height: 40px; font-weight: 500; letter-spacing: -1.2px; color: #000; }
 .scopes { display: flex; gap: 8px; padding: 8px 0; margin: -8px -8px; padding-inline: 8px; overflow-x: auto; scrollbar-width: none; }
@@ -68,36 +68,42 @@ button, input, select { font: inherit; color: inherit; }
 .combo-btn[aria-pressed="true"] { background: var(--text); }
 /* On the combos page the effect pills fade out (the filters only apply to the shelf). */
 .fx-row { transition: opacity .25s ease; }
-.shelf-head.combos-view .fx-row { opacity: 0; pointer-events: none; }
+.shelf-head.combos-view + .fx-row { opacity: 0; pointer-events: none; }
 .fx-row .scope { background: #f2f2f2; }
 .fx-row .scope:hover { background: #e8e8e8; }
 .fx-row .scope[aria-pressed="true"] { background: var(--text); }
-/* Zoom control: pinned after the effect pills, which fade out under it as they scroll. Closed, it is one
-   40px circle showing the current size; open, it widens to the left to show all three, with a white thumb
-   on the current one. Each icon is a 2x2, 3x3 or 4x4 grid of real swatches. */
-.fx-bar { display: flex; align-items: center; gap: 4px; }
-.fx-bar .fx-row { flex: 1; min-width: 0; margin-right: 0; padding-right: 16px;
-  -webkit-mask: linear-gradient(90deg, #000 calc(100% - 24px), transparent); mask: linear-gradient(90deg, #000 calc(100% - 24px), transparent); }
-.zoom { --w: 40px; --i: 0; position: relative; flex-shrink: 0; width: var(--w); height: 40px; border-radius: 100px; background: #f2f2f2; overflow: hidden;
-  touch-action: none; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent;
-  transition: width .32s cubic-bezier(.2, .8, .2, 1), background .15s ease; }
-.zoom.open { width: calc(var(--w) * 3); background: #e9e9e9; }
-.z-track { position: absolute; inset: 0 auto 0 0; display: flex; transform: translateX(calc(var(--i) * var(--w) * -1)); transition: transform .32s cubic-bezier(.2, .8, .2, 1); }
-.zoom.open .z-track { transform: none; }
-.z-thumb { position: absolute; top: 3px; left: 3px; width: calc(var(--w) - 6px); height: 34px; border-radius: 100px; background: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, .14);
-  opacity: 0; transform: translateX(calc(var(--i) * var(--w))); transition: transform .22s cubic-bezier(.2, .8, .2, 1), opacity .2s ease; }
-.zoom.open .z-thumb { opacity: 1; }
-.z-opt { position: relative; width: var(--w); height: 40px; padding: 0; border: 0; background: none; display: block; cursor: pointer; }
-.z-opt:focus-visible { outline: 2px solid var(--text); outline-offset: -4px; border-radius: 100px; }
-.zoom.open .z-opt:not(.on) .zi { opacity: .5; }
-/* Every tile in an icon is exactly the same size: tiles and gaps are whole pixels (2x2: 8px tiles, 2px gaps;
-   3x3: 5px and 1px; 4x4: 4px and 1px), and the icon sits on a whole pixel, so nothing gets rounded unevenly. */
-.zi { --t: 8px; --g: 2px; position: absolute; display: grid; grid-template-columns: repeat(var(--n), var(--t)); grid-auto-rows: var(--t); gap: var(--g);
-  left: 11px; top: 11px; transition: opacity .2s ease; }
-.zi canvas { display: block; width: var(--t); height: var(--t); border-radius: 2px; background: #d9d9d9; }
-.zi[data-n="3"] { --t: 5px; --g: 1px; } .zi[data-n="3"] canvas { border-radius: 1.5px; }
-.zi[data-n="4"] { --t: 4px; --g: 1px; left: 10px; top: 10px; } .zi[data-n="4"] canvas { border-radius: 1px; }
-@media (prefers-reduced-motion: reduce) { .zoom, .z-track, .z-thumb { transition: none; } }
+/* Zoom control: a frosted floating slider at the bottom center. Big grid icon (2 per row) on the left, a
+   soft pale track with a white knob, dense grid icon (4 per row) on the right. It moves up above the
+   Layers peek bar on phones, centers on the shelf beside the Layers pane on wider screens, and hides behind
+   the polish detail view. Icons are grids of dots with droplet swatches (.dots), else squares. */
+.zoom { position: fixed; z-index: 50; left: 50%; translate: -50% 0; bottom: calc(24px + env(safe-area-inset-bottom));
+  display: flex; align-items: center; gap: 4px; height: 44px; padding: 0 8px; border-radius: 100px; color: #222;
+  background: rgba(255, 255, 255, .78); -webkit-backdrop-filter: blur(24px) saturate(1.6); backdrop-filter: blur(24px) saturate(1.6);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, .06), 0 8px 24px rgba(0, 0, 0, .14);
+  user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent;
+  transition: bottom .38s cubic-bezier(.2, .8, .2, 1), left .45s cubic-bezier(.2, .8, .2, 1), opacity .2s ease; }
+body.detail-open .zoom { opacity: 0; pointer-events: none; }
+@media (max-width: 760px) { body.bench-open .zoom { bottom: calc(116px + env(safe-area-inset-bottom)); } }
+@media (min-width: 761px) {
+  .zoom { bottom: calc(32px + env(safe-area-inset-bottom)); }
+  body.bench-open .zoom { left: calc((100% - 28px - 348px - 40px - env(safe-area-inset-right)) / 2); }
+}
+.z-end { position: relative; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%; background: none; color: inherit; cursor: pointer; }
+.z-end:focus-visible, .z-track:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; border-radius: 100px; }
+
+.z-track { --p: .5; position: relative; width: 160px; height: 36px; margin: 0 8px; touch-action: none; cursor: pointer; }
+.z-line { position: absolute; left: 0; right: 0; top: 16px; height: 4px; border-radius: 2px; background: rgba(0, 0, 0, .08); }
+.z-knob { position: absolute; top: 9px; left: calc(var(--p) * 100%); width: 18px; height: 18px; border-radius: 50%; background: #fff;
+  box-shadow: 0 0 0 .5px rgba(0, 0, 0, .12), 0 2px 6px rgba(0, 0, 0, .18); translate: -50% 0; transition: left .2s cubic-bezier(.2, .8, .2, 1), scale .15s ease; }
+.zoom.dragging .z-knob { scale: 1.15; }
+/* Every dot or square in an icon is exactly the same size: whole-pixel sizes and gaps (4x4: 3px and 1px;
+   2x2: 7px and 2px), and each icon sits on a whole pixel. */
+.zi { --t: 7px; --g: 2px; position: absolute; display: grid; grid-template-columns: repeat(var(--n), var(--t)); grid-auto-rows: var(--t); gap: var(--g); left: 10px; top: 10px; }
+.zi i { display: block; width: var(--t); height: var(--t); border-radius: 1.5px; background: currentColor; }
+.zi[data-n="4"] { --t: 3px; --g: 1px; left: 11px; top: 11px; } .zi[data-n="4"] i { border-radius: .75px; }
+.zi[data-n="3"] { --t: 4px; --g: 1px; left: 11px; top: 11px; } .zi[data-n="3"] i { border-radius: 1px; }
+.zoom.dots .zi i { border-radius: 50%; }
+@media (prefers-reduced-motion: reduce) { .zoom, .z-knob { transition: none; } }
 /* Thumbnail Pair: two 19.25px cards, the back one turned 10deg and the front one -3deg. */
 .thumb-pair { position: relative; flex-shrink: 0; width: 28px; height: 28px; }
 .tp { position: absolute; width: 19.25px; height: 19.25px; border-radius: 4px; overflow: hidden; background: #fff;
@@ -109,10 +115,17 @@ button, input, select { font: inherit; color: inherit; }
    around the swatch's rounded corners. */
 .tp:has(canvas) { background: none; }
 @media (max-width: 600px) {
-  .shelf-head { gap: 16px; margin-bottom: 40px; padding: 0; }
+  .shelf-head { gap: 16px; margin-bottom: 16px; padding: 0; }
   .shelf-title { font-size: 32px; line-height: 40px; letter-spacing: -.9px; }
   .scopes { margin-inline: -16px; padding-inline: 16px; }
 }
+/* Sticky filters: the effect pills stay pinned near the top of the window as the shelf scrolls (the title
+   scrolls away). There's no bar behind them; each pill is frosted, so it stays readable over the swatches.
+   Pills are #f2f2f2 at rest, as before. */
+.fx-row { position: sticky; z-index: 40; top: calc(8px + env(safe-area-inset-top)); margin-bottom: 56px; }
+.fx-row .scope { mix-blend-mode: normal; background: rgba(242, 242, 242, .78); -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); }
+.fx-row .scope:not([aria-pressed="true"]):hover { background: rgba(232, 232, 232, .85); }
+@media (max-width: 600px) { .fx-row { margin-bottom: 32px; } }
 .pill.small { padding: 6px 12px; font-size: 13px; line-height: 16px; }
 
 /* Shelf grid */

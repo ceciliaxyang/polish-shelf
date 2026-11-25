@@ -26,22 +26,21 @@
       <main>
         <header class="shelf-head">
           <!-- Figma "Action Header Web", node 2218:2270: the title with the Favorite combos tab in the upper right,
-               then the effect pills in a sideways-scrolling row. -->
+               then (just below the header) the effect pills in a sideways-scrolling row. -->
           <div class="shelf-top">
             <h1 class="shelf-title" id="shelfTitle">Polish shelf</h1>
             <button type="button" class="scope combo-btn" id="comboBtn" aria-pressed="false" aria-controls="grid"><span class="thumb-pair" id="comboThumbs" aria-hidden="true"><span class="tp tp-back"></span><span class="tp tp-front"></span></span>Favorite combos</button>
           </div>
-          <!-- The effect pills, then the zoom control (2, 3 or 4 swatches per row on a phone) pinned at the end. -->
-          <div class="fx-bar">
-            <div class="scopes fx-row" id="fxPills" role="group" aria-label="Filter by effect"></div>
-            <div class="zoom" id="zoom" role="radiogroup" aria-label="Swatch size"></div>
-          </div>
         </header>
+        <!-- The effect pills sit outside the header so they can stay pinned at the top as the shelf scrolls. -->
+        <div class="scopes fx-row" id="fxPills" role="group" aria-label="Filter by effect"></div>
         <div class="grid" id="grid"></div>
       </main>
 
     </div>
   </div>
+  <!-- Zoom: a floating slider at the bottom (2, 3 or 4 swatches per row on a phone). -->
+  <div class="zoom" id="zoom" role="group" aria-label="Swatch size"></div>
   <!-- The Layers pane lives outside the page so it stays sharp and on top, even over the detail dialog. -->
   <aside class="bench" id="bench" aria-label="Layers" hidden>
     <div class="bench-head" id="benchHead">
