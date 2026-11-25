@@ -18,11 +18,27 @@
   <meta property="og:image:alt" content="An animated nail polish bottle slowly rotating, its green and gold magnetic polish shimmering">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:image" content="https://ceciliayang.com/polish-shelf/images/og-7.gif">
-  <!-- The title is set in Hedvig Letters Serif (Figma node 2383:2325). -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hedvig+Letters+Serif:opsz@12..24&display=swap">
+  <!-- The title and the filter labels are set in Instrument Serif (Figma node 2384:82780), served from
+       fonts/ (see the @font-face rules at the top of css/style.css). -->
+  <link rel="preload" href="fonts/instrument-serif-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="css/style.css">
+  <!-- Is SF Pro (installed, or the Apple system font) available? If not, the page falls back to Inter and
+       html gets "no-sf", which tightens Inter's letter spacing (see css/style.css). Checked by comparing
+       text widths against a font that doesn't exist. -->
+  <script>
+    (function () {
+      try {
+        var c = document.createElement("canvas").getContext("2d"), s = "Magnetic topper Glow-in-the-dark 0123";
+        // A made-up family shows what the browser substitutes for a font it doesn't have (monospace, or on
+        // Linux whatever font it matches instead); SF measuring the same means it isn't there either.
+        c.font = '40px "No Such Font 7f3a", monospace'; var none = c.measureText(s).width;
+        // Some Linux setups quietly map "SF Pro Display" to an installed Inter, so match against that too.
+        c.font = '40px "Inter", "No Such Font 7f3a", monospace'; var inter = c.measureText(s).width;
+        c.font = '40px "SF Pro Display", -apple-system, BlinkMacSystemFont, "No Such Font 7f3a", monospace'; var sf = c.measureText(s).width;
+        if (Math.abs(sf - none) < 0.5 || Math.abs(sf - inter) < 0.5) document.documentElement.classList.add("no-sf");
+      } catch (e) {}
+    })();
+  </script>
 </head>
 <body>
   <div class="page">
@@ -31,13 +47,14 @@
         <header class="shelf-head">
           <!-- Title row (Figma node 2383:2324), with the Favorite combos tab in the upper right. -->
           <div class="shelf-top">
-            <h1 class="shelf-title" id="shelfTitle">Polish shelf</h1>
+            <h1 class="shelf-title" id="shelfTitle">My polish shelf</h1>
             <button type="button" class="scope combo-btn" id="comboBtn" aria-pressed="false" aria-controls="grid"><span class="thumb-pair" id="comboThumbs" aria-hidden="true"><span class="tp tp-back"></span><span class="tp tp-front"></span></span>Favorite combos</button>
           </div>
         </header>
         <!-- Filters (Figma node 2384:82776): a labeled row each for effects and brands, pills on the right,
-             with a hairline under each row. -->
+             with a hairline under each row. Once scrolled, they collapse into one row of the same pills. -->
         <div class="filters" id="filters">
+          <div class="filter-rows" id="filterRows">
           <div class="filter-row">
             <h2 class="filter-label" id="fxLabel">Effects</h2>
             <div class="scopes fx-row" id="fxPills" role="group" aria-labelledby="fxLabel"></div>
@@ -45,6 +62,7 @@
           <div class="filter-row">
             <h2 class="filter-label" id="brandLabel">Brands</h2>
             <div class="scopes fx-row" id="brandPills" role="group" aria-labelledby="brandLabel"></div>
+          </div>
           </div>
         </div>
         <div class="grid" id="grid"></div>

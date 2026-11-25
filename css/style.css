@@ -1,4 +1,17 @@
 /* Shelf, pills and the layering pane follow the Figma design (Cecilia personal, nodes 2152:17938 and 2180:86749). */
+/* Instrument Serif (SIL Open Font License), self-hosted so it loads wherever the site is served. */
+@font-face { font-family: "Instrument Serif"; font-style: normal; font-weight: 400; font-display: swap;
+  src: url("../fonts/instrument-serif-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Instrument Serif"; font-style: normal; font-weight: 400; font-display: swap;
+  src: url("../fonts/instrument-serif-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+/* Inter (SIL Open Font License), self-hosted: the fallback where SF Pro Display and the Apple system font
+   aren't available (Windows, Android). Variable weight, 400 to 600. Named "Inter Fallback" so the font check
+   in index.html can still ask for an installed "Inter" by its own name. */
+@font-face { font-family: "Inter Fallback"; font-style: normal; font-weight: 400 600; font-display: swap;
+  src: url("../fonts/inter-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
 :root {
   --bg: #ffffff;
   --fg: #000000;
@@ -15,8 +28,14 @@ body {
   background: var(--bg);
   color: var(--fg);
   /* SF Pro Display first (the project's default face, as in Figma), then the system font where it isn't installed. */
-  font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Inter Fallback", system-ui, sans-serif;
 }
+/* When Inter stands in (html.no-sf, set in index.html), tighten it so it reads closer to SF Pro Display:
+   -0.5px at 14px and smaller (the pills), -1px from 15px up. Set per element so each uses its own size;
+   :where() keeps it weaker than any letter spacing an element sets itself. The serif title and labels
+   keep their own spacing. */
+:where(html.no-sf) :where(*) { letter-spacing: clamp(-1px, calc(6.5px - .5em), -.5px); }
+html.no-sf .filter-label { letter-spacing: normal; }
 button, input, select { font: inherit; color: inherit; }
 /* viewport-fit=cover lets the page (and the dialog) draw under the phone's status bar; the safe-area
    insets keep content clear of the notch. */
@@ -56,8 +75,11 @@ button, input, select { font: inherit; color: inherit; }
    then a single row of filled filter pills ("Scoping Bar") that scrolls sideways when it runs out of room. */
 .shelf-head { display: flex; flex-direction: column; gap: 24px; margin: 0 0 64px; padding: 0; }
 .shelf-top { display: flex; align-items: flex-start; gap: 16px; }
-/* Title in Hedvig Letters Serif, 48/48 (Figma node 2383:2325). */
-.shelf-title { flex: 1; min-width: 0; margin: 0; font-family: "Hedvig Letters Serif", Georgia, serif; font-size: 48px; line-height: 48px; font-weight: 400; letter-spacing: -1.2px; color: #000; }
+/* Title in Instrument Serif, 128px on 100px with -3px tracking, 48px below the top of the page (Figma node
+   2384:82780). It scales down with the window, to 64px on a phone. */
+.shelf-head { padding-top: 48px; }
+.shelf-title { flex: 1; min-width: 0; margin: 0; font-family: "Instrument Serif", Georgia, serif; font-size: clamp(64px, 10vw - 16px, 128px); line-height: .78125; font-weight: 400; letter-spacing: -.0234em; color: #000; }
+.shelf-top { align-items: center; }
 .scopes { display: flex; gap: 8px; padding: 8px 0; margin: -8px -8px; padding-inline: 8px; overflow-x: auto; scrollbar-width: none; }
 .scopes::-webkit-scrollbar { display: none; }
 .scope { flex-shrink: 0; min-width: 56px; padding: 12px 16px; border: 0; border-radius: 32px; background: #f7f7f7; mix-blend-mode: multiply; color: var(--text); font-size: 12px; line-height: 16px; font-weight: 500; white-space: nowrap; cursor: pointer; transition: background .15s ease, color .15s ease; }
@@ -72,11 +94,13 @@ button, input, select { font: inherit; color: inherit; }
    the pills on the right, with a 1px #ebebeb line under each row and 20px around it. If the pills run out
    of room they scroll sideways (the auto margin keeps them right-aligned without cutting off the start). */
 .filters { display: flex; flex-direction: column; margin: 0 0 56px; padding: 0; transition: opacity .25s ease; }
+.filter-rows { display: flex; flex-direction: column; }
 .filter-row { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 20px 0; border-bottom: 1px solid #ebebeb; }
 .filter-row:first-child { padding-top: 0; }
-/* On desktop, keep at least 300px between the label and its pills; the pills scroll sideways instead. */
-@media (min-width: 761px) { .filter-row { gap: 300px; } }
-.filter-label { flex-shrink: 0; margin: 0; font-size: 16px; line-height: 20px; font-weight: 400; color: #222; }
+/* On desktop, keep at least 300px between the label and its pills, growing with the window on wider screens
+   (about 350px at 1280, 400px at 1440, 490px at 1728, 550px at 1920, up to 640px). */
+@media (min-width: 761px) { .filter-row { gap: clamp(300px, 32vw - 60px, 640px); } }
+.filter-label { flex-shrink: 0; margin: 0; font-family: "Instrument Serif", Georgia, serif; font-size: 20px; line-height: 24px; font-weight: 400; color: #222; } /* Figma node 2384:82738 */
 .filter-row .scopes { min-width: 0; margin: -8px 0; padding: 8px 0; }
 .filter-row .scope:first-child { margin-left: auto; }
 .filter-row .scopes.more-end { -webkit-mask-image: linear-gradient(to left, transparent, #000 48px); mask-image: linear-gradient(to left, transparent, #000 48px); }
@@ -88,6 +112,21 @@ button, input, select { font: inherit; color: inherit; }
 .filters { position: sticky; z-index: 40; top: 0; padding-top: calc(16px + env(safe-area-inset-top)); margin-top: calc(-16px - env(safe-area-inset-top)); background: var(--bg); box-shadow: 0 0 0 100vmax var(--bg); clip-path: inset(0 -100vmax); }
 /* On the combos page the filters fade out (they only apply to the shelf). */
 .shelf-head.combos-view + .filters { opacity: 0; pointer-events: none; }
+/* Collapsed (as soon as the page scrolls down, set in app.js): effects and brands run together in one row that scrolls
+   sideways, labels and hairlines hidden, with no bar behind them. The pills themselves look exactly as they do
+   open (same grey fill, no added strokes or shadows). The filters keep their full height (--fh) so nothing below moves, but the empty part
+   lets clicks through to the swatches under it. */
+.filters.collapsed { height: var(--fh); padding-top: calc(16px + env(safe-area-inset-top)); background: none; box-shadow: none; clip-path: none; pointer-events: none; }
+.filters.collapsed .filter-rows { flex-direction: row; gap: 8px; margin: -12px -40px; padding: 12px 40px 16px; overflow-x: auto; scrollbar-width: none; pointer-events: auto; overscroll-behavior-x: contain; }
+.filters.collapsed .filter-rows::-webkit-scrollbar { display: none; }
+.filters.collapsed .filter-row { flex-shrink: 0; gap: 0; padding: 0; border: 0; }
+.filters.collapsed .filter-row + .filter-row { margin-left: 12px; } /* a little more room between effects and brands */
+.filters.collapsed .filter-label { display: none; }
+.filters.collapsed .scopes { overflow: visible; margin: 0; padding: 0; -webkit-mask-image: none; mask-image: none; }
+.filters.collapsed .scope:first-child { margin-left: 0; }
+.filters.swapping .filter-rows { animation: filters-swap .28s cubic-bezier(.2, .8, .2, 1); }
+@keyframes filters-swap { from { opacity: 0; transform: translateY(-6px); } }
+@media (prefers-reduced-motion: reduce) { .filters.swapping .filter-rows { animation: none; } }
 .fx-row .scope { background: #f2f2f2; }
 .fx-row .scope:hover { background: #e8e8e8; }
 .fx-row .scope[aria-pressed="true"] { background: var(--text); }
@@ -140,14 +179,17 @@ body.detail-open .zoom { opacity: 0; pointer-events: none; }
    around the swatch's rounded corners. */
 .tp:has(canvas) { background: none; }
 @media (max-width: 600px) {
-  .shelf-head { gap: 16px; margin-bottom: 40px; padding: 0; }
-  .shelf-title { font-size: 40px; line-height: 40px; letter-spacing: -1px; }
+  .shelf-head { gap: 16px; margin-bottom: 48px; padding: 0; }
+  .shelf-head { padding-top: 24px; }
   /* On a phone each label sits above its pills, which run edge to edge and scroll sideways. */
   .filters { margin-bottom: 32px; padding: 0; }
   .filter-row { flex-direction: column; align-items: stretch; gap: 12px; padding: 16px 0; }
   .filter-row .scopes { margin-inline: -16px; padding-inline: 16px; }
   .filter-row .scope:first-child { margin-left: 0; }
   .scopes { margin-inline: -16px; padding-inline: 16px; }
+  .filters.collapsed { padding-top: calc(8px + env(safe-area-inset-top)); }
+  .filters.collapsed .filter-rows { margin-inline: -16px; padding-inline: 16px; }
+  .filters.collapsed .filter-row .scopes { margin-inline: 0; padding-inline: 0; }
 }
 .fx-row .scope { mix-blend-mode: normal; }
 .pill.small { padding: 6px 12px; font-size: 13px; line-height: 16px; }
