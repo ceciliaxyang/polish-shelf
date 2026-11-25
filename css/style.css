@@ -68,7 +68,7 @@ button, input, select { font: inherit; color: inherit; }
 .combo-btn { flex-shrink: 0; display: flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 4px 16px; border-radius: 100px; background: #f7f7f7; }
 .combo-btn:hover { background: #ededed; }
 .combo-btn[aria-pressed="true"] { background: var(--text); }
-/* Filters (Figma node 2384:82776): a row each for Effects and Brands, the label on the left (20/24) and
+/* Filters (Figma node 2384:82776): a row each for Effects and Brands, the label on the left (16/20) and
    the pills on the right, with a 1px #ebebeb line under each row and 20px around it. If the pills run out
    of room they scroll sideways (the auto margin keeps them right-aligned without cutting off the start). */
 .filters { display: flex; flex-direction: column; margin: 0 0 56px; padding: 0; transition: opacity .25s ease; }
@@ -76,7 +76,7 @@ button, input, select { font: inherit; color: inherit; }
 .filter-row:first-child { padding-top: 0; }
 /* On desktop, keep at least 300px between the label and its pills; the pills scroll sideways instead. */
 @media (min-width: 761px) { .filter-row { gap: 300px; } }
-.filter-label { flex-shrink: 0; margin: 0; font-size: 20px; line-height: 24px; font-weight: 400; color: #222; }
+.filter-label { flex-shrink: 0; margin: 0; font-size: 16px; line-height: 20px; font-weight: 400; color: #222; }
 .filter-row .scopes { min-width: 0; margin: -8px 0; padding: 8px 0; }
 .filter-row .scope:first-child { margin-left: auto; }
 .filter-row .scopes.more-end { -webkit-mask-image: linear-gradient(to left, transparent, #000 48px); mask-image: linear-gradient(to left, transparent, #000 48px); }
