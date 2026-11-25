@@ -436,8 +436,10 @@ body.detail-open .mini-nav { opacity: 0; visibility: hidden; pointer-events: non
 .modal { position: fixed; inset: 0; z-index: 50; outline: none; overflow-y: auto; overscroll-behavior: contain; } /* scrolls when the photos run past the screen */
 /* A thick material: the shelf itself is blurred (reliable in every browser), with a mostly opaque white
    wash on top (72%; it was 40%, too see-through). */
-.page { position: relative; transition: filter .35s ease; }
-body.detail-open .page { filter: blur(60px); }
+/* The blur is the heaviest thing on screen, so it comes in once the swatch has landed (body.detail-blur, see
+   openDetail), fading in; while the swatch flies only the white wash fades in. On close it goes at once. */
+.page { position: relative; }
+body.detail-blur .page { filter: blur(60px); transition: filter .35s ease; }
 /* The white wash lives on the shelf itself, not on a fixed layer. Safari on iOS 26 shows the page (not
    fixed layers) under the status bar, and paints the bar solid in the color of any fixed layer at the
    top. With the wash part of the page, the area under the clock is blurred and washed exactly like the
@@ -485,8 +487,6 @@ body.detail-open .page::after { opacity: 1; }
 /* The live swatch, in the card's shape (240 x 260), at 180 x 195. It grows out of its card when the page
    opens and flies back into it on close, and scrolls away with the page. */
 .m-swatch { position: relative; z-index: 3; flex-shrink: 0; width: 180px; height: 195px; border-radius: 36px; overflow: hidden; background: var(--swatch); }
-/* Once the photos start to scroll, the name, description and pills fade away; the swatch and buttons stay. */
-.modal.open.scrolled .mh-content { opacity: 0; pointer-events: none; transition-delay: 0s; transition-duration: .2s; }
 .m-swatch canvas { display: block; width: 100%; height: 100%; }
 /* Titles: name, description and pills, centered, 24px apart */
 .mh-content { display: flex; flex-direction: column; align-items: center; gap: 24px; max-width: 100%; text-align: center; }

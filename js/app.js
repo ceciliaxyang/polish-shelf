@@ -1477,8 +1477,10 @@ function openDetail(p, card) {
   link.hidden = !p.url; if (p.url) link.href = p.url;
 
   // Show the dialog first so the swatch can be drawn at the size it will actually appear.
-  const m = $("#modal"); m.hidden = false; document.body.style.overflow = "hidden"; document.body.classList.add("detail-open");
-  m.scrollTop = 0; m.classList.remove("scrolled");
+  // The dialog's backdrop (body.detail-open) starts with the swatch's flight, below, not now: starting it in
+  // the same frame as all this setup used to eat the flight before it was ever painted.
+  const m = $("#modal"); m.hidden = false; document.body.style.overflow = "hidden";
+  m.scrollTop = 0;
   $("#mPills").querySelectorAll(".scope-icon").forEach(fitIcon);
   const stage = $("#mStage"); stage.innerHTML = "";
   const cv = document.createElement("canvas"); cv.className = "swatch";
@@ -1490,41 +1492,52 @@ function openDetail(p, card) {
 
   // Photos: a plain row of the saved product photos (not interactive).
   const row = $("#mPhotos"); row.innerHTML = "";
+  const photoImgs = [];
   (p.photos || []).slice(0, 4).forEach((src, i) => {
     // Photos load lazily: the ones near the top of the dialog right away, the rest as you scroll to them.
-    const im = document.createElement("img"); im.loading = "lazy"; im.decoding = "async"; im.src = src; im.alt = `${p.name} photo ${i + 1}`;
+    // The source is set once the swatch has landed (below), so loading and decoding them doesn't stall the flight.
+    const im = document.createElement("img"); im.loading = "lazy"; im.decoding = "async"; im.dataset.src = src; im.alt = `${p.name} photo ${i + 1}`;
     // Staggered entry: each photo a beat after the last, with a little randomness so it feels organic.
     // It starts once the photo has loaded, so the rise is actually seen.
     im.style.setProperty("--d", (.12 + i * .1 + Math.random() * .05).toFixed(3) + "s");
     const reveal = () => requestAnimationFrame(() => requestAnimationFrame(() => im.classList.add("in")));
-    if (im.complete && im.naturalWidth) reveal(); else im.addEventListener("load", reveal, { once: true });
-    row.appendChild(im);
+    im.addEventListener("load", reveal, { once: true });
+    row.appendChild(im); photoImgs.push(im);
   });
 
-  // Grow the swatch out of its card.
+  // Grow the swatch out of its card (a shared element). First paint it sitting exactly over its card, with
+  // the rest of the dialog still invisible, so nothing seems to change; the flight, the shelf's blur and the
+  // text fade start on the frame after that, once the setup above has been painted, so the whole flight is seen.
   const from = card.getBoundingClientRect(), to = stage.getBoundingClientRect();
   stage.style.transition = "none";
   stage.style.transformOrigin = "0 0";
   stage.style.transform = `translate(${from.left - to.left}px, ${from.top - to.top}px) scale(${from.width / to.width}, ${from.height / to.height})`;
   m.classList.remove("open"); void m.offsetWidth;
-  stage.style.transition = `transform .45s ${EASE}`;
-  stage.style.transform = "";
-  m.classList.add("open");
   card.style.visibility = "hidden";
+  const token = detail.token = {};
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    if (detail.token !== token || m.hidden) return; // closed (or another polish opened) meanwhile
+    document.body.classList.add("detail-open");
+    stage.style.transition = `transform .5s ${EASE}`;
+    stage.style.transform = "";
+    m.classList.add("open");
+    // Once it has landed: the shelf's blur, then the photos.
+    setTimeout(() => { if (detail.token !== token) return; document.body.classList.add("detail-blur"); photoImgs.forEach(im => { im.src = im.dataset.src; }); }, 520);
+  }));
   m.focus({ preventScroll: true }); // keyboard focus moves into the dialog (Tab reaches the buttons)
   history.replaceState(null, "", SITE_ROOT + "p/" + encodeURIComponent(p.id) + "/");
   document.title = `${p.name} · ${p.brand} · ${SITE_TITLE}`;
 }
 
-$("#modal").addEventListener("scroll", e => e.currentTarget.classList.toggle("scrolled", e.currentTarget.scrollTop > 4), { passive: true });
 
 function closeDetail() {
   const m = $("#modal"); if (m.hidden) return;
+  detail.token = null; // cancels an opening flight or photo load still waiting to start
   const stage = $("#mStage"), card = detail.card;
   // The swatch flies back into its card from wherever it has scrolled to (a shared element, both ways).
   const fly = stage;
   const done = () => { m.hidden = true; m.classList.remove("open"); stage.style.transform = ""; document.body.style.overflow = ""; if (card) card.style.visibility = ""; };
-  m.classList.remove("open"); document.body.classList.remove("detail-open");
+  m.classList.remove("open"); document.body.classList.remove("detail-open", "detail-blur");
   history.replaceState(null, "", SITE_ROOT); document.title = SITE_TITLE;
   if (card && card.isConnected) {
     const from = fly.getBoundingClientRect(), to = card.getBoundingClientRect();
