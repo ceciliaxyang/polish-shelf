@@ -1060,7 +1060,59 @@ function renderComboThumbs() {
 function toggleFx(k) {
   state.fx.has(k) ? state.fx.delete(k) : state.fx.add(k);
   document.querySelectorAll("#fxPills .scope").forEach(b => b.setAttribute("aria-pressed", state.fx.has(b.dataset.fx)));
-  renderShelf();
+  filterShelf();
+}
+const matchesFx = p => !state.fx.size || labelsOf(p).some(k => state.fx.has(k));
+
+/* Filtering keeps the shelf as it is: no card is rebuilt and no swatch redrawn. Polishes that don't
+   match fade and shrink away where they stand, the ones that stay glide to their new places, and ones
+   that match again fade back in. Cards are hidden, not removed, so a swatch that comes back is already drawn. */
+const FILTER_MS = { out: 220, move: 480, in: 380 };
+function filterShelf() {
+  const grid = $("#grid");
+  const cards = [...grid.children].filter(c => c._p);
+  if (state.view !== "shelf" || !cards.length) return renderShelf();
+  // Settle any filter animation still running from a quick earlier tap, so positions are measured at rest.
+  cards.forEach(c => c.getAnimations().forEach(a => { if (a.id === "filter") a.finish(); }));
+  grid.querySelectorAll(".card-fx .pill").forEach(b => b.setAttribute("aria-pressed", state.fx.has(b.dataset.fx)));
+  const animate = !reduceMotion, gr = grid.getBoundingClientRect();
+  const before = new Map(cards.filter(c => !c.hidden).map(c => [c, c.getBoundingClientRect()]));
+  const leaving = cards.filter(c => !c.hidden && !matchesFx(c._p));
+  const entering = cards.filter(c => c.hidden && matchesFx(c._p));
+  const staying = cards.filter(c => !c.hidden && matchesFx(c._p));
+
+  // Leaving cards come out of the layout at once (so the rest can move) but stay where they are while they fade.
+  leaving.forEach(c => {
+    const r = before.get(c);
+    if (!animate) { c.hidden = true; return; }
+    Object.assign(c.style, { position: "absolute", left: r.left - gr.left + "px", top: r.top - gr.top + "px", width: r.width + "px", pointerEvents: "none", zIndex: 0 });
+    const a = c.animate([{ opacity: 1, transform: "none" }, { opacity: 0, transform: "scale(.9)" }], { duration: FILTER_MS.out, easing: "ease-in", fill: "forwards" });
+    a.id = "filter";
+    a.onfinish = () => { c.hidden = true; ["position", "left", "top", "width", "pointerEvents", "zIndex"].forEach(k => c.style[k] = ""); a.cancel(); };
+  });
+  entering.forEach(c => { c.hidden = false; c.classList.add("in"); });
+
+  let empty = grid.querySelector(":scope > .empty");
+  const none = !staying.length && !entering.length;
+  if (none && !empty) grid.insertAdjacentHTML("beforeend", emptyMsg("No matches", "No polishes with that effect yet."));
+  if (!none && empty) empty.remove();
+
+  // The cards that stay glide from where they were to where they now sit.
+  if (animate) staying.forEach(c => {
+    const a = before.get(c), b = c.getBoundingClientRect(), dx = a.left - b.left, dy = a.top - b.top;
+    if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return;
+    c.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: "none" }], { duration: FILTER_MS.move, easing: EASE }).id = "filter";
+  });
+  if (animate) entering.forEach(c => {
+    c.animate([{ opacity: 0, transform: "scale(.9)" }, { opacity: 1, transform: "none" }], { duration: FILTER_MS.in, delay: FILTER_MS.out * .6, easing: EASE, fill: "backwards" }).id = "filter";
+  });
+  // A swatch shown again is drawn only if it never was, or the card's size changed while it was hidden.
+  entering.forEach(c => {
+    const cv = c.querySelector(".swatch");
+    if (cv._w && Math.abs(cv.parentElement.clientWidth - cv._w) <= 2) return;
+    cv._w = 0; drawIO && drawIO.unobserve(cv); queueDraw(cv);
+  });
+  shapeForScroll(true);
 }
 // A polish's rendering uses `effect`; `effects` (optional) lists everything it should be found under.
 // There's no Multichrome category (chrome counts as multichrome): those labels are dropped, and a polish
@@ -1086,10 +1138,11 @@ function renderShelf() {
   if (state.view === "combos") return renderCombos();
   const grid = $("#grid"); grid.innerHTML = "";
   if (!state.polishes.length) { grid.innerHTML = emptyMsg("Your shelf is empty", "Add your polishes to js/polishes.js and they will show up here."); return; }
-  const list = state.polishes.filter(p => !state.fx.size || labelsOf(p).some(k => state.fx.has(k)));
-  if (!list.length) { grid.innerHTML = emptyMsg("No matches", "No polishes with that effect yet."); return; }
-  for (const p of list) {
+  // Every polish gets a card; ones the effect filters leave out are hidden (see filterShelf).
+  if (!state.polishes.some(matchesFx)) grid.innerHTML = emptyMsg("No matches", "No polishes with that effect yet.");
+  for (const p of state.polishes) {
     const card = document.createElement("article"); card.className = "card rise"; riseIn(card);
+    card._p = p; card.hidden = !matchesFx(p);
     const wrap = document.createElement("div"); wrap.className = "swatch-wrap";
     const sw = document.createElement("canvas"); sw.className = "swatch";
     const add = document.createElement("button"); add.type = "button"; add.className = "swatch-btn"; add.innerHTML = PLUS_CHECK; add.dataset.pid = p.id;
@@ -1110,7 +1163,7 @@ function renderShelf() {
     const fx = document.createElement("div"); fx.className = "card-fx";
     labelsOf(p).forEach(k => {
       const b = document.createElement("button"); b.type = "button"; b.className = "pill tiny"; b.textContent = EFFECTS[k] || k;
-      b.setAttribute("aria-pressed", state.fx.has(k)); b.onclick = () => toggleFx(k);
+      b.setAttribute("aria-pressed", state.fx.has(k)); b.dataset.fx = k; b.onclick = () => toggleFx(k);
       fx.appendChild(b);
     });
     text.append(title, fx);
@@ -1780,14 +1833,15 @@ function queueDraw(cv) {
 }
 function fillIdle() {
   idle(deadline => {
-    const next = [...document.querySelectorAll("#grid .swatch")].find(cv => !cv._w);
+    const next = [...document.querySelectorAll("#grid .swatch")].find(cv => !cv._w && cv.parentElement.clientWidth); // hidden cards wait until shown
     if (!next) return;
     if (deadline.timeRemaining() > 4) { drawIO && drawIO.unobserve(next); drawCard(next); shapeForScroll(true); }
     fillIdle();
   });
 }
 function drawCard(cv) {
-  const w = Math.round(cv.parentElement.clientWidth) || 240;
+  const w = Math.round(cv.parentElement.clientWidth);
+  if (!w) { cv._w = 0; queueDraw(cv); return; } // its card is hidden by a filter: draw once it's shown
   cv._w = w;
   if (cv._combo) drawStack(cv, cv._combo.layers, w, Math.round(w * 260 / 240));
   else renderSwatch(cv, cv._p, w, Math.round(w * 260 / 240));
@@ -1868,7 +1922,7 @@ function shapeForScroll(instant) {
   if (!noHover) return; // phones and tablets only; with a mouse, hovering plays it instead
   const vh = innerHeight;
   document.querySelectorAll("#grid .swatch").forEach(cv => {
-    if (!cv.setRest) return;
+    if (!cv.setRest || cv.closest(".card[hidden]")) return;
     const r = cv.getBoundingClientRect();
     if (r.bottom < -40 || r.top > vh + 40) return;
     const d = Math.min(1, Math.abs((r.top + r.bottom) / 2 - vh / 2) / (vh / 2));
