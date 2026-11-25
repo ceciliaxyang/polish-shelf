@@ -34,6 +34,10 @@ const CATEGORY = { chrome: "multichrome", glitter: "shimmer", sheermag: "magtopp
 const category = k => CATEGORY[k] || k;
 // Filter pills always shown, in this order; other effects get a pill once a polish uses them.
 const PILL_EFFECTS = ["magnetic", "holo", "shimmer"];
+// Brand filter pills come first in this order (Figma node 2384:82743), then any other brand on the shelf,
+// most polishes first. A few brands go by a shorter name on their pill.
+const PILL_BRANDS = ["Mooncat", "ILNP", "Awesome Nail Polish", "Bee's Knees"];
+const BRAND_LABELS = { "Awesome Nail Polish": "ANLAC", "Bee's Knees": "Bee’s Knees" };
 const NATURAL = "#f2d6cf";
 
 /* ---------- color helpers ---------- */
@@ -1014,7 +1018,7 @@ function newId() { return Date.now().toString(36) + Math.random().toString(36).s
 
 // Polishes come from js/polishes.js; the bench and saved combos are kept in this browser. (Combos saved by
 // an older version, under KEY.combos, are left alone.) `view` is the shelf or the saved combos page.
-const state = { polishes: typeof POLISHES !== "undefined" ? POLISHES : [], fx: new Set(), finish: null, view: "shelf" };
+const state = { polishes: typeof POLISHES !== "undefined" ? POLISHES : [], fx: new Set(), brands: new Set(), finish: null, view: "shelf" };
 const combos = load(KEY.saved, []).filter(c => c && Array.isArray(c.layers));
 const saveCombos = () => save(KEY.saved, combos);
 const bench = { layers: load(KEY.bench, []) };
@@ -1035,6 +1039,17 @@ function buildPills() {
     b.dataset.fx = k; b.onclick = () => toggleFx(k);
     box.appendChild(b);
   });
+  // Brands: same pill, with an icon after each brand's logo (js/brand-icons.js).
+  const count = {};
+  state.polishes.forEach(p => { if (p.brand) count[p.brand] = (count[p.brand] || 0) + 1; });
+  const brands = [...PILL_BRANDS.filter(b => count[b]), ...Object.keys(count).filter(b => !PILL_BRANDS.includes(b)).sort((a, b) => count[b] - count[a])];
+  brands.forEach(k => {
+    const b = document.createElement("button"); b.type = "button"; b.className = "scope"; b.setAttribute("aria-pressed", "false");
+    if (typeof BRAND_ICONS !== "undefined" && BRAND_ICONS[k]) b.innerHTML = `<svg class="scope-icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">${BRAND_ICONS[k]}</svg>`;
+    b.append(BRAND_LABELS[k] || k);
+    b.dataset.brand = k; b.onclick = () => toggleBrand(k);
+    $("#brandPills").appendChild(b);
+  });
 }
 
 // Favorite combos switches the page between the shelf and your saved combos (Figma node 2201:98964).
@@ -1047,14 +1062,14 @@ $("#comboBtn").onclick = () => {
 // there are any.
 // Favorite combos only appears once a combo is saved, rising in the first time.
 // Deleting the last combo while on the combos page goes back to the shelf.
-// The effect filters belong to the shelf: on the combos page they fade out and can't be used (and don't
+// The filters belong to the shelf: on the combos page they fade out and can't be used (and don't
 // filter the combos); the picks come back when you return to the shelf.
 function setView(v) {
   state.view = v;
   $("#comboBtn").setAttribute("aria-pressed", v === "combos");
   $(".shelf-head").classList.toggle("combos-view", v === "combos");
   $("#shelfTitle").textContent = v === "combos" ? "Favorite combos" : "Polish shelf";
-  $("#fxPills").inert = v === "combos";
+  $("#filters").inert = v === "combos";
 }
 function syncComboBtn() {
   const btn = $("#comboBtn"), none = !combos.length;
@@ -1084,7 +1099,13 @@ function toggleFx(k) {
 }
 // A magnetic topper also counts as Magnetic for the filter (its card still reads just "Magnetic topper").
 const filterKeysOf = p => { const l = labelsOf(p); return l.includes("magtopper") ? [...l, "magnetic"] : l; };
-const matchesFx = p => !state.fx.size || filterKeysOf(p).some(k => state.fx.has(k));
+// Pick several effects or several brands to see any of them; an effect and a brand together narrow it down.
+const matchesFx = p => (!state.fx.size || filterKeysOf(p).some(k => state.fx.has(k))) && (!state.brands.size || state.brands.has(p.brand));
+function toggleBrand(k) {
+  state.brands.has(k) ? state.brands.delete(k) : state.brands.add(k);
+  document.querySelectorAll("#brandPills .scope").forEach(b => b.setAttribute("aria-pressed", state.brands.has(b.dataset.brand)));
+  filterShelf();
+}
 
 /* Filtering keeps the shelf as it is: no card is rebuilt and no swatch redrawn. Polishes that don't
    match fade and shrink away where they stand, the ones that stay glide to their new places, and ones
@@ -1116,7 +1137,7 @@ function filterShelf() {
 
   let empty = grid.querySelector(":scope > .empty");
   const none = !staying.length && !entering.length;
-  if (none && !empty) grid.insertAdjacentHTML("beforeend", emptyMsg("No matches", "No polishes with that effect yet."));
+  if (none && !empty) grid.insertAdjacentHTML("beforeend", emptyMsg("No matches", "No polishes match those filters yet."));
   if (!none && empty) empty.remove();
 
   // The cards that stay glide from where they were to where they now sit.
@@ -1162,7 +1183,7 @@ function renderShelf() {
   const grid = $("#grid"); grid.innerHTML = "";
   if (!state.polishes.length) { grid.innerHTML = emptyMsg("Your shelf is empty", "Add your polishes to js/polishes.js and they will show up here."); return; }
   // Every polish gets a card; ones the effect filters leave out are hidden (see filterShelf).
-  if (!state.polishes.some(matchesFx)) grid.innerHTML = emptyMsg("No matches", "No polishes with that effect yet.");
+  if (!state.polishes.some(matchesFx)) grid.innerHTML = emptyMsg("No matches", "No polishes match those filters yet.");
   for (const p of state.polishes) {
     const card = document.createElement("article"); card.className = "card";
     card._p = p; card.hidden = !matchesFx(p);
@@ -2071,6 +2092,17 @@ function zoomFlip() {
 
 /* ---------- boot ---------- */
 buildPills();
+// A filter row with more pills than fit fades out at the edge that has more to scroll to.
+function fadeScopes() {
+  document.querySelectorAll(".filter-row .scopes").forEach(el => {
+    const max = el.scrollWidth - el.clientWidth;
+    el.classList.toggle("more-start", max > 1 && el.scrollLeft > 1);
+    el.classList.toggle("more-end", max > 1 && el.scrollLeft < max - 1);
+  });
+}
+document.querySelectorAll(".filter-row .scopes").forEach(el => el.addEventListener("scroll", fadeScopes, { passive: true }));
+addEventListener("resize", fadeScopes);
+fadeScopes();
 buildZoom();
 renderShelf();
 renderBench();
