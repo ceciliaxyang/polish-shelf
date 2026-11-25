@@ -1852,7 +1852,7 @@ function iconPolishes(count) {
 }
 function zoomIcon(n) {
   const icon = document.createElement("span"); icon.className = "zi"; icon.style.setProperty("--n", n); icon.dataset.n = n; icon.setAttribute("aria-hidden", "true");
-  const picks = iconPolishes(n * n), px = n === 2 ? 9 : n === 3 ? 6 : 5, dpr = Math.min(3, devicePixelRatio || 1);
+  const picks = iconPolishes(n * n), px = n === 2 ? 8 : n === 3 ? 5 : 4, dpr = Math.min(3, devicePixelRatio || 1);
   // Diagonal order: tiles nearer the top left come first, so hues sweep from one corner to the other.
   const cells = Array.from({ length: n * n }, (_, i) => i).sort((a, b) => ((a / n | 0) + a % n) - ((b / n | 0) + b % n) || (a / n | 0) - (b / n | 0));
   const tiles = Array.from({ length: n * n }, () => document.createElement("canvas"));

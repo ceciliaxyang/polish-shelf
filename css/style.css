@@ -87,13 +87,16 @@ button, input, select { font: inherit; color: inherit; }
 .z-thumb { position: absolute; top: 3px; left: 3px; width: calc(var(--w) - 6px); height: 34px; border-radius: 100px; background: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, .14);
   opacity: 0; transform: translateX(calc(var(--i) * var(--w))); transition: transform .22s cubic-bezier(.2, .8, .2, 1), opacity .2s ease; }
 .zoom.open .z-thumb { opacity: 1; }
-.z-opt { position: relative; width: var(--w); height: 40px; padding: 0; border: 0; background: none; display: grid; place-items: center; cursor: pointer; }
+.z-opt { position: relative; width: var(--w); height: 40px; padding: 0; border: 0; background: none; display: block; cursor: pointer; }
 .z-opt:focus-visible { outline: 2px solid var(--text); outline-offset: -4px; border-radius: 100px; }
 .zoom.open .z-opt:not(.on) .zi { opacity: .5; }
-.zi { --n: 2; display: grid; grid-template-columns: repeat(var(--n), 1fr); gap: 1.5px; width: 18px; height: 18px; transition: opacity .2s ease; }
-.zi canvas { display: block; width: 100%; height: 100%; border-radius: 2px; background: #d9d9d9; }
-.zi[data-n="3"] { gap: 1.2px; } .zi[data-n="3"] canvas { border-radius: 1.5px; }
-.zi[data-n="4"] { gap: 1px; } .zi[data-n="4"] canvas { border-radius: 1px; }
+/* Every tile in an icon is exactly the same size: tiles and gaps are whole pixels (2x2: 8px tiles, 2px gaps;
+   3x3: 5px and 1px; 4x4: 4px and 1px), and the icon sits on a whole pixel, so nothing gets rounded unevenly. */
+.zi { --t: 8px; --g: 2px; position: absolute; display: grid; grid-template-columns: repeat(var(--n), var(--t)); grid-auto-rows: var(--t); gap: var(--g);
+  left: 11px; top: 11px; transition: opacity .2s ease; }
+.zi canvas { display: block; width: var(--t); height: var(--t); border-radius: 2px; background: #d9d9d9; }
+.zi[data-n="3"] { --t: 5px; --g: 1px; } .zi[data-n="3"] canvas { border-radius: 1.5px; }
+.zi[data-n="4"] { --t: 4px; --g: 1px; left: 10px; top: 10px; } .zi[data-n="4"] canvas { border-radius: 1px; }
 @media (prefers-reduced-motion: reduce) { .zoom, .z-track, .z-thumb { transition: none; } }
 /* Thumbnail Pair: two 19.25px cards, the back one turned 10deg and the front one -3deg. */
 .thumb-pair { position: relative; flex-shrink: 0; width: 28px; height: 28px; }
