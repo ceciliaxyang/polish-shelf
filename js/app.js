@@ -1532,7 +1532,13 @@ function sheerOps(q, W, H, under) {
     const shape = q.effect === "sheermag" || q.effect === "magnetic" ? { glow: { shape: .5 } } : {};
     const blk = { ...q, ...shape, colors: ["#000000", ...q.colors.slice(1)], shadow: "#000000" };
     const sp = { density: 1, floor: .1, ...q.sparkle };
-    draw({ ...blk, sparkle: { ...sp, density: 0 }, flakes: null }, "screen", .6);
+    if (q.effect === "sheermag") {
+      // Magnetic toppers: where the particles line up they cover what's below, so the flash goes on as its
+      // own color with its own brightness as coverage (see flashCover), not screened and faded at 60%.
+      // The sheer base still tints the rest; the flash stays as bright and saturated as on the shelf.
+      draw({ ...blk, sparkle: { ...sp, density: 0 }, flakes: null }, "source-over", 1);
+      ops[ops.length - 1].cover = true;
+    } else draw({ ...blk, sparkle: { ...sp, density: 0 }, flakes: null }, "screen", .6);
     // Under a chrome powder the glitter is buried beneath the mirror film and barely shows.
     draw({ ...blk, colors: q.colors.map(() => "#000000"), sparkle: { ...sp, density: sp.density * 2.2, floor: .04, mix: 1, dark: 0 } }, "screen", under ? .35 : 1);
   } else {
@@ -1553,11 +1559,28 @@ function stackOps(W, H, layers = bench.layers) {
   });
   return ops;
 }
+// A flash drawn on black, turned into a see-through layer: each pixel keeps its hue at full brightness and
+// its brightness becomes how much it covers (eased, so the dim edges stay sheer and the core stays solid).
+function flashCover(o) {
+  const src = o.cv, w = src.width, h = src.height;
+  if (!w || !h) return src;
+  const c = o._cover || (o._cover = document.createElement("canvas"));
+  if (c.width !== w || c.height !== h) { c.width = w; c.height = h; }
+  const img = src.getContext("2d").getImageData(0, 0, w, h), d = img.data;
+  for (let i = 0; i < d.length; i += 4) {
+    const m = Math.max(d[i], d[i + 1], d[i + 2]);
+    if (!m) { d[i + 3] = 0; continue; }
+    const a = m / 255, k = Math.pow(255 / m, .5); // lift the hue partway, so the grain in the flash still shows
+    d[i] *= k; d[i + 1] *= k; d[i + 2] *= k; d[i + 3] = 255 * Math.min(.8, a * Math.sqrt(a)) * (d[i + 3] / 255);
+  }
+  c.getContext("2d").putImageData(img, 0, 0);
+  return c;
+}
 function composeOps(ctx, ops, ow, oh) {
   ctx.globalCompositeOperation = "source-over"; ctx.globalAlpha = 1; ctx.clearRect(0, 0, ow, oh);
   for (const o of ops) {
     ctx.globalCompositeOperation = o.op; ctx.globalAlpha = o.alpha;
-    if (o.fill) { ctx.fillStyle = o.fill; ctx.fillRect(0, 0, ow, oh); } else ctx.drawImage(o.cv, 0, 0, ow, oh);
+    if (o.fill) { ctx.fillStyle = o.fill; ctx.fillRect(0, 0, ow, oh); } else ctx.drawImage(o.cover ? flashCover(o) : o.cv, 0, 0, ow, oh);
   }
   ctx.globalCompositeOperation = "source-over"; ctx.globalAlpha = 1;
 }
