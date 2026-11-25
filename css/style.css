@@ -92,10 +92,6 @@ button, input, select { font: inherit; color: inherit; }
 .scope:hover { background: #ededed; }
 .scope[aria-pressed="true"] { background: var(--text); color: #fff; mix-blend-mode: normal; }
 .scope:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
-/* Favorite combos (Figma node 2218:2545) sits at the title's top right on #f7f7f7; the effect pills below are #f2f2f2. */
-.combo-btn { flex-shrink: 0; display: flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 4px 16px; border-radius: 100px; background: #f7f7f7; }
-.combo-btn:hover { background: #ededed; }
-.combo-btn[aria-pressed="true"] { background: var(--text); }
 /* Filters (Figma node 2384:82776): a row each for Effects and Brands, the label on the left (16/20) and
    the pills on the right, with a 1px #ebebeb line under each row and 20px around it. If the pills run out
    of room they scroll sideways (the auto margin keeps them right-aligned without cutting off the start). */
@@ -143,20 +139,34 @@ body.show-mini .mini-nav { opacity: 1; transform: none; visibility: visible; tra
    dense, left to right). The selected one sits on a dark circle that slides between them. It moves up above
    the Layers peek bar on phones, centers on the shelf beside the Layers pane on wider screens, and hides
    behind the polish detail view. Icons are grids of dots with droplet swatches (.dots), else squares. */
-.zoom { --i: 1; position: fixed; z-index: 50; left: 50%; translate: -50% 0; bottom: calc(8px + env(safe-area-inset-bottom));
+/* The dock holds the zoom bar and sits at the bottom center; the Favorite combos button hangs off its right
+   side, so the zoom bar stays centered whether or not the button is showing. */
+.dock { position: fixed; z-index: 50; left: 50%; translate: -50% 0; bottom: calc(8px + env(safe-area-inset-bottom));
+  transition: bottom .38s cubic-bezier(.2, .8, .2, 1), left .45s cubic-bezier(.2, .8, .2, 1), opacity .2s ease; }
+.zoom { --i: 1; position: relative;
   display: flex; gap: 4px; padding: 4px; border-radius: 100px; color: #222;
   background: rgba(255, 255, 255, .32); -webkit-backdrop-filter: blur(16px) saturate(1.8); backdrop-filter: blur(16px) saturate(1.8);
   box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .6), 0 0 0 .5px rgba(0, 0, 0, .08), 0 6px 20px rgba(0, 0, 0, .12);
-  -webkit-tap-highlight-color: transparent;
-  transition: bottom .38s cubic-bezier(.2, .8, .2, 1), left .45s cubic-bezier(.2, .8, .2, 1), opacity .2s ease; }
-body.detail-open .zoom { opacity: 0; pointer-events: none; }
+  -webkit-tap-highlight-color: transparent; }
+body.detail-open .dock { opacity: 0; pointer-events: none; }
 /* The detail page covers everything behind it: the shelf's one-row nav (fixed, outside the blurred page) hides too. */
 body.detail-open .mini-nav { opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .2s ease, visibility 0s .2s; }
-@media (max-width: 760px) { body.bench-open .zoom { bottom: calc(108px + env(safe-area-inset-bottom)); } }
+@media (max-width: 760px) { body.bench-open .dock { bottom: calc(108px + env(safe-area-inset-bottom)); } }
 @media (min-width: 761px) {
-  .zoom { bottom: calc(16px + env(safe-area-inset-bottom)); }
-  body.bench-open .zoom { left: calc((100% - 28px - 348px - 40px - env(safe-area-inset-right)) / 2); }
+  .dock { bottom: calc(16px + env(safe-area-inset-bottom)); }
+  body.bench-open .dock { left: calc((100% - 28px - 348px - 40px - env(safe-area-inset-right)) / 2); }
 }
+/* Favorite combos FAB: a 48px frosted circle, the same glass and height as the zoom bar, 8px to its right,
+   showing the two newest combos as a thumbnail pair. It turns dark while the combos page is open. */
+.combo-fab { position: absolute; top: 0; left: calc(100% + 8px); width: 48px; height: 48px; padding: 0; border: 0; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; cursor: pointer; color: #222;
+  background: rgba(255, 255, 255, .32); -webkit-backdrop-filter: blur(16px) saturate(1.8); backdrop-filter: blur(16px) saturate(1.8);
+  box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .6), 0 0 0 .5px rgba(0, 0, 0, .08), 0 6px 20px rgba(0, 0, 0, .12);
+  -webkit-tap-highlight-color: transparent; transition: background .15s ease; }
+.combo-fab[hidden] { display: none; }
+.combo-fab:hover { background: rgba(255, 255, 255, .5); }
+.combo-fab[aria-pressed="true"] { background: #222; }
+.combo-fab:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
 /* The dark circle carries a white copy of the three icons, shifted back by the same amount it moves, so the
    white icon is always exactly over the grey one under it. As the circle slides, the selected icon turns
    white where the circle covers it, with no fade in between (which made icons vanish and flash). */
@@ -174,7 +184,7 @@ body.detail-open .mini-nav { opacity: 0; visibility: hidden; pointer-events: non
 .zi[data-n="3"] { --t: 4px; --g: 1px; left: 13px; top: 13px; } .zi[data-n="3"] i { border-radius: 1px; }
 .zi[data-n="4"] { --t: 3px; --g: 1px; left: 12px; top: 12px; } .zi[data-n="4"] i { border-radius: .75px; }
 .zoom.dots .zi i { border-radius: 50%; }
-@media (prefers-reduced-motion: reduce) { .zoom, .z-thumb, .z-thumb-row { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .dock, .z-thumb, .z-thumb-row { transition: none; } }
 /* Thumbnail Pair: two 19.25px cards, the back one turned 10deg and the front one -3deg. */
 .thumb-pair { position: relative; flex-shrink: 0; width: 28px; height: 28px; }
 .tp { position: absolute; width: 19.25px; height: 19.25px; border-radius: 4px; overflow: hidden; background: #fff;
@@ -269,6 +279,13 @@ body.detail-open .mini-nav { opacity: 0; visibility: hidden; pointer-events: non
 .drops .grid .card-fx, .drops .grid .combo-stack { justify-content: center; }
 .grid[data-zoom="3"] .swatch-btn { top: 12px; right: 12px; width: 36px; height: 36px; padding: 8px; }
 .grid[data-zoom="4"] .card-text, .grid[data-zoom="4"] .swatch-btn { display: none; }
+/* On desktop the + still shows at 4 per row, but only while the pointer is over the swatch (or the button has
+   keyboard focus): a smaller 32px button that fades in at the top right. */
+@media (hover: hover) and (min-width: 601px) {
+  .grid[data-zoom="4"] .swatch-btn { display: flex; top: 10px; right: 10px; width: 32px; height: 32px; padding: 7px; opacity: 0; transition: opacity .15s ease, background .15s ease; }
+  .grid[data-zoom="4"] .swatch-btn svg { width: 18px; height: 18px; }
+  .grid[data-zoom="4"] .swatch-wrap:hover .swatch-btn, .grid[data-zoom="4"] .swatch-btn:focus-visible { opacity: 1; }
+}
 .grid[data-zoom="4"] { gap: 24px; }
 @media (max-width: 600px) {
   .grid[data-zoom="3"] { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px 10px; }
@@ -344,9 +361,9 @@ body.detail-open .mini-nav { opacity: 0; visibility: hidden; pointer-events: non
 .save-combo:hover { background: #000; }
 /* Save combo rises and fades in when the second layer arrives. */
 .save-combo.rise-in { animation: save-in .45s cubic-bezier(.2, .8, .2, 1) both; }
-.combo-btn.rise-in { animation: save-in .45s cubic-bezier(.2, .8, .2, 1) both; }
+.combo-fab.rise-in { animation: save-in .45s cubic-bezier(.2, .8, .2, 1) both; }
 @keyframes save-in { from { opacity: 0; transform: translateY(10px) scale(.92); } to { opacity: 1; transform: none; } }
-@media (prefers-reduced-motion: reduce) { .save-combo.rise-in, .combo-btn.rise-in { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .save-combo.rise-in, .combo-fab.rise-in { animation: none; } }
 .save-combo:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
 .layer { position: relative; display: flex; align-items: center; gap: 16px; height: 72px; border-bottom: 1px solid #ebebeb; transition: transform .2s cubic-bezier(.2, .8, .2, 1); user-select: none; -webkit-user-select: none; }
 /* Drag to reorder: on touch screens a grip is the handle to drag by; with a mouse there's no grip, just
