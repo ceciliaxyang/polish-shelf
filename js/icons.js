@@ -16,8 +16,8 @@ const EFFECT_ICONS = {
   shimmer: '<g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M9 3.75 10.5 9l5.25 1.5-5.25 1.5L9 17.25 7.5 12 2.25 10.5 7.5 9z"/></g><path fill="currentColor" d="M18 12.75l.9 2.85 2.85.9-2.85.9-.9 2.85-.9-2.85-2.85-.9 2.85-.9zM17.25 2.25l.6 1.9 1.9.6-1.9.6-.6 1.9-.6-1.9-1.9-.6 1.9-.6z"/><circle cx="5.25" cy="20.25" r="1.1" fill="currentColor"/>',
   // Overlapping circles
   multichrome: '<g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><circle cx="8.6" cy="9" r="6"/><circle cx="15.4" cy="9" r="6"/><circle cx="12" cy="15" r="6"/></g>',
-  // Magnet + sparkle
-  magtopper: '<g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M3 6.75h3.75v6a1.875 1.875 0 0 0 3.75 0v-6h3.75v6a5.625 5.625 0 0 1-11.25 0z"/><path d="M3 9.75h3.75M10.5 9.75h3.75"/></g><path fill="currentColor" d="M19.5 1.5l1.05 3.45 3.45 1.05-3.45 1.05-1.05 3.45-1.05-3.45-3.45-1.05 3.45-1.05z"/>',
+  // The Magnetic magnet, a little smaller, on a line (a topper goes over a base)
+  magtopper: '<g fill="none" stroke="currentColor" stroke-linejoin="round"><g transform="translate(2.4 1.5) scale(.8)" stroke-width="1.875"><path d="M5.25 3.75h4.5V12a2.25 2.25 0 0 0 4.5 0V3.75h4.5V12a6.75 6.75 0 0 1-13.5 0z"/><path d="M5.25 7.5h4.5M14.25 7.5h4.5"/></g><path d="M5.25 20.25h13.5" stroke-width="1.5" stroke-linecap="round"/></g>',
   // Shards
   flakies: '<g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M3 5.25 9.75 3l1.5 6-6.75 2.25zM13.5 8.25l7.5 1.5-2.25 6.75-6-2.25zM4.5 15.75l6-.75 1.5 6-6 .75z"/></g>',
   // Dust
