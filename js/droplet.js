@@ -76,6 +76,73 @@ function dropSvg(cls, vh, inner) {
   s.innerHTML = inner; return s;
 }
 
+/* The poured look, after photos of real polish pours: crisp tapered light streaks along the upper left
+   edge (and a small one lower right), an edge band, and in shimmer and magnetic polishes a faint
+   marbled swirl, as if the shimmer settled where it flowed. Tuned by Cecilia in the mockup's sliders. */
+const POLISH_BY_ID = new Map((typeof POLISHES !== "undefined" ? POLISHES : []).map(p => [p.id, p]));
+const dropHex = c => { c = String(c).replace("#", ""); if (c.length === 3) c = [...c].map(x => x + x).join(""); return [0, 2, 4].map(i => parseInt(c.slice(i, i + 2), 16) / 255); };
+const dropToHex = a => "#" + a.map(v => Math.round(Math.max(0, Math.min(1, v)) * 255).toString(16).padStart(2, "0")).join("");
+function dropHsl([r, g, b]) { const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2; let h = 0, s = 0;
+  if (mx !== mn) { const d = mx - mn; s = l > .5 ? d / (2 - mx - mn) : d / (mx + mn); h = mx === r ? (g - b) / d + (g < b ? 6 : 0) : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h /= 6; } return [h, s, l]; }
+function dropRgb([h, s, l]) { if (!s) return [l, l, l]; const q = l < .5 ? l * (1 + s) : l + s - l * s, p = 2 * l - q;
+  const f = t => { t = (t + 1) % 1; return t < 1 / 6 ? p + (q - p) * 6 * t : t < .5 ? q : t < 2 / 3 ? p + (q - p) * (2 / 3 - t) * 6 : p; }; return [f(h + 1 / 3), f(h), f(h - 1 / 3)]; }
+// The edge band and swirl for a drop's key: a polish id, or a stack ("combo:a+b"), shaped by its top layer.
+function pouredLook(key) {
+  key = String(key);
+  const p = POLISH_BY_ID.get(key.startsWith("combo:") ? key.slice(6).split("+").pop() : key);
+  if (!p || !p.colors) return null;
+  const base = p.baseColor || p.colors[0], [h, s, l] = dropHsl(dropHex(base)), fx = p.effect;
+  // See-through polishes glow lighter and richer where the pour thins at its edge; opaque ones get a deeper band.
+  const clear = fx === "sheer" || fx === "sheermag" || (p.effects || []).includes("jelly") || !!p.sheer || (!!p.baseColor && l < .35);
+  return {
+    rim: clear ? dropToHex(dropRgb([h, Math.min(1, s * 1.25 + .1), Math.min(.85, l * 1.6 + .14)])) : dropToHex(dropRgb([h, Math.min(1, s * 1.1), l * .62])),
+    rimA: clear ? .75 : .45, rimW: clear ? 9 : 7,
+    swirly: ["shimmer", "magnetic", "sheermag", "multichrome"].includes(fx), swirl: .85 * .19 * (fx === "shimmer" ? 1.35 : 1),
+  };
+}
+// The swirl: a small grey pattern (lighter where the shimmer gathered, darker between), laid over the
+// swatch with soft light. Drawn once per drop shape, a little after the page settles, and kept.
+const swirlCache = new Map(), swirlQueue = [];
+function swirlPattern(key, s) {
+  const id = key + "|" + s.vh.toFixed(2);
+  if (swirlCache.has(id)) return swirlCache.get(id);
+  const W = 128, H = Math.round(W * s.vh / 100), cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+  const x = cv.getContext("2d"), img = x.createImageData(W, H), R = dropRand(dropHash(key + "#sw2"));
+  const g = new Float32Array(64 * 64), RN = dropRand(dropHash(key + "#swirl")); for (let i = 0; i < g.length; i++) g[i] = RN();
+  const at = (a, b) => g[((b & 63) << 6) | (a & 63)];
+  const n1 = (px, py) => { const xi = Math.floor(px), yi = Math.floor(py), fx = px - xi, fy = py - yi, sx = fx * fx * (3 - 2 * fx), sy = fy * fy * (3 - 2 * fy);
+    const a = at(xi, yi), b = at(xi + 1, yi), c = at(xi, yi + 1), d = at(xi + 1, yi + 1); return (a + (b - a) * sx) * (1 - sy) + (c + (d - c) * sx) * sy; };
+  const N = (px, py) => n1(px, py) * .55 + n1(px * 2.1 + 7, py * 2.1 + 3) * .3 + n1(px * 4.3 + 1, py * 4.3 + 9) * .15;
+  const cx = s.cx / 100, cy = s.cy / s.vh, turns = (2.2 + R() * 1.6) * .69, dir = R() < .5 ? -1 : 1, ox = (R() - .5) * .25, oy = (R() - .5) * .25;
+  const lo = -.2 + .48 * .75, span = 1.2 - .48 * 1.1;
+  for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) {
+    let u = i / W - cx - ox, v = j / H - cy - oy;
+    const wx = N(u * 1.6 + 4, v * 1.6) - .5, wy = N(u * 1.6, v * 1.6 + 8) - .5; u += wx * .38; v += wy * .38;
+    const r = Math.hypot(u, v), a = Math.atan2(v, u);
+    const band = Math.sin(dir * a + r * turns * 6.28 + N(u * 2 + 2, v * 2 + 5) * 3);
+    const t = Math.max(0, Math.min(1, (band - lo) / span)), hi = t * t * (3 - 2 * t);
+    const val = .5 + .3 * hi - .14 + (N(u * 7 + 3, v * 7 + 1) - .5) * .11 * .5;
+    const q = (j * W + i) * 4, c = Math.round(Math.max(0, Math.min(1, val)) * 255);
+    img.data[q] = img.data[q + 1] = img.data[q + 2] = c; img.data[q + 3] = 255;
+  }
+  x.putImageData(img, 0, 0);
+  swirlCache.set(id, cv); return cv;
+}
+function swirlInto(box, key, s) {
+  const cv = document.createElement("canvas"); cv.className = "drop-swirl"; cv.setAttribute("aria-hidden", "true");
+  cv.style.setProperty("--swirl", pouredLook(key).swirl.toFixed(3));
+  const canvas = box.querySelector(":scope > canvas:not(.drop-swirl)");
+  if (canvas) canvas.after(cv); else box.appendChild(cv);
+  swirlQueue.push([cv, key, s]);
+  if (swirlQueue.length === 1) (window.requestIdleCallback || (fn => setTimeout(fn, 50)))(function paint(deadline) {
+    while (swirlQueue.length && (!deadline || deadline.timeRemaining() > 2)) {
+      const [c, k, sh] = swirlQueue.shift(); if (!c.isConnected) continue;
+      const src = swirlPattern(k, sh); c.width = src.width; c.height = src.height; c.getContext("2d").drawImage(src, 0, 0);
+    }
+    if (swirlQueue.length) (window.requestIdleCallback || (fn => setTimeout(fn, 50)))(paint);
+  });
+}
+
 // Turn a box holding a swatch canvas into a droplet. `aspect` is the box's height / width. Safe to call
 // again after the box's canvas is replaced. Options: small (no shadow blur, for thumbnails),
 // ring (a ring in the page color around the drop, for overlapping thumbnails), shadow (default on).
@@ -85,31 +152,57 @@ function dropify(box, key, aspect = 1, opt = {}) {
   box.classList.add("drop");
   box._drop = s; dropClip(box);
   if (!box._dropSized) { box._dropSized = true; dropRO.observe(box); }
-  box.querySelectorAll(":scope > .drop-under, :scope > .drop-gloss").forEach(el => el.remove());
+  box.querySelectorAll(":scope > .drop-under, :scope > .drop-gloss, :scope > .drop-swirl").forEach(el => el.remove());
   const sc = (k, dx = 0, dy = 0) => `translate(${(s.cx * (1 - k) + dx).toFixed(2)} ${(s.cy * (1 - k) + dy).toFixed(2)}) scale(${k})`;
-  let under = "";
+  let under = "", gloss;
   if (opt.ring) under += `<path d="${s.d}" fill="none" style="stroke: var(--bg)" stroke-width="${opt.ring}"/>`;
-  if (opt.shadow !== false) under += opt.small
-    ? `<path d="${s.d}" transform="translate(0 1.4)" fill="rgba(40,30,20,.14)"/>`
-    : `<defs><filter id="${id}s" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation=".8"/></filter>
-        <filter id="${id}a" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="3"/></filter></defs>
-      <path d="${s.d}" transform="translate(.4 1.6)" fill="rgba(40,30,20,.07)" filter="url(#${id}a)"/>
-      <path d="${s.d}" transform="translate(.25 .7)" fill="rgba(40,30,20,.2)" filter="url(#${id}s)"/>`;
-  const edgeW = opt.small ? 2.4 : 1.3, rimW = opt.small ? 1.4 : .7;
-  const gloss = `<defs>
-      <clipPath id="${id}c"><path d="${s.d}"/></clipPath>
-      <linearGradient id="${id}e" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset=".32" stop-color="#fff" stop-opacity="0"/>
-        <stop offset=".85" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#fff" stop-opacity=".18"/>
-      </linearGradient>
-      <radialGradient id="${id}h" cx=".36" cy=".3" r=".5"><stop offset="0" stop-color="#fff" stop-opacity=".1"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
-      <filter id="${id}b1"><feGaussianBlur stdDeviation=".3"/></filter>
-    </defs>
-    <g clip-path="url(#${id}c)">
-      <rect width="100" height="${vh}" fill="url(#${id}h)"/>
-      <path d="${s.d}" fill="none" stroke="url(#${id}e)" stroke-width="${edgeW}" ${opt.small ? "" : `filter="url(#${id}b1)"`} transform="${sc(.988)}"/>
-      <path d="${s.d}" fill="none" stroke="#000" stroke-opacity=".2" stroke-width="${rimW}" ${opt.small ? "" : `filter="url(#${id}b1)"`}/>
-    </g>`;
+  if (opt.small) {
+    // Thumbnails: a flat contact shadow, the bright edge and a hairline rim.
+    if (opt.shadow !== false) under += `<path d="${s.d}" transform="translate(0 1.4)" fill="rgba(40,30,20,.14)"/>`;
+    gloss = `<defs>
+        <clipPath id="${id}c"><path d="${s.d}"/></clipPath>
+        <linearGradient id="${id}e" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset=".32" stop-color="#fff" stop-opacity="0"/>
+          <stop offset=".85" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#fff" stop-opacity=".18"/>
+        </linearGradient>
+      </defs>
+      <g clip-path="url(#${id}c)">
+        <path d="${s.d}" fill="none" stroke="url(#${id}e)" stroke-width="2.4" transform="${sc(.988)}"/>
+        <path d="${s.d}" fill="none" stroke="#000" stroke-opacity=".2" stroke-width="1.4"/>
+      </g>`;
+  } else {
+    const look = pouredLook(key);
+    if (opt.shadow !== false) under += `<defs><filter id="${id}u" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation=".7"/></filter>
+        <filter id="${id}v" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="2.4"/></filter></defs>
+      <path d="${s.d}" transform="translate(.2 1.1)" fill="rgba(40,30,20,.05)" filter="url(#${id}v)"/>
+      <path d="${s.d}" transform="translate(.15 .45)" fill="rgba(40,30,20,.14)" filter="url(#${id}u)"/>`;
+    // Light streaks: each is three overlapping strokes along the outline (pulled in a little), shorter
+    // and bolder toward the middle, so it tapers at both ends.
+    const streak = (c, len, k, w, op, f) => [1, .6, .3].map((m, i) =>
+      `<path d="${s.d}" transform="${sc(k)}" pathLength="100" fill="none" stroke="#fff" stroke-linecap="round"
+        stroke-dasharray="${(len * m).toFixed(2)} 200" stroke-dashoffset="${(-(c * 100 - len * m / 2)).toFixed(2)}"
+        stroke-width="${(w * (.55 + i * .35)).toFixed(2)}" stroke-opacity="${Math.min(1, op * (.45 + i * .3)).toFixed(3)}" filter="url(#${id}${f})"/>`).join("");
+    const R = dropRand(dropHash(key + "#spec")), c1 = .6 + (R() - .5) * .06, l1 = (9 + R() * 6) * .78, c2 = .12 + (R() - .5) * .06, l2 = (3 + R() * 3) * .78;
+    gloss = `<defs>
+        <clipPath id="${id}c"><path d="${s.d}"/></clipPath>
+        <radialGradient id="${id}h" cx=".34" cy=".26" r=".55"><stop offset="0" stop-color="#fff" stop-opacity=".07"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+        <filter id="${id}r" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="2.2"/></filter>
+        <filter id="${id}k"><feGaussianBlur stdDeviation=".215"/></filter>
+        <filter id="${id}w"><feGaussianBlur stdDeviation=".85"/></filter>
+        <filter id="${id}l"><feGaussianBlur stdDeviation=".22"/></filter>
+      </defs>
+      <g clip-path="url(#${id}c)">
+        <rect width="100" height="${vh}" fill="url(#${id}h)"/>
+        ${look ? `<path d="${s.d}" fill="none" stroke="${look.rim}" stroke-opacity="${look.rimA}" stroke-width="${look.rimW}" filter="url(#${id}r)"/>` : ""}
+        ${streak(c1, l1 * 1.5, .9, 2.56, .09, "w")}
+        ${streak(c1, l1, .935, 1.2, .39, "k")}
+        ${streak(c2, l2, .94, .88, .7, "k")}
+        <path d="${s.d}" transform="${sc(.975)}" pathLength="100" fill="none" stroke="#fff" stroke-opacity=".2" stroke-width=".45"
+          stroke-dasharray="17.16 200" stroke-dashoffset="${(-(c1 * 100 - 8.58)).toFixed(2)}" filter="url(#${id}l)"/>
+        <path d="${s.d}" fill="none" stroke="#000" stroke-opacity=".22" stroke-width=".6" filter="url(#${id}l)"/>
+      </g>`;
+    if (look && look.swirly) swirlInto(box, key, s);
+  }
   if (under) box.prepend(dropSvg("drop-under", vh, under));
   box.append(dropSvg("drop-gloss", vh, gloss));
   return box;
