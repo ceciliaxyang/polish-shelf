@@ -1874,8 +1874,9 @@ function renderBench() {
 const GAP = 40, MAX_CARD = 336;
 // Zoom levels (see "zoom" below): swatches per row on a phone, and how much smaller desktop cards get.
 const ZOOMS = [2, 3, 4], ZOOM_SCALE = { 2: 1, 3: 2 / 3, 4: 1 / 2 };
-// The shelf always opens at the most zoomed-out level (4 per row); a zoom picked during a visit isn't remembered.
-const zoom = { level: 4 };
+// The shelf opens at the middle zoom (3 per row) on larger screens and the most zoomed out (4 per row) on
+// phones (600px and narrower, where the grid switches to its phone layout). A zoom picked during a visit isn't remembered.
+const zoom = { level: matchMedia("(max-width: 600px)").matches ? 4 : 3 };
 // Card swatches are drawn at the size they're actually shown (cards grow on bigger screens), so they
 // stay sharp instead of being stretched.
 // Cards rise into view as they're scrolled to. Cards arriving together (a new row, or the first screen)
