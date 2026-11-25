@@ -96,9 +96,12 @@ button, input, select { font: inherit; color: inherit; }
 .filter-row:last-child { border-bottom: 0; } /* no divider under the last row (Brands) */
 /* On desktop, keep at least 300px between the label and its pills, growing with the window on wider screens
    (about 350px at 1280, 400px at 1440, 490px at 1728, 550px at 1920, up to 640px). */
-@media (min-width: 761px) { .filter-row { gap: clamp(300px, 32vw - 60px, 640px); } }
 .filter-label { flex-shrink: 0; margin: 0; font-family: "Instrument Serif", Georgia, serif; font-size: 20px; line-height: 24px; font-weight: 400; color: #222; } /* Figma node 2384:82738 */
-.filter-row .scopes { min-width: 0; margin: -8px 0; padding: 8px 0; }
+/* The space between a label and its pills (--label-gap) is padding inside the pill scroller rather than a gap,
+   so pills scrolled sideways keep showing until they reach the label (8px short of it), not 24-640px before. */
+.filter-row { --label-gap: 24px; gap: 8px; }
+@media (min-width: 761px) { .filter-row { --label-gap: clamp(300px, 32vw - 60px, 640px); } }
+.filter-row .scopes { min-width: 0; margin: -8px 0; padding: 8px 0 8px calc(var(--label-gap) - 8px); }
 .filter-row .scope:first-child { margin-left: auto; }
 .filter-row .scopes.more-end { -webkit-mask-image: linear-gradient(to left, transparent, #000 48px); mask-image: linear-gradient(to left, transparent, #000 48px); }
 .filter-row .scopes.more-start { -webkit-mask-image: linear-gradient(to right, transparent, #000 48px); mask-image: linear-gradient(to right, transparent, #000 48px); }
@@ -128,6 +131,8 @@ body.show-mini .mini-nav { opacity: 1; transform: none; visibility: visible; tra
 /* Effect pills with icons (Figma "Filters", node 2383:2326): a 24px icon, 8px gap, then 14px regular text;
    11px top and bottom, 16px sides, so each pill is 46px tall. */
 .fx-row .scope { display: inline-flex; align-items: center; gap: 8px; padding: 11px 16px; font-size: 14px; line-height: 18px; font-weight: 400; }
+/* In SF Pro Display the pill text is tracked -0.4px (the Inter fallback keeps its own tracking). */
+html:not(.no-sf) .fx-row .scope { letter-spacing: -.4px; }
 .scope-icon { flex-shrink: 0; display: block; width: 24px; height: 24px; }
 /* Zoom control: a see-through frosted floating bar low at the bottom center with three icons, 2, 3 and 4 per row (big to
    dense, left to right). The selected one sits on a dark circle that slides between them. It moves up above
@@ -200,13 +205,13 @@ body.detail-open .dock { opacity: 0; pointer-events: none; }
   .mini-row { margin-inline: -16px; padding-inline: 16px; }
   /* Native phone reference (Figma node 2401:20488): each label sits beside its pills, 48px apart, and the pills
      run off the right edge and scroll sideways. 16px between the rows, a line only under Effects. */
-  .filter-row { flex-direction: row; align-items: center; gap: 48px; padding: 16px 0; }
+  .filter-row { --label-gap: 48px; flex-direction: row; align-items: center; gap: 8px; padding: 16px 0; }
   .filter-row:first-child { padding-top: 0; }
-  .filter-row .scopes { margin-left: 0; margin-right: -16px; padding-left: 0; padding-right: 16px; }
+  .filter-row .scopes { margin-left: 0; margin-right: -16px; padding-left: calc(var(--label-gap) - 8px); padding-right: 16px; }
+  .filter-label { font-size: 18px; line-height: 22px; } /* a bit smaller than the 20px on wider screens */
   /* Smaller pills: a 20px icon, 4px gap, 12/18 text, 8px top and bottom, 12px sides (34px tall), 4px apart. */
   .scopes, .mini-row { gap: 4px; }
   .fx-row .scope { gap: 4px; min-width: 0; padding: 8px 12px; font-size: 12px; line-height: 18px; }
-  html:not(.no-sf) .fx-row .scope { letter-spacing: -.3px; }
   .fx-row .scope-icon { width: 20px; height: 20px; }
 }
 .fx-row .scope { mix-blend-mode: normal; }
