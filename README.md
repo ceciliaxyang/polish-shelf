@@ -34,7 +34,7 @@ npm run previews -- <id>    # just one
 
 ## Notes
 
-- The floating zoom bar at the bottom (three icons) switches between 2, 3 and 4 (default) swatches per row on a phone (desktop cards shrink to match). At 3 each card shows the name and its effect types in small text, centered (switch to left-aligned in developer settings: tap the title 5 times); at 4 only swatches. The choice is kept in this browser. Switching zoom glides the cards into the new grid (skipped with reduced motion); swatches are redrawn at their new size after they land, a few per frame, fading over their old picture.
+- The floating zoom bar at the bottom (three icons) switches between 2, 3 and 4 (default) swatches per row on a phone (desktop cards shrink to match). At 3 each card shows the name and its effect types in small text, centered (switch to left-aligned in developer settings: tap the title 5 times); at 4 only swatches. The site always opens at 4 per row (the most zoomed out); a choice isn't remembered between visits. Switching zoom glides the cards into the new grid (skipped with reduced motion); swatches are redrawn at their new size after they land, a few per frame, fading over their old picture.
 - Favorite combos is a round frosted button that floats just right of the zoom bar; it appears once a combo is saved and switches the page between the shelf and the saved combos.
 - At 4 per row on desktop, hovering a swatch shows a small + to add it to the layers.
 - Polishes live in `js/polishes.js`. The current layers are stored in this browser's localStorage, so they stay on this computer and browser only.
