@@ -162,6 +162,11 @@ function drawLayer(ctx, L, b, R) {
 // view uses 2x to stay smooth while animating.
 function swatchDpr(W) { return W > 400 ? 2 : Math.min(3, Math.max(2, window.devicePixelRatio || 1)); }
 
+// Each draw of a swatch takes its canvas over. An earlier draw's animation can still be easing (a
+// drift or touch in progress when the zoom changed); without this it kept painting its old, smaller
+// picture into the corner of the resized canvas, which showed as a darker square in the drop.
+function claim(cv) { const g = cv._gen = (cv._gen || 0) + 1; return () => cv._gen === g; }
+
 function renderSwatch(cv, p, W, H) {
   if (p.effect === "powder") return powderSwatch(cv, p, W, H);
   if (p.effect === "magnetic" || p.effect === "sheermag") return magneticSwatch(cv, p, W, H); // sheer magnetic: a pale, see-through base
@@ -219,6 +224,7 @@ function clumpField(R, cw, ch, cell) {
 }
 
 function magneticSwatch(cv, p, W, H) {
+  const mine = claim(cv);
   const dpr = swatchDpr(W), cw = Math.round(W * dpr), ch = Math.round(H * dpr);
   cv.width = cw; cv.height = ch;
   const ctx = cv.getContext("2d");
@@ -450,6 +456,7 @@ function magneticSwatch(cv, p, W, H) {
   }
 
   function tick() {
+    if (!mine()) { raf = 0; return; } // the canvas was redrawn (e.g. at a new zoom): this animation is stale
     cur.x += (target.x - cur.x) * .2; cur.y += (target.y - cur.y) * .2; cur.h += (target.h - cur.h) * .14;
     const moving = Math.abs(target.x - cur.x) + Math.abs(target.y - cur.y) + Math.abs(target.h - cur.h) > .002;
     // The slow touch-screen drift is redrawn every other frame (30 a second is plenty for it, and
@@ -505,6 +512,7 @@ function magneticSwatch(cv, p, W, H) {
   Optional in js/polishes.js: shadow (edge color), holo: { strength, width, angle }.
 */
 function holoSwatch(cv, p, W, H) {
+  const mine = claim(cv);
   const dpr = swatchDpr(W), cw = Math.round(W * dpr), ch = Math.round(H * dpr);
   cv.width = cw; cv.height = ch;
   const ctx = cv.getContext("2d", { willReadFrequently: true });
@@ -580,6 +588,7 @@ function holoSwatch(cv, p, W, H) {
   }
 
   function tick() {
+    if (!mine()) { raf = 0; return; } // the canvas was redrawn (e.g. at a new zoom): this animation is stale
     cur.x += (target.x - cur.x) * .2; cur.y += (target.y - cur.y) * .2;
     draw();
     raf = Math.abs(target.x - cur.x) + Math.abs(target.y - cur.y) > .002 ? requestAnimationFrame(tick) : 0;
@@ -603,6 +612,7 @@ function holoSwatch(cv, p, W, H) {
   colors, shifting with temperature) and shimmer (one color of fine sparkle) suspended in the polish.
 */
 function thermalSwatch(cv, p, W, H) {
+  const mine = claim(cv);
   const dpr = swatchDpr(W), cw = Math.round(W * dpr), ch = Math.round(H * dpr);
   cv.width = cw; cv.height = ch;
   const ctx = cv.getContext("2d");
@@ -699,6 +709,7 @@ function thermalSwatch(cv, p, W, H) {
   // bottom-right it warms (lighter). Moving off returns it to the resting gradient.
   const temp = { cur: 0, target: 0 };
   function tick() {
+    if (!mine()) { raf = 0; return; } // the canvas was redrawn (e.g. at a new zoom): this animation is stale
     temp.cur += (temp.target - temp.cur) * .12;
     draw();
     raf = Math.abs(temp.target - temp.cur) > .002 ? requestAnimationFrame(tick) : 0;
@@ -726,6 +737,7 @@ function thermalSwatch(cv, p, W, H) {
   glimmer: optional { color, share } bright colored glints scattered through the shimmer.
 */
 function multichromeSwatch(cv, p, W, H) {
+  const mine = claim(cv);
   const dpr = swatchDpr(W), cw = Math.round(W * dpr), ch = Math.round(H * dpr);
   cv.width = cw; cv.height = ch;
   const ctx = cv.getContext("2d", { willReadFrequently: true });
@@ -796,6 +808,7 @@ function multichromeSwatch(cv, p, W, H) {
   }
 
   function tick() {
+    if (!mine()) { raf = 0; return; } // the canvas was redrawn (e.g. at a new zoom): this animation is stale
     cur.x += (target.x - cur.x) * .15; cur.y += (target.y - cur.y) * .15;
     draw();
     raf = Math.abs(target.x - cur.x) + Math.abs(target.y - cur.y) > .002 ? requestAnimationFrame(tick) : 0;
@@ -824,6 +837,7 @@ function multichromeSwatch(cv, p, W, H) {
     strength), cover (how much of what's below it covers when layered, .8) }
 */
 function powderSwatch(cv, p, W, H) {
+  const mine = claim(cv);
   const dpr = swatchDpr(W), cw = Math.round(W * dpr), ch = Math.round(H * dpr);
   cv.width = cw; cv.height = ch;
   const ctx = cv.getContext("2d");
@@ -889,6 +903,7 @@ function powderSwatch(cv, p, W, H) {
     ctx.putImageData(img, 0, 0);
   }
   function tick() {
+    if (!mine()) { raf = 0; return; } // the canvas was redrawn (e.g. at a new zoom): this animation is stale
     cur.x += (target.x - cur.x) * .15; cur.y += (target.y - cur.y) * .15;
     const moving = Math.abs(target.x - cur.x) + Math.abs(target.y - cur.y) > .002;
     draw(moving);
@@ -909,6 +924,7 @@ function powderSwatch(cv, p, W, H) {
   Optional in js/polishes.js: glowColor, glowCore (brightest glow), glow: { fade } (seconds to fade).
 */
 function glowSwatch(cv, p, W, H) {
+  const mine = claim(cv);
   const dpr = swatchDpr(W), cw = Math.round(W * dpr), ch = Math.round(H * dpr);
   cv.width = cw; cv.height = ch;
   const ctx = cv.getContext("2d", { willReadFrequently: true });
@@ -970,6 +986,7 @@ function glowSwatch(cv, p, W, H) {
   }
 
   function tick(now) {
+    if (!mine()) { raf = 0; return; } // the canvas was redrawn (e.g. at a new zoom): this animation is stale
     const dt = Math.min(.05, (now - (last || now)) / 1000); last = now;
     // Goes dark quickly under your hand; the glow fades slowly once you move away.
     const rate = st.target > st.night ? 1 - Math.exp(-dt / .35) : 1 - Math.exp(-dt / (opt.fade / 3));
