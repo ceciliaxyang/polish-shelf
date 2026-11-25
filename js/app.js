@@ -1869,7 +1869,10 @@ function zoomIcon(n) {
 function buildZoom() {
   const box = $("#zoom"); box.innerHTML = "";
   box.classList.toggle("dots", typeof DROPS !== "undefined" && DROPS);
-  box.appendChild(Object.assign(document.createElement("span"), { className: "z-thumb" }));
+  // The dark circle holds white copies of the icons (see .z-thumb in style.css).
+  const thumb = Object.assign(document.createElement("span"), { className: "z-thumb" }), row = Object.assign(document.createElement("span"), { className: "z-thumb-row" });
+  ZOOMS.forEach(n => { const slot = document.createElement("span"); slot.appendChild(zoomIcon(n)); row.appendChild(slot); });
+  thumb.appendChild(row); box.appendChild(thumb);
   ZOOMS.forEach(n => {
     const b = document.createElement("button"); b.type = "button"; b.className = "z-opt"; b.dataset.n = n;
     b.setAttribute("role", "radio"); b.setAttribute("aria-label", `${n} per row`);
