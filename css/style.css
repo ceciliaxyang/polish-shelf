@@ -159,11 +159,20 @@ button, input, select { font: inherit; color: inherit; }
 .m-add svg { display: block; width: 20px; height: 20px; margin: -2px; overflow: visible; }
 .m-add .plus { transform: scale(.8); }
 @media (prefers-reduced-motion: reduce) { .swatch-btn .plus, .swatch-btn .check, .swatch-btn.on .check, .m-add .plus, .m-add .check, .m-add.on .check { transition: none; } }
-/* Zoom: 3 per row keeps only the name (tags would stack and make rows uneven); 4 per row is swatches
-   only, without the + button (add from the polish's page). Combo cards follow the same rules. */
+/* Zoom: 3 per row shows the name and, under it, the effect types as one line of small grey text instead of
+   pills (pills would stack and make rows uneven); 4 per row is swatches only, without the + button (add
+   from the polish's page). Combo cards follow the same rules. At 3 per row the text is centered under the
+   swatch, or left-aligned with the developer setting (html[data-card-align="left"], set in droplet.js). */
 .grid[data-zoom="3"] .brand, .grid[data-zoom="3"] .card-fx, .grid[data-zoom="3"] .combo-date, .grid[data-zoom="3"] .combo-stack { display: none; }
 .grid[data-zoom="3"] .card { gap: 12px; }
 .grid[data-zoom="3"] .name { font-size: 16px; }
+.card-type { display: none; }
+.grid[data-zoom="3"] .card-title { gap: 4px; }
+.grid[data-zoom="3"] .card-type { display: block; font-size: 13px; line-height: 16px; color: #7a7a7a; }
+.grid[data-zoom="3"] .card { align-items: center; }
+.grid[data-zoom="3"] .card-text { text-align: center; }
+html[data-card-align="left"] .grid[data-zoom="3"] .card { align-items: flex-start; }
+html[data-card-align="left"] .grid[data-zoom="3"] .card-text { text-align: left; }
 .grid[data-zoom="3"] .swatch-btn { top: 12px; right: 12px; width: 36px; height: 36px; padding: 8px; }
 .grid[data-zoom="4"] .card-text, .grid[data-zoom="4"] .swatch-btn { display: none; }
 .grid[data-zoom="4"] { gap: 24px; }
@@ -172,6 +181,8 @@ button, input, select { font: inherit; color: inherit; }
   .grid[data-zoom="3"] .swatch-wrap { border-radius: 22px; }
   .grid[data-zoom="3"] .card { gap: 8px; }
   .grid[data-zoom="3"] .name { font-size: 13px; line-height: 16px; }
+  .grid[data-zoom="3"] .card-title { gap: 2px; }
+  .grid[data-zoom="3"] .card-type { font-size: 11px; line-height: 14px; }
   .grid[data-zoom="3"] .swatch-btn { top: 8px; right: 8px; width: 30px; height: 30px; padding: 7px; }
   .grid[data-zoom="3"] .swatch-btn svg { width: 16px; height: 16px; }
   .grid[data-zoom="4"] { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
