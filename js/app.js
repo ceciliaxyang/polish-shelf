@@ -2140,8 +2140,16 @@ function measureFilters() {
   filtersEl.style.setProperty("--fh", filtersEl.offsetHeight + "px");
   filtersEl.classList.toggle("collapsed", was);
 }
+// Scrolling back up opens them again right away (on their white bar), without waiting to reach the top;
+// scrolling down collapses them again. A few pixels of slack keep small jitters from flipping it.
+let lastY = scrollY, scrollDir = 1, dirFrom = scrollY;
 function collapseFilters() {
-  const c = filtersEl.getBoundingClientRect().top <= 1 && scrollY > 0;
+  const y = scrollY, dir = y > lastY ? 1 : y < lastY ? -1 : scrollDir;
+  if (dir !== scrollDir) { scrollDir = dir; dirFrom = lastY; }
+  lastY = y;
+  const stuck = filtersEl.getBoundingClientRect().top <= 1 && y > 0;
+  const goingUp = scrollDir < 0 && dirFrom - y > 8;
+  const c = stuck && (filtersEl.classList.contains("collapsed") ? !goingUp : scrollDir > 0 && y - dirFrom > 8);
   if (c === filtersEl.classList.contains("collapsed")) return;
   if (c) measureFilters();
   filtersEl.classList.toggle("collapsed", c);
