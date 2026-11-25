@@ -2159,7 +2159,10 @@ function placeMiniNav() {
   miniNav.style.left = r.left + "px"; miniNav.style.width = r.width + "px";
 }
 function syncMiniNav() {
-  const show = state.view !== "combos" && filtersEl.getBoundingClientRect().bottom < 0;
+  // Only once the last filter row (Brands), hairline included, has scrolled fully off the top, plus a little
+  // more, so the two never show at once.
+  const rows = filtersEl.querySelectorAll(".filter-row"), last = rows[rows.length - 1] || filtersEl;
+  const show = state.view !== "combos" && last.getBoundingClientRect().bottom < -16;
   if (show === document.body.classList.contains("show-mini")) return;
   if (show) placeMiniNav();
   document.body.classList.toggle("show-mini", show);
