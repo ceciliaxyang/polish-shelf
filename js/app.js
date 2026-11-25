@@ -2130,7 +2130,7 @@ function fadeScopes() {
 document.querySelectorAll(".filter-row .scopes").forEach(el => el.addEventListener("scroll", fadeScopes, { passive: true }));
 addEventListener("resize", fadeScopes);
 fadeScopes();
-// Once the filters stick to the top, they collapse into one row (see .filters.collapsed in style.css). They
+// As soon as the page scrolls down, the filters collapse into one row (see .filters.collapsed in style.css). They
 // keep their full height while collapsed, so the shelf under them doesn't jump; that height is measured
 // with the filters open, and again on resize.
 const filtersEl = $("#filters");
@@ -2147,9 +2147,8 @@ function collapseFilters() {
   const y = scrollY, dir = y > lastY ? 1 : y < lastY ? -1 : scrollDir;
   if (dir !== scrollDir) { scrollDir = dir; dirFrom = lastY; }
   lastY = y;
-  const stuck = filtersEl.getBoundingClientRect().top <= 1 && y > 0;
   const goingUp = scrollDir < 0 && dirFrom - y > 8;
-  const c = stuck && (filtersEl.classList.contains("collapsed") ? !goingUp : scrollDir > 0 && y - dirFrom > 8);
+  const c = y > 4 && (filtersEl.classList.contains("collapsed") ? !goingUp : scrollDir > 0 && y - dirFrom > 8);
   if (c === filtersEl.classList.contains("collapsed")) return;
   if (c) measureFilters();
   filtersEl.classList.toggle("collapsed", c);

@@ -90,7 +90,7 @@ button, input, select { font: inherit; color: inherit; }
 .filters { position: sticky; z-index: 40; top: 0; padding-top: calc(16px + env(safe-area-inset-top)); margin-top: calc(-16px - env(safe-area-inset-top)); background: var(--bg); box-shadow: 0 0 0 100vmax var(--bg); clip-path: inset(0 -100vmax); }
 /* On the combos page the filters fade out (they only apply to the shelf). */
 .shelf-head.combos-view + .filters { opacity: 0; pointer-events: none; }
-/* Collapsed (once the filters stick, set in app.js): effects and brands run together in one row that scrolls
+/* Collapsed (as soon as the page scrolls down, set in app.js): effects and brands run together in one row that scrolls
    sideways, labels and hairlines hidden, with no bar behind them; the frosted pills alone keep them readable
    over the swatches. The filters keep their full height (--fh) so nothing below moves, but the empty part
    lets clicks through to the swatches under it. */
