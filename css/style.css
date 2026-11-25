@@ -301,7 +301,8 @@ body.detail-open .zoom { opacity: 0; pointer-events: none; }
   display: flex; flex-direction: column; gap: 24px; background: var(--bg); border-left: 1px solid #ebebeb; scrollbar-width: none; }
 /* With the pane open, the detail dialog uses the space to its left. */
 @media (min-width: 761px) {
-  body.bench-open .modal, body.bench-open .modal-head { right: calc(28px + 348px + 40px + env(safe-area-inset-right)); }
+  body.bench-open .modal { right: calc(28px + 348px + 40px + env(safe-area-inset-right)); }
+  body.bench-open .modal-head { right: calc(28px + 348px + 40px + 48px + env(safe-area-inset-right)); }
 }
 .bench::-webkit-scrollbar { display: none; }
 .bench-head { display: flex; align-items: flex-start; gap: 16px; }
@@ -384,7 +385,7 @@ body.detail-open .zoom { opacity: 0; pointer-events: none; }
   @media (prefers-reduced-motion: reduce) { .bench, .peek-mini.pulse { transition: none; animation: none; } }
 }
 
-/* Detail view (Figma "Desktop - 2") */
+/* Detail view (Figma "Polish detail / Desktop (1440)", node 2398:3167) */
 .modal { position: fixed; inset: 0; z-index: 50; outline: none; overflow-y: auto; overscroll-behavior: contain; } /* scrolls when the photos run past the screen */
 /* Figma: background blur 100 + white 40%. The shelf itself is blurred (reliable in every browser), with the white wash on top. */
 .page { position: relative; transition: filter .35s ease; }
@@ -398,6 +399,8 @@ body.detail-open .page::after { opacity: 1; }
 .modal-blur { position: fixed; inset: 0; }
 .modal-head { opacity: 0; transition: opacity .3s ease; }
 .modal.open .modal-head { opacity: 1; }
+.mh-content { opacity: 0; transition: opacity .3s ease; }
+.modal.open .mh-content { opacity: 1; transition-delay: .1s; }
 /* Photos drift up and fade in one after another; each gets its own slightly varied delay (--d, set in
    app.js) so the entry feels organic rather than mechanical. On close they fade out together, quickly. */
 /* Each photo rises in once it has actually loaded (so the motion is never spent on an empty frame), a beat
@@ -409,27 +412,9 @@ body.detail-open .page::after { opacity: 1; }
 .card.rise { opacity: 0; transform: translateY(16px); }
 .card.rise.in { opacity: 1; transform: none; transition: opacity .5s ease var(--d, 0s), transform .65s cubic-bezier(.2, .8, .2, 1) var(--d, 0s); }
 @media (prefers-reduced-motion: reduce) { .m-photos img, .card.rise { transform: none !important; } }
-/* The header row is 96px tall (starting 32px down): brand, name and effect pills, with the swatch spanning
-   the same height and the buttons centered on it.
-   Left: 17px past the swatch. */
-/* The nav (header and swatch) is fixed, so it stays put while the photos scroll underneath. Once the
-   photos start to scroll, the brand and name fade away; the swatch and buttons stay. */
-.modal-head { position: fixed; z-index: 2; top: 0; left: 0; right: 0; display: flex; align-items: center; gap: 16px; box-sizing: content-box; height: auto; min-height: 96px; padding: calc(32px + env(safe-area-inset-top)) 48px 16px calc(36px + 96px + 17px); }
-.mh-trail { display: flex; align-items: center; justify-content: flex-end; gap: 8px; width: 97px; flex-shrink: 0; }
-.mh-content { transition: opacity .2s ease; }
-.modal.scrolled .mh-content { opacity: 0; pointer-events: none; } /* once the photos scroll, only the swatch and buttons stay */
-.mh-content { flex: 1; min-width: 0; align-self: stretch; display: flex; flex-direction: column; justify-content: space-between; gap: 6px; }
-.mh-title { padding: 2px 0; }
-/* Effect pills under the name: 12px below it, like the card's pills but not clickable here */
-.mh-pills { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
-/* Frosted glass with no stroke (the same material as the zoom toggle), so it sits on the tinted blur; not clickable here */
-.mh-pills .pill { cursor: default; border: 0; padding: 7px 13px; background: rgba(255, 255, 255, .4); -webkit-backdrop-filter: blur(16px) saturate(1.4); backdrop-filter: blur(16px) saturate(1.4); }
-.mh-brand, .mh-name { margin: 0; color: #000; overflow-wrap: anywhere; }
-.mh-brand { font-size: 14px; }
-.mh-name { font-size: 20px; font-weight: 500; }
-/* One-line description under the name (polishes.js desc) */
-.mh-desc { margin: -4px 0 0; font-size: 14px; line-height: 18px; color: #555; overflow-wrap: anywhere; }
-.mh-desc[hidden] { display: none; }
+/* The add / link / close buttons are pinned to the top right (32px down, 48px in) while the page scrolls under them. */
+.modal-head { position: fixed; z-index: 4; top: calc(32px + env(safe-area-inset-top)); right: calc(48px + env(safe-area-inset-right)); }
+.mh-trail { display: flex; align-items: center; gap: 8px; }
 /* Material buttons: translucent, blurring whatever passes behind them (photos, as they scroll) */
 .mh-btn { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; padding: 12px; border: 0; border-radius: 100px;
   background: rgba(242, 242, 242, .7); -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6);
@@ -443,30 +428,48 @@ body.detail-open .page::after { opacity: 1; }
 .bench .mh-btn:hover { background: #ebebeb; }
 .mh-btn:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
 .mh-btn[hidden] { display: none; }
-/* Detail view layout (Figma "Desktop - 4"): the live swatch sits small in the header's upper-left
-   slot. Below the header the product photos are a 2 x 2 grid of squares (bigger than the Figma's single
-   row, per your ask), lined up with the swatch on the left (36px) and the close button on the right
-   (48px); the dialog scrolls if they run past the screen. Phones get a single column. */
-/* The swatch spans the full title block: its top lines up with the brand, its bottom with the effect pills. */
-.m-swatch { position: fixed; z-index: 3; top: calc(32px + env(safe-area-inset-top)); left: 36px; width: 96px; height: 96px; border-radius: 21px; overflow: hidden; background: var(--swatch); }
+/* Page column: 60px down, 36px in on the left and 48px on the right. A centered hero (swatch, then the
+   titles 24px below it), then the photos 76px further down, two squares a row 24px apart. The dialog
+   scrolls when the photos run past the screen. */
+.modal-body { position: absolute; left: 36px; right: 48px; top: calc(60px + env(safe-area-inset-top)); display: flex; flex-direction: column; align-items: center; padding-bottom: calc(48px + env(safe-area-inset-bottom)); }
+.mh-content { margin-top: 24px; }
+.m-photos { margin-top: 76px; }
+/* The live swatch, in the card's shape (240 x 260), at 180 x 195. It is sticky: it stays where it opened
+   while the photos scroll under it, and lifts off them with a shadow in its own shape. */
+.m-swatch { position: sticky; top: calc(60px + env(safe-area-inset-top)); z-index: 3; flex-shrink: 0; width: 180px; height: 195px; border-radius: 36px; overflow: hidden; background: var(--swatch); transition: box-shadow .25s ease; }
+.modal.scrolled .m-swatch { box-shadow: 0 10px 28px rgba(0, 0, 0, .22), 0 2px 6px rgba(0, 0, 0, .14); }
+.drops .m-swatch { transition: filter .25s ease; }
+.drops .modal.scrolled .m-swatch { box-shadow: none; filter: drop-shadow(0 8px 14px rgba(0, 0, 0, .2)) drop-shadow(0 2px 3px rgba(0, 0, 0, .12)); }
+/* Once the photos start to scroll, the name, description and pills fade away; the swatch and buttons stay. */
+.modal.open.scrolled .mh-content { opacity: 0; pointer-events: none; transition-delay: 0s; transition-duration: .2s; }
 .m-swatch canvas { display: block; width: 100%; height: 100%; }
-.m-swatch { transition: box-shadow .25s ease; }
-.modal.scrolled .m-swatch { box-shadow: 0 10px 28px rgba(0, 0, 0, .22), 0 2px 6px rgba(0, 0, 0, .14); } /* lifts off the photos while pinned */
-.modal-body { position: absolute; left: 36px; right: 48px; top: calc(var(--head, 156px) + 8px); padding-bottom: calc(48px + env(safe-area-inset-bottom)); }
-.m-photos { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+/* Titles: name, description and pills, centered, 24px apart */
+.mh-content { display: flex; flex-direction: column; align-items: center; gap: 24px; max-width: 100%; text-align: center; }
+/* "Brand — Name": Instrument Serif 40 on 40, -1.5px, #222 */
+.mh-name { margin: 0; font-family: "Instrument Serif", Georgia, serif; font-size: 40px; line-height: 40px; font-weight: 400; letter-spacing: -1.5px; color: #222; text-wrap: balance; overflow-wrap: anywhere; }
+/* One-line description (polishes.js desc): 14 on 18, grey 700 */
+.mh-desc { margin: 0; font-size: 14px; line-height: 18px; letter-spacing: -.5px; color: #6c6c6c; text-wrap: balance; overflow-wrap: anywhere; }
+.mh-desc[hidden] { display: none; }
+/* Effect pills: the filter pill (24px icon, 8px gap, 11/16 padding, 14 on 18) in white frosted glass, the
+   material the detail page's pills used before (white 40%, blurring the tinted backdrop); not clickable here */
+.mh-pills { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.mh-pill { display: inline-flex; align-items: center; gap: 8px; padding: 11px 16px; border-radius: 32px; color: #222; font-size: 14px; line-height: 18px; white-space: nowrap;
+  background: rgba(255, 255, 255, .4); -webkit-backdrop-filter: blur(16px) saturate(1.4); backdrop-filter: blur(16px) saturate(1.4); }
+.m-photos { align-self: stretch; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
 .m-photos img { display: block; width: 100%; aspect-ratio: 1; height: auto; object-fit: cover; border-radius: 48px; background: var(--swatch); }
 @media (max-width: 1000px) {
   .m-photos { gap: 16px; }
   .m-photos img { border-radius: 32px; }
 }
 @media (max-width: 600px) {
-  /* Phones: the swatch and the buttons share the top row (centered on each other), and the brand and
-     name stack underneath the swatch. */
-  .modal-head { display: grid; grid-template-columns: 1fr auto; grid-template-rows: 64px auto; align-items: center; height: auto; padding: calc(16px + env(safe-area-inset-top)) 16px 12px; gap: 0; }
-  .mh-trail { grid-row: 1; grid-column: 2; width: auto; }
-  .mh-content { grid-row: 2; grid-column: 1 / -1; padding-top: 12px; }
-  .m-swatch { top: calc(16px + env(safe-area-inset-top)); left: 16px; width: 64px; height: 64px; border-radius: 14px; }
-  .modal-body { left: 16px; right: 16px; top: calc(var(--head, 118px) + 8px); padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
+  /* Phones: the buttons sit 16px in from the top right, and the hero starts 16px under them so the
+     swatch never runs into them. A smaller swatch and title; one photo a row. */
+  .modal-head { top: calc(16px + env(safe-area-inset-top)); right: 16px; }
+  .modal-body { left: 16px; right: 16px; top: calc(72px + env(safe-area-inset-top)); padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
+  .m-swatch { top: calc(72px + env(safe-area-inset-top)); width: 144px; height: 156px; border-radius: 29px; }
+  .mh-content { gap: 16px; margin-top: 20px; }
+  .m-photos { margin-top: 40px; }
+  .mh-name { font-size: 32px; line-height: 34px; letter-spacing: -1.2px; }
   .m-photos { grid-template-columns: 1fr; gap: 12px; }
   .m-photos img { border-radius: 24px; }
 }
@@ -496,9 +499,6 @@ body.detail-open .page::after { opacity: 1; }
 .drops .peek-thumbs .drop-thumb { width: 24px; height: 24px; margin-left: -6px; }
 .drops .zi canvas { border-radius: 50% !important; }
 .drops .tp { box-shadow: none; }
-/* The polish page's swatch lifts off the photos with a shadow in its own shape. */
-.drops .modal.scrolled .m-swatch { box-shadow: none; filter: drop-shadow(0 8px 14px rgba(0, 0, 0, .2)) drop-shadow(0 2px 3px rgba(0, 0, 0, .12)); }
-.drops .m-swatch { transition: filter .25s ease; }
 .drops .fly-swatch { box-shadow: none; filter: drop-shadow(0 10px 18px rgba(0, 0, 0, .18)); }
 
 /* Developer settings (five taps on the title) */
