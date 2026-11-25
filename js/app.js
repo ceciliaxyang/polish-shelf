@@ -1831,50 +1831,22 @@ function shapeForScroll(instant) {
     cv.setRest(d * d * (3 - 2 * d), instant);
   });
 }
+// The sticky top nav gets smaller, with a soft line under it, once the page is scrolled.
+const markScrolled = () => document.body.classList.toggle("scrolled", scrollY > 4);
+addEventListener("scroll", markScrolled, { passive: true }); markScrolled();
 let shapeRaf = 0;
 addEventListener("scroll", () => { if (!shapeRaf) shapeRaf = requestAnimationFrame(() => { shapeRaf = 0; shapeForScroll(); }); }, { passive: true });
 
 /* ---------- zoom ---------- */
-// The zoom control at the end of the effect pills: 2, 3 (default) or 4 swatches per row on a phone. Closed,
+// The zoom control, a floating button at the bottom right: 2, 3 (default) or 4 swatches per row on a phone. Closed,
 // it shows only the current size; tapping it opens all three, and you can tap one or slide your finger
 // across them (the shelf follows as you slide). It closes when you let go on a size, tap outside or press
 // Escape. Each icon is a tiny shelf made of real swatches. At 3 per row the cards show only the name; at 4,
 // only the swatch (no + button: add from the polish's page). The choice is kept in this browser.
-// The icons aren't in shelf order: they're picked for looks. Each polish is boiled down to its most vivid
-// color, the most colorful polishes are spread evenly around the color wheel, and the tiles are laid out so
-// the hue flows diagonally across the grid. Each tile is the bright middle of that polish's real swatch.
-function heroHue(p) {
-  let best = null;
-  for (const c of [...(p.colors || []), p.shimmer].filter(Boolean)) {
-    const [r, g, b] = rgb(c).map(v => v / 255), mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
-    if (!best || d * mx > best.vivid) {
-      const h = !d ? 0 : mx === r ? ((g - b) / d + 6) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
-      best = { vivid: d * mx, hue: h * 60 };
-    }
-  }
-  return best;
-}
-function iconPolishes(count) {
-  const pool = state.polishes.map(p => ({ p, ...(heroHue(p) || { vivid: 0, hue: 0 }) })).sort((a, b) => b.vivid - a.vivid);
-  // Keep the more colorful half (at least enough to fill the grid), then take evenly spaced hues.
-  const vivid = pool.slice(0, Math.max(count, Math.ceil(pool.length / 2))).sort((a, b) => a.hue - b.hue);
-  return Array.from({ length: Math.min(count, vivid.length) }, (_, i) => vivid[Math.floor(i * vivid.length / count)].p);
-}
+// Each icon is a plain n x n grid of rounded squares in the button's text color.
 function zoomIcon(n) {
   const icon = document.createElement("span"); icon.className = "zi"; icon.style.setProperty("--n", n); icon.dataset.n = n; icon.setAttribute("aria-hidden", "true");
-  const picks = iconPolishes(n * n), px = n === 2 ? 8 : n === 3 ? 5 : 4, dpr = Math.min(3, devicePixelRatio || 1);
-  // Diagonal order: tiles nearer the top left come first, so hues sweep from one corner to the other.
-  const cells = Array.from({ length: n * n }, (_, i) => i).sort((a, b) => ((a / n | 0) + a % n) - ((b / n | 0) + b % n) || (a / n | 0) - (b / n | 0));
-  const tiles = Array.from({ length: n * n }, () => document.createElement("canvas"));
-  cells.forEach((cell, k) => {
-    const p = picks[k], t = tiles[cell]; if (!p) return;
-    const big = document.createElement("canvas"), S = px * 4;
-    renderSwatch(big, p, S, S);
-    t.width = t.height = Math.round(px * dpr);
-    const bw = big.width, bh = big.height;
-    try { t.getContext("2d").drawImage(big, bw * .3, bh * .3, bw * .4, bh * .4, 0, 0, t.width, t.height); } catch (e) {}
-  });
-  icon.append(...tiles);
+  for (let i = 0; i < n * n; i++) icon.appendChild(document.createElement("i"));
   return icon;
 }
 function buildZoom() {

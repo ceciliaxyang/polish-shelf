@@ -72,31 +72,39 @@ button, input, select { font: inherit; color: inherit; }
 .fx-row .scope { background: #f2f2f2; }
 .fx-row .scope:hover { background: #e8e8e8; }
 .fx-row .scope[aria-pressed="true"] { background: var(--text); }
-/* Zoom control: pinned after the effect pills, which fade out under it as they scroll. Closed, it is one
-   40px circle showing the current size; open, it widens to the left to show all three, with a white thumb
-   on the current one. Each icon is a 2x2, 3x3 or 4x4 grid of real swatches. */
-.fx-bar { display: flex; align-items: center; gap: 4px; }
-.fx-bar .fx-row { flex: 1; min-width: 0; margin-right: 0; padding-right: 16px;
-  -webkit-mask: linear-gradient(90deg, #000 calc(100% - 24px), transparent); mask: linear-gradient(90deg, #000 calc(100% - 24px), transparent); }
-.zoom { --w: 40px; --i: 0; position: relative; flex-shrink: 0; width: var(--w); height: 40px; border-radius: 100px; background: #f2f2f2; overflow: hidden;
+/* Zoom control: a frosted floating button at the bottom right. Closed, it is one 48px circle showing the
+   current size; open, it widens to the left to show all three, with a dark thumb on the current one. Each
+   icon is a plain 2x2, 3x3 or 4x4 grid of rounded squares. It moves up above the Layers peek bar on phones,
+   and left of the Layers pane on wider screens, and hides behind the polish detail view. */
+.zoom { --w: 48px; --i: 0; position: fixed; z-index: 50; right: max(16px, calc(16px + env(safe-area-inset-right))); bottom: calc(24px + env(safe-area-inset-bottom));
+  width: var(--w); height: 48px; border-radius: 100px; overflow: hidden; color: #222;
+  background: rgba(255, 255, 255, .78); -webkit-backdrop-filter: blur(24px) saturate(1.6); backdrop-filter: blur(24px) saturate(1.6);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, .06), 0 8px 24px rgba(0, 0, 0, .16);
   touch-action: none; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent;
-  transition: width .32s cubic-bezier(.2, .8, .2, 1), background .15s ease; }
-.zoom.open { width: calc(var(--w) * 3); background: #e9e9e9; }
+  transition: width .32s cubic-bezier(.2, .8, .2, 1), bottom .38s cubic-bezier(.2, .8, .2, 1), right .45s cubic-bezier(.2, .8, .2, 1), opacity .2s ease; }
+.zoom.open { width: calc(var(--w) * 3); }
+body.detail-open .zoom { opacity: 0; pointer-events: none; }
+@media (max-width: 760px) { body.bench-open .zoom { bottom: calc(116px + env(safe-area-inset-bottom)); } }
+@media (min-width: 761px) {
+  .zoom { right: calc(32px + env(safe-area-inset-right)); bottom: calc(32px + env(safe-area-inset-bottom)); }
+  body.bench-open .zoom { right: calc(28px + 348px + 40px + 24px + env(safe-area-inset-right)); }
+}
 .z-track { position: absolute; inset: 0 auto 0 0; display: flex; transform: translateX(calc(var(--i) * var(--w) * -1)); transition: transform .32s cubic-bezier(.2, .8, .2, 1); }
 .zoom.open .z-track { transform: none; }
-.z-thumb { position: absolute; top: 3px; left: 3px; width: calc(var(--w) - 6px); height: 34px; border-radius: 100px; background: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, .14);
+.z-thumb { position: absolute; top: 4px; left: 4px; width: calc(var(--w) - 8px); height: 40px; border-radius: 100px; background: #222;
   opacity: 0; transform: translateX(calc(var(--i) * var(--w))); transition: transform .22s cubic-bezier(.2, .8, .2, 1), opacity .2s ease; }
 .zoom.open .z-thumb { opacity: 1; }
-.z-opt { position: relative; width: var(--w); height: 40px; padding: 0; border: 0; background: none; display: block; cursor: pointer; }
+.z-opt { position: relative; width: var(--w); height: 48px; padding: 0; border: 0; background: none; color: inherit; display: block; cursor: pointer; }
 .z-opt:focus-visible { outline: 2px solid var(--text); outline-offset: -4px; border-radius: 100px; }
-.zoom.open .z-opt:not(.on) .zi { opacity: .5; }
-/* Every tile in an icon is exactly the same size: tiles and gaps are whole pixels (2x2: 8px tiles, 2px gaps;
-   3x3: 5px and 1px; 4x4: 4px and 1px), and the icon sits on a whole pixel, so nothing gets rounded unevenly. */
-.zi { --t: 8px; --g: 2px; position: absolute; display: grid; grid-template-columns: repeat(var(--n), var(--t)); grid-auto-rows: var(--t); gap: var(--g);
-  left: 11px; top: 11px; transition: opacity .2s ease; }
-.zi canvas { display: block; width: var(--t); height: var(--t); border-radius: 2px; background: #d9d9d9; }
-.zi[data-n="3"] { --t: 5px; --g: 1px; } .zi[data-n="3"] canvas { border-radius: 1.5px; }
-.zi[data-n="4"] { --t: 4px; --g: 1px; left: 10px; top: 10px; } .zi[data-n="4"] canvas { border-radius: 1px; }
+.zoom.open .z-opt.on { color: #fff; }
+.zoom.open .z-opt:not(.on) { color: #8a8a8a; }
+/* Every square in an icon is exactly the same size: squares and gaps are whole pixels (2x2: 9px squares,
+   2px gaps; 3x3: 6px and 1px; 4x4: 4px and 1px), and the icon sits on a whole pixel. */
+.zi { --t: 9px; --g: 2px; position: absolute; display: grid; grid-template-columns: repeat(var(--n), var(--t)); grid-auto-rows: var(--t); gap: var(--g);
+  left: 14px; top: 14px; transition: color .2s ease; }
+.zi i { display: block; width: var(--t); height: var(--t); border-radius: 2px; background: currentColor; }
+.zi[data-n="3"] { --t: 6px; --g: 1px; } .zi[data-n="3"] i { border-radius: 1.5px; }
+.zi[data-n="4"] { --t: 4px; --g: 1px; } .zi[data-n="4"] i { border-radius: 1px; }
 @media (prefers-reduced-motion: reduce) { .zoom, .z-track, .z-thumb { transition: none; } }
 /* Thumbnail Pair: two 19.25px cards, the back one turned 10deg and the front one -3deg. */
 .thumb-pair { position: relative; flex-shrink: 0; width: 28px; height: 28px; }
@@ -113,6 +121,21 @@ button, input, select { font: inherit; color: inherit; }
   .shelf-title { font-size: 32px; line-height: 40px; letter-spacing: -.9px; }
   .scopes { margin-inline: -16px; padding-inline: 16px; }
 }
+/* Sticky top nav: the title row and effect pills stay at the top of the window as the shelf scrolls. The
+   header reaches up into the page's top padding (and out to the screen edges) with a white background, so
+   at rest it looks the same; once the page scrolls (body.scrolled, set in app.js) the title gets smaller
+   and a soft line appears under the header. */
+.shelf-head { position: sticky; z-index: 40; top: 0; background: var(--bg);
+  margin: calc(-24px - env(safe-area-inset-top)) -40px 52px; padding: calc(24px + env(safe-area-inset-top)) 48px 12px;
+  transition: box-shadow .2s ease; }
+.shelf-title { transition: font-size .2s ease, line-height .2s ease; }
+body.scrolled .shelf-head { box-shadow: 0 1px 0 rgba(0, 0, 0, .06), 0 6px 16px -8px rgba(0, 0, 0, .12); }
+body.scrolled .shelf-title { font-size: 28px; line-height: 40px; }
+@media (max-width: 600px) {
+  .shelf-head { margin: calc(-12px - env(safe-area-inset-top)) -16px 28px; padding: calc(12px + env(safe-area-inset-top)) 16px 12px; }
+  body.scrolled .shelf-title { font-size: 24px; }
+}
+@media (prefers-reduced-motion: reduce) { .shelf-head, .shelf-title { transition: none; } }
 .pill.small { padding: 6px 12px; font-size: 13px; line-height: 16px; }
 
 /* Shelf grid */
