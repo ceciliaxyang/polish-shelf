@@ -1094,7 +1094,7 @@ function setView(v) {
   state.view = v;
   $("#comboBtn").setAttribute("aria-pressed", v === "combos");
   $(".shelf-head").classList.toggle("combos-view", v === "combos");
-  $("#shelfTitle").textContent = v === "combos" ? "Favorite combos" : "Polish shelf";
+  $("#shelfTitle").textContent = v === "combos" ? "Favorite combos" : "My polish shelf";
   $("#filters").inert = v === "combos";
 }
 function syncComboBtn() {

@@ -56,8 +56,11 @@ button, input, select { font: inherit; color: inherit; }
    then a single row of filled filter pills ("Scoping Bar") that scrolls sideways when it runs out of room. */
 .shelf-head { display: flex; flex-direction: column; gap: 24px; margin: 0 0 64px; padding: 0; }
 .shelf-top { display: flex; align-items: flex-start; gap: 16px; }
-/* Title in Hedvig Letters Serif, 48/48 (Figma node 2383:2325). */
-.shelf-title { flex: 1; min-width: 0; margin: 0; font-family: "Hedvig Letters Serif", Georgia, serif; font-size: 48px; line-height: 48px; font-weight: 400; letter-spacing: -1.2px; color: #000; }
+/* Title in Instrument Serif, 128px on 100px with -3px tracking, 48px below the top of the page (Figma node
+   2384:82780). It scales down with the window, to 64px on a phone. */
+.shelf-head { padding-top: 48px; }
+.shelf-title { flex: 1; min-width: 0; margin: 0; font-family: "Instrument Serif", Georgia, serif; font-size: clamp(64px, 10vw - 16px, 128px); line-height: .78125; font-weight: 400; letter-spacing: -.0234em; color: #000; }
+.shelf-top { align-items: center; }
 .scopes { display: flex; gap: 8px; padding: 8px 0; margin: -8px -8px; padding-inline: 8px; overflow-x: auto; scrollbar-width: none; }
 .scopes::-webkit-scrollbar { display: none; }
 .scope { flex-shrink: 0; min-width: 56px; padding: 12px 16px; border: 0; border-radius: 32px; background: #f7f7f7; mix-blend-mode: multiply; color: var(--text); font-size: 12px; line-height: 16px; font-weight: 500; white-space: nowrap; cursor: pointer; transition: background .15s ease, color .15s ease; }
@@ -78,7 +81,7 @@ button, input, select { font: inherit; color: inherit; }
 /* On desktop, keep at least 300px between the label and its pills, growing with the window on wider screens
    (about 350px at 1280, 400px at 1440, 490px at 1728, 550px at 1920, up to 640px). */
 @media (min-width: 761px) { .filter-row { gap: clamp(300px, 32vw - 60px, 640px); } }
-.filter-label { flex-shrink: 0; margin: 0; font-size: 16px; line-height: 20px; font-weight: 400; color: #222; }
+.filter-label { flex-shrink: 0; margin: 0; font-family: "Instrument Serif", Georgia, serif; font-size: 20px; line-height: 24px; font-weight: 400; color: #222; } /* Figma node 2384:82738 */
 .filter-row .scopes { min-width: 0; margin: -8px 0; padding: 8px 0; }
 .filter-row .scope:first-child { margin-left: auto; }
 .filter-row .scopes.more-end { -webkit-mask-image: linear-gradient(to left, transparent, #000 48px); mask-image: linear-gradient(to left, transparent, #000 48px); }
@@ -161,8 +164,8 @@ body.detail-open .zoom { opacity: 0; pointer-events: none; }
    around the swatch's rounded corners. */
 .tp:has(canvas) { background: none; }
 @media (max-width: 600px) {
-  .shelf-head { gap: 16px; margin-bottom: 40px; padding: 0; }
-  .shelf-title { font-size: 40px; line-height: 40px; letter-spacing: -1px; }
+  .shelf-head { gap: 16px; margin-bottom: 48px; padding: 0; }
+  .shelf-head { padding-top: 24px; }
   /* On a phone each label sits above its pills, which run edge to edge and scroll sideways. */
   .filters { margin-bottom: 32px; padding: 0; }
   .filter-row { flex-direction: column; align-items: stretch; gap: 12px; padding: 16px 0; }
