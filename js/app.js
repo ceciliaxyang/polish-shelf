@@ -1835,13 +1835,13 @@ let shapeRaf = 0;
 addEventListener("scroll", () => { if (!shapeRaf) shapeRaf = requestAnimationFrame(() => { shapeRaf = 0; shapeForScroll(); }); }, { passive: true });
 
 /* ---------- zoom ---------- */
-// The zoom control is a floating slider at the bottom of the screen: 4 (dense, left), 3 (default) or 2
-// (big, right) swatches per row on a phone. Drag the small knob along the track (it snaps to the nearest
+// The zoom control is a floating slider at the bottom of the screen: 2 (big, left), 3 (default) or 4
+// (dense, right) swatches per row on a phone. Drag the knob along the track (it snaps to the nearest
 // size and the shelf follows as you drag), tap a spot on the track, or tap the icon at either end to step
 // one size that way. Each icon is a grid of dots (droplet swatches) or rounded squares (rectangles). At 3
 // per row the cards show the name and effect types; at 4, only the swatch (no + button: add from the
 // polish's page). The choice is kept in this browser.
-const ZOOM_STOPS = [4, 3, 2]; // left to right along the track
+const ZOOM_STOPS = [2, 3, 4]; // left to right along the track
 function zoomIcon(n) {
   const icon = document.createElement("span"); icon.className = "zi"; icon.style.setProperty("--n", n); icon.dataset.n = n; icon.setAttribute("aria-hidden", "true");
   for (let i = 0; i < n * n; i++) icon.appendChild(document.createElement("i"));
@@ -1859,8 +1859,8 @@ function buildZoom() {
   const track = document.createElement("div"); track.className = "z-track"; track.id = "zoomTrack"; track.tabIndex = 0;
   track.setAttribute("role", "slider"); track.setAttribute("aria-label", "Swatches per row");
   track.setAttribute("aria-valuemin", 2); track.setAttribute("aria-valuemax", 4);
-  track.innerHTML = '<span class="z-line"></span>' + ZOOM_STOPS.map((_, i) => `<span class="z-stop" style="--p:${i / (ZOOM_STOPS.length - 1)}"></span>`).join("") + '<span class="z-knob"></span>';
-  box.append(end(4, -1, "Smaller swatches"), track, end(2, 1, "Bigger swatches"));
+  track.innerHTML = '<span class="z-line"></span><span class="z-knob"></span>';
+  box.append(end(2, -1, "Bigger swatches"), track, end(4, 1, "Smaller swatches"));
   // Which stop is nearest the finger.
   const stopAt = x => { const r = track.getBoundingClientRect(); return ZOOM_STOPS[Math.round(Math.max(0, Math.min(1, (x - r.left) / r.width)) * (ZOOM_STOPS.length - 1))]; };
   track.addEventListener("pointerdown", e => {
