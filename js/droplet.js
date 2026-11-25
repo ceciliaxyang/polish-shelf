@@ -93,10 +93,13 @@ function pouredLook(key) {
   if (!p || !p.colors) return null;
   const base = p.baseColor || p.colors[0], [h, s, l] = dropHsl(dropHex(base)), fx = p.effect;
   // See-through polishes glow lighter and richer where the pour thins at its edge; opaque ones get a deeper band.
-  const clear = fx === "sheer" || fx === "sheermag" || (p.effects || []).includes("jelly") || !!p.sheer || (!!p.baseColor && l < .35);
+  const clear = fx === "sheer" || fx === "sheermag" || (p.effects || []).includes("jelly") || !!p.sheer;
+  // A shimmer over a dark base keeps its shimmer right out to the edge: the band only deepens it a
+  // little, in the base's own color, so the edge doesn't read as a different polish.
+  const deepShimmer = fx === "shimmer" && !!p.baseColor && l < .35;
   return {
-    rim: clear ? dropToHex(dropRgb([h, Math.min(1, s * 1.25 + .1), Math.min(.85, l * 1.6 + .14)])) : dropToHex(dropRgb([h, Math.min(1, s * 1.1), l * .62])),
-    rimA: clear ? .75 : .45, rimW: clear ? 9 : 7,
+    rim: deepShimmer ? base : clear ? dropToHex(dropRgb([h, Math.min(1, s * 1.25 + .1), Math.min(.85, l * 1.6 + .14)])) : dropToHex(dropRgb([h, Math.min(1, s * 1.1), l * .62])),
+    rimA: deepShimmer ? .3 : clear ? .75 : .45, rimW: deepShimmer ? 6 : clear ? 9 : 7,
     swirly: ["shimmer", "magnetic", "sheermag", "multichrome"].includes(fx), swirl: .85 * .19 * (fx === "shimmer" ? 1.35 : 1),
   };
 }
