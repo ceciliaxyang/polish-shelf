@@ -3,9 +3,8 @@
 // of polish, round but a little irregular, the shape picked from the polish (or combo) so it stays the
 // same every visit. The live swatch canvas is clipped to the drop, so every effect (magnetic flash,
 // multichrome shift, holo, shimmer...) still moves. On top sits a "soft sheen": the polish lies flat, so
-// there's no dome shading, just a faint broad sheen, a few swirl marks where it settled, a thin bright
-// line where the edge catches the light (from the upper left) and a hairline meniscus; a tight contact
-// shadow sits underneath.
+// there's no dome shading, just a faint broad sheen, a thin bright line where the edge catches the
+// light (from the upper left) and a hairline meniscus; a tight contact shadow sits underneath.
 //
 // Which one shows is a developer setting, kept in this browser: tap the "Polish shelf" title five times
 // to open it, or add ?swatch=drop / ?swatch=rect to the address. Droplets are the default.
@@ -78,7 +77,7 @@ function dropSvg(cls, vh, inner) {
 }
 
 // Turn a box holding a swatch canvas into a droplet. `aspect` is the box's height / width. Safe to call
-// again after the box's canvas is replaced. Options: small (no swirls or shadow blur, for thumbnails),
+// again after the box's canvas is replaced. Options: small (no shadow blur, for thumbnails),
 // ring (a ring in the page color around the drop, for overlapping thumbnails), shadow (default on).
 function dropify(box, key, aspect = 1, opt = {}) {
   if (!DROPS || !box) return box;
@@ -87,8 +86,7 @@ function dropify(box, key, aspect = 1, opt = {}) {
   box._drop = s; dropClip(box);
   if (!box._dropSized) { box._dropSized = true; dropRO.observe(box); }
   box.querySelectorAll(":scope > .drop-under, :scope > .drop-gloss").forEach(el => el.remove());
-  // Seeded per drop (the same each time), but not from the outline's own random stream.
-  const R = dropRand(dropHash(key + "#gloss")), sc = (k, dx = 0, dy = 0) => `translate(${(s.cx * (1 - k) + dx).toFixed(2)} ${(s.cy * (1 - k) + dy).toFixed(2)}) scale(${k})`;
+  const sc = (k, dx = 0, dy = 0) => `translate(${(s.cx * (1 - k) + dx).toFixed(2)} ${(s.cy * (1 - k) + dy).toFixed(2)}) scale(${k})`;
   let under = "";
   if (opt.ring) under += `<path d="${s.d}" fill="none" style="stroke: var(--bg)" stroke-width="${opt.ring}"/>`;
   if (opt.shadow !== false) under += opt.small
@@ -97,12 +95,6 @@ function dropify(box, key, aspect = 1, opt = {}) {
         <filter id="${id}a" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="3"/></filter></defs>
       <path d="${s.d}" transform="translate(.4 1.6)" fill="rgba(40,30,20,.07)" filter="url(#${id}a)"/>
       <path d="${s.d}" transform="translate(.25 .7)" fill="rgba(40,30,20,.2)" filter="url(#${id}s)"/>`;
-  let swirl = "";
-  if (!opt.small) for (let i = 0; i < 3; i++) {
-    const k = .42 + R() * .4, dx = (R() - .5) * 8, dy = (R() - .5) * 8, len = 10 + R() * 16, off = R() * 100;
-    swirl += `<path d="${s.d}" transform="${sc(k, dx, dy)}" pathLength="100" stroke-dasharray="${len.toFixed(1)} 100" stroke-dashoffset="${off.toFixed(1)}" fill="none" stroke="#fff" stroke-opacity=".1" stroke-width="${(1.2 / k).toFixed(2)}" stroke-linecap="round" filter="url(#${id}b2)"/>
-      <path d="${s.d}" transform="${sc(k, dx + .5, dy + .9)}" pathLength="100" stroke-dasharray="${len.toFixed(1)} 100" stroke-dashoffset="${off.toFixed(1)}" fill="none" stroke="#000" stroke-opacity=".07" stroke-width="${(.9 / k).toFixed(2)}" stroke-linecap="round" filter="url(#${id}b2)"/>`;
-  }
   const edgeW = opt.small ? 2.4 : 1.3, rimW = opt.small ? 1.4 : .7;
   const gloss = `<defs>
       <clipPath id="${id}c"><path d="${s.d}"/></clipPath>
@@ -112,11 +104,9 @@ function dropify(box, key, aspect = 1, opt = {}) {
       </linearGradient>
       <radialGradient id="${id}h" cx=".36" cy=".3" r=".5"><stop offset="0" stop-color="#fff" stop-opacity=".1"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
       <filter id="${id}b1"><feGaussianBlur stdDeviation=".3"/></filter>
-      <filter id="${id}b2"><feGaussianBlur stdDeviation=".9"/></filter>
     </defs>
     <g clip-path="url(#${id}c)">
       <rect width="100" height="${vh}" fill="url(#${id}h)"/>
-      ${swirl}
       <path d="${s.d}" fill="none" stroke="url(#${id}e)" stroke-width="${edgeW}" ${opt.small ? "" : `filter="url(#${id}b1)"`} transform="${sc(.988)}"/>
       <path d="${s.d}" fill="none" stroke="#000" stroke-opacity=".2" stroke-width="${rimW}" ${opt.small ? "" : `filter="url(#${id}b1)"`}/>
     </g>`;
@@ -227,14 +217,8 @@ function pourDone(card) {
   const base = card.querySelector(".pour-base"); if (base) base.remove();
 }
 
-/* Card text alignment at 3 per row: centered under the swatch (default) or left-aligned. */
-const ALIGN_KEY = "polish-shelf:card-align";
-let CARD_ALIGN = "center";
-try { if (JSON.parse(localStorage.getItem(ALIGN_KEY)) === "left") CARD_ALIGN = "left"; } catch (e) {}
-document.documentElement.dataset.cardAlign = CARD_ALIGN;
-
-/* Developer settings: five quick taps on the page title open a small panel to switch the swatch shape
-   and the card text alignment. */
+/* Developer settings: five quick taps on the page title open a small panel to switch the swatch shape.
+   (Card text follows the shape: centered under droplets, left-aligned under rectangles.) */
 (() => {
   const title = document.getElementById("shelfTitle");
   if (!title) return;
@@ -254,22 +238,7 @@ document.documentElement.dataset.cardAlign = CARD_ALIGN;
             <button type="button" role="radio" data-shape="drop">Droplet</button>
             <button type="button" role="radio" data-shape="rect">Rectangle</button>
           </div></div>
-        <div class="dev-row"><span id="devAlignLabel">Card text</span>
-          <div class="dev-seg" role="radiogroup" aria-labelledby="devAlignLabel">
-            <button type="button" role="radio" data-align="left">Left</button>
-            <button type="button" role="radio" data-align="center">Center</button>
-          </div></div>
         <button type="button" class="dev-close">Done</button>`;
-      // Alignment applies right away (no reload).
-      const alignBtns = panel.querySelectorAll("[data-align]");
-      const syncAlign = () => alignBtns.forEach(b => b.setAttribute("aria-checked", b.dataset.align === CARD_ALIGN));
-      alignBtns.forEach(b => {
-        b.onclick = () => {
-          CARD_ALIGN = b.dataset.align; document.documentElement.dataset.cardAlign = CARD_ALIGN; syncAlign();
-          try { localStorage.setItem(ALIGN_KEY, JSON.stringify(CARD_ALIGN)); } catch (e) {}
-        };
-      });
-      syncAlign();
       panel.querySelectorAll("[data-shape]").forEach(b => {
         b.setAttribute("aria-checked", b.dataset.shape === SHAPE);
         b.onclick = () => {
