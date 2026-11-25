@@ -52,7 +52,7 @@
           </div>
         </header>
         <!-- Filters (Figma node 2384:82776): a labeled row each for effects and brands, pills on the right,
-             with a hairline under each row. Once scrolled, they collapse into one row of the same pills. -->
+             with a hairline under each row. Once they scroll out of view, the mini nav below shows the same pills in one row. -->
         <div class="filters" id="filters">
           <div class="filter-rows" id="filterRows">
           <div class="filter-row">
@@ -70,6 +70,8 @@
 
     </div>
   </div>
+  <!-- Mini nav: one row of the filter pills that slides in at the top once the filters scroll away (app.js). -->
+  <nav class="mini-nav" id="miniNav" aria-label="Filters" inert><div class="mini-row fx-row" id="miniRow"></div></nav>
   <!-- Zoom: three icons in a floating bar at the bottom (2, 3 or 4 swatches per row on a phone). -->
   <div class="zoom" id="zoom" role="radiogroup" aria-label="Swatch size"></div>
   <!-- The Layers pane lives outside the page so it stays sharp and on top, even over the detail dialog. -->
