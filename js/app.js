@@ -2132,36 +2132,39 @@ function fadeScopes() {
 document.querySelectorAll(".filter-row .scopes").forEach(el => el.addEventListener("scroll", fadeScopes, { passive: true }));
 addEventListener("resize", fadeScopes);
 fadeScopes();
-// As soon as the page scrolls down, the filters collapse into one row (see .filters.collapsed in style.css). They
-// keep their full height while collapsed, so the shelf under them doesn't jump; that height is measured
-// with the filters open, and again on resize.
-const filtersEl = $("#filters");
-function measureFilters() {
-  const was = filtersEl.classList.contains("collapsed");
-  filtersEl.classList.remove("collapsed");
-  filtersEl.style.setProperty("--fh", filtersEl.offsetHeight + "px");
-  filtersEl.classList.toggle("collapsed", was);
+// Mini nav: once the filters have scrolled out of view, the same pills slide in at the top of the window in
+// one row (.mini-nav in style.css). Each mini pill is a copy that presses the real pill, and mirrors its
+// pressed state, so the filters stay the one source of truth.
+const filtersEl = $("#filters"), miniNav = $("#miniNav"), miniRow = $("#miniRow");
+(() => {
+  const groups = ["#fxPills", "#brandPills"].map(sel => [...document.querySelectorAll(sel + " .scope")]);
+  groups.forEach((pills, gi) => {
+    if (gi) { const gap = document.createElement("span"); gap.className = "mini-gap"; miniRow.appendChild(gap); }
+    pills.forEach(orig => {
+      const copy = orig.cloneNode(true); copy.removeAttribute("id");
+      copy.onclick = () => orig.click();
+      new MutationObserver(() => copy.setAttribute("aria-pressed", orig.getAttribute("aria-pressed"))).observe(orig, { attributes: true, attributeFilter: ["aria-pressed"] });
+      miniRow.appendChild(copy);
+    });
+  });
+})();
+function placeMiniNav() {
+  const r = $("main").getBoundingClientRect();
+  miniNav.style.left = r.left + "px"; miniNav.style.width = r.width + "px";
 }
-// Scrolling back up opens them again right away (on their white bar), without waiting to reach the top;
-// scrolling down collapses them again. A few pixels of slack keep small jitters from flipping it.
-let lastY = scrollY, scrollDir = 1, dirFrom = scrollY;
-function collapseFilters() {
-  const y = scrollY, dir = y > lastY ? 1 : y < lastY ? -1 : scrollDir;
-  if (dir !== scrollDir) { scrollDir = dir; dirFrom = lastY; }
-  lastY = y;
-  const goingUp = scrollDir < 0 && dirFrom - y > 8;
-  const c = y > 4 && (filtersEl.classList.contains("collapsed") ? !goingUp : scrollDir > 0 && y - dirFrom > 8);
-  if (c === filtersEl.classList.contains("collapsed")) return;
-  if (c) measureFilters();
-  filtersEl.classList.toggle("collapsed", c);
-  filtersEl.classList.remove("swapping"); void filtersEl.offsetWidth; filtersEl.classList.add("swapping");
-  if (!c) fadeScopes();
+function syncMiniNav() {
+  const show = state.view !== "combos" && filtersEl.getBoundingClientRect().bottom < 0;
+  if (show === document.body.classList.contains("show-mini")) return;
+  if (show) placeMiniNav();
+  document.body.classList.toggle("show-mini", show);
+  miniNav.inert = !show;
 }
-filtersEl.addEventListener("animationend", () => filtersEl.classList.remove("swapping"));
-let collapseRaf = 0;
-addEventListener("scroll", () => { if (!collapseRaf) collapseRaf = requestAnimationFrame(() => { collapseRaf = 0; collapseFilters(); }); }, { passive: true });
-addEventListener("resize", () => { if (filtersEl.classList.contains("collapsed")) measureFilters(); collapseFilters(); });
-collapseFilters();
+let miniRaf = 0;
+addEventListener("scroll", () => { if (!miniRaf) miniRaf = requestAnimationFrame(() => { miniRaf = 0; syncMiniNav(); }); }, { passive: true });
+addEventListener("resize", () => { placeMiniNav(); syncMiniNav(); });
+// The shelf column narrows when the Layers pane opens; keep the mini nav over it.
+new ResizeObserver(placeMiniNav).observe($("main"));
+syncMiniNav();
 buildZoom();
 renderShelf();
 renderBench();

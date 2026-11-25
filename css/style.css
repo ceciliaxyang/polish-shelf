@@ -106,27 +106,19 @@ button, input, select { font: inherit; color: inherit; }
 .filter-row .scopes.more-end { -webkit-mask-image: linear-gradient(to left, transparent, #000 48px); mask-image: linear-gradient(to left, transparent, #000 48px); }
 .filter-row .scopes.more-start { -webkit-mask-image: linear-gradient(to right, transparent, #000 48px); mask-image: linear-gradient(to right, transparent, #000 48px); }
 .filter-row .scopes.more-start.more-end { -webkit-mask-image: linear-gradient(to right, transparent, #000 48px, #000 calc(100% - 48px), transparent); mask-image: linear-gradient(to right, transparent, #000 48px, #000 calc(100% - 48px), transparent); }
-/* Sticky: the filter rows stay pinned at the top of the window as the shelf scrolls (the title scrolls
-   away). They sit on a solid white bar that runs edge to edge, so swatches slide under it cleanly; the extra
-   top padding is cancelled by a matching negative margin, so nothing moves until it sticks. */
-.filters { position: sticky; z-index: 40; top: 0; padding-top: calc(16px + env(safe-area-inset-top)); margin-top: calc(-16px - env(safe-area-inset-top)); background: var(--bg); box-shadow: 0 0 0 100vmax var(--bg); clip-path: inset(0 -100vmax); }
 /* On the combos page the filters fade out (they only apply to the shelf). */
 .shelf-head.combos-view + .filters { opacity: 0; pointer-events: none; }
-/* Collapsed (as soon as the page scrolls down, set in app.js): effects and brands run together in one row that scrolls
-   sideways, labels and hairlines hidden, with no bar behind them. The pills themselves look exactly as they do
-   open (same grey fill, no added strokes or shadows). The filters keep their full height (--fh) so nothing below moves, but the empty part
-   lets clicks through to the swatches under it. */
-.filters.collapsed { height: var(--fh); padding-top: calc(16px + env(safe-area-inset-top)); background: none; box-shadow: none; clip-path: none; pointer-events: none; }
-.filters.collapsed .filter-rows { flex-direction: row; gap: 8px; margin: -12px -40px; padding: 12px 40px 16px; overflow-x: auto; scrollbar-width: none; pointer-events: auto; overscroll-behavior-x: contain; }
-.filters.collapsed .filter-rows::-webkit-scrollbar { display: none; }
-.filters.collapsed .filter-row { flex-shrink: 0; gap: 0; padding: 0; border: 0; }
-.filters.collapsed .filter-row + .filter-row { margin-left: 12px; } /* a little more room between effects and brands */
-.filters.collapsed .filter-label { display: none; }
-.filters.collapsed .scopes { overflow: visible; margin: 0; padding: 0; -webkit-mask-image: none; mask-image: none; }
-.filters.collapsed .scope:first-child { margin-left: 0; }
-.filters.swapping .filter-rows { animation: filters-swap .28s cubic-bezier(.2, .8, .2, 1); }
-@keyframes filters-swap { from { opacity: 0; transform: translateY(-6px); } }
-@media (prefers-reduced-motion: reduce) { .filters.swapping .filter-rows { animation: none; } }
+/* Mini nav: once the filters have scrolled out of view, a copy of the effect and brand pills slides in at the
+   top of the window as one row that scrolls sideways, with no labels and no bar behind it. The pills look
+   exactly as they do in the filters. Shown by app.js (body.show-mini), lined up with the shelf column. */
+.mini-nav { position: fixed; z-index: 40; top: 0; left: 0; width: 100%; padding-top: calc(16px + env(safe-area-inset-top));
+  pointer-events: none; opacity: 0; transform: translateY(-12px); visibility: hidden;
+  transition: opacity .25s ease, transform .3s cubic-bezier(.2, .8, .2, 1), visibility 0s linear .3s; }
+body.show-mini .mini-nav { opacity: 1; transform: none; visibility: visible; transition: opacity .25s ease, transform .3s cubic-bezier(.2, .8, .2, 1), visibility 0s; }
+.mini-row { display: flex; gap: 8px; margin: -12px -40px 0; padding: 12px 40px 16px; overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain; pointer-events: auto; }
+.mini-row::-webkit-scrollbar { display: none; }
+.mini-row .mini-gap { flex: 0 0 4px; } /* a little more room between effects and brands */
+@media (prefers-reduced-motion: reduce) { .mini-nav, body.show-mini .mini-nav { transition: none; transform: none; } }
 .fx-row .scope { background: #f2f2f2; }
 .fx-row .scope:hover { background: #e8e8e8; }
 .fx-row .scope[aria-pressed="true"] { background: var(--text); }
@@ -187,9 +179,8 @@ body.detail-open .zoom { opacity: 0; pointer-events: none; }
   .filter-row .scopes { margin-inline: -16px; padding-inline: 16px; }
   .filter-row .scope:first-child { margin-left: 0; }
   .scopes { margin-inline: -16px; padding-inline: 16px; }
-  .filters.collapsed { padding-top: calc(8px + env(safe-area-inset-top)); }
-  .filters.collapsed .filter-rows { margin-inline: -16px; padding-inline: 16px; }
-  .filters.collapsed .filter-row .scopes { margin-inline: 0; padding-inline: 0; }
+  .mini-nav { padding-top: calc(8px + env(safe-area-inset-top)); }
+  .mini-row { margin-inline: -16px; padding-inline: 16px; }
 }
 .fx-row .scope { mix-blend-mode: normal; }
 .pill.small { padding: 6px 12px; font-size: 13px; line-height: 16px; }
