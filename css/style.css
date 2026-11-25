@@ -188,6 +188,16 @@ body.detail-open .zoom { opacity: 0; pointer-events: none; }
   .scopes { margin-inline: -16px; padding-inline: 16px; }
   .mini-nav { padding-top: calc(8px + env(safe-area-inset-top)); }
   .mini-row { margin-inline: -16px; padding-inline: 16px; }
+  /* Native phone reference (Figma node 2401:20488): each label sits beside its pills, 48px apart, and the pills
+     run off the right edge and scroll sideways. 16px between the rows, a line only under Effects. */
+  .filter-row { flex-direction: row; align-items: center; gap: 48px; padding: 16px 0; }
+  .filter-row:first-child { padding-top: 0; }
+  .filter-row .scopes { margin-left: 0; margin-right: -16px; padding-left: 0; padding-right: 16px; }
+  /* Smaller pills: a 20px icon, 4px gap, 12/18 text, 8px top and bottom, 12px sides (34px tall), 4px apart. */
+  .scopes, .mini-row { gap: 4px; }
+  .fx-row .scope { gap: 4px; min-width: 0; padding: 8px 12px; font-size: 12px; line-height: 18px; }
+  html:not(.no-sf) .fx-row .scope { letter-spacing: -.3px; }
+  .fx-row .scope-icon { width: 20px; height: 20px; }
 }
 .fx-row .scope { mix-blend-mode: normal; }
 .pill.small { padding: 6px 12px; font-size: 13px; line-height: 16px; }
