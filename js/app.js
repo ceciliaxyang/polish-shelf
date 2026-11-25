@@ -1862,6 +1862,7 @@ const idle = window.requestIdleCallback || (fn => setTimeout(() => fn({ timeRema
 const drawQueue = [];
 let pumping = 0;
 function pump() {
+  if (zoomBusy()) { pumping = requestAnimationFrame(pump); return; } // wait for the zoom animation to finish first
   const t = performance.now(); let drew = false;
   while (drawQueue.length && (!drew || performance.now() - t < 12)) {
     const cv = drawQueue.shift();
@@ -1881,7 +1882,7 @@ function fillIdle() {
   idle(deadline => {
     const next = [...document.querySelectorAll("#grid .swatch")].find(cv => !cv._w && cv.parentElement.clientWidth); // hidden cards wait until shown
     if (!next) return;
-    if (deadline.timeRemaining() > 4) { drawIO && drawIO.unobserve(next); drawCard(next); shapeForScroll(true); }
+    if (deadline.timeRemaining() > 4 && !zoomBusy()) { drawIO && drawIO.unobserve(next); drawCard(next); shapeForScroll(true); }
     fillIdle();
   });
 }
@@ -1889,23 +1890,42 @@ function drawCard(cv) {
   const w = Math.round(cv.parentElement.clientWidth);
   if (!w) { cv._w = 0; queueDraw(cv); return; } // its card is hidden by a filter: draw once it's shown
   cv._w = w;
+  // Redrawn at a new size (after a zoom or resize): the old picture fades out over the new one, so the
+  // swatch sharpens up instead of popping (glitter and sparkles land in new places at each size).
+  const ghost = cv._soft && cv.width && !reduceMotion ? ghostOf(cv) : null; cv._soft = false;
   if (cv._combo) drawStack(cv, cv._combo.layers, w, Math.round(w * 260 / 240));
   else renderSwatch(cv, cv._p, w, Math.round(w * 260 / 240));
   if (cv._p) pourDrawn(cv); // its drop may be waiting to fade the swatch in (see pourIn)
+  if (ghost) ghost.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 280, easing: "ease-out", fill: "forwards" }).onfinish = () => ghost.remove();
+}
+// A still copy of a swatch's current picture, laid over it.
+function ghostOf(cv) {
+  const g = document.createElement("canvas"); g.className = "swatch-ghost"; g.setAttribute("aria-hidden", "true");
+  g.width = cv.width; g.height = cv.height;
+  try { g.getContext("2d").drawImage(cv, 0, 0); } catch (e) { return null; }
+  cv.after(g); return g;
 }
 let redrawTimer = 0;
-// After a resize, only swatches on screen are redrawn right away; the others are marked undrawn and
-// go back into the lazy queue, so resizing (or the scrollbar appearing) doesn't redraw the whole shelf.
+// After a resize or a zoom, swatches on screen are redrawn first, top to bottom, a frame's worth at a
+// time (one redraw can take tens of milliseconds, so doing them all at once froze the page); the old
+// picture stays up, scaled, until each one's turn. The others are marked undrawn and go back into the
+// lazy queue, so resizing (or the scrollbar appearing) doesn't redraw the whole shelf. Nothing is
+// redrawn while the zoom animation plays.
 function redrawCards() {
   clearTimeout(redrawTimer);
-  redrawTimer = setTimeout(() => {
-    const vh = innerHeight;
+  redrawTimer = setTimeout(function go() {
+    if (zoomBusy()) { redrawTimer = setTimeout(go, zoomBusyUntil - performance.now() + 30); return; }
+    const vh = innerHeight, now = [];
     document.querySelectorAll("#grid .swatch").forEach(cv => {
       if (!cv._w || Math.abs(cv.parentElement.clientWidth - cv._w) <= 2) return;
       const r = cv.getBoundingClientRect();
-      if (r.bottom > -40 && r.top < vh + 40) drawCard(cv); else { cv._w = 0; queueDraw(cv); }
+      cv._w = 0;
+      if (r.bottom > -40 && r.top < vh + 40) { cv._soft = true; now.push([r.top, r.left, cv]); } else queueDraw(cv);
     });
-    shapeForScroll(true); fillIdle();
+    now.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+    drawQueue.unshift(...now.map(e => e[2]));
+    if (drawQueue.length && !pumping) pumping = requestAnimationFrame(pump);
+    fillIdle();
   }, 150);
 }
 
@@ -2014,11 +2034,60 @@ function buildZoom() {
   setZoom(zoom.level, true);
 }
 function setZoom(n, quiet) {
-  const changed = n !== zoom.level; zoom.level = n;
+  const changed = n !== zoom.level;
+  const settle = changed && !quiet ? zoomFlip() : null; // note where every card is before the grid changes
+  zoom.level = n;
   $("#grid").dataset.zoom = n;
   const box = $("#zoom"); box.style.setProperty("--i", ZOOMS.indexOf(n));
   box.querySelectorAll(".z-opt").forEach(b => { const on = +b.dataset.n === n; b.setAttribute("aria-checked", on); b.tabIndex = on ? 0 : -1; });
-  if (changed && !quiet) { save(KEY.zoom, n); fitGrid(); }
+  if (changed && !quiet) { save(KEY.zoom, n); fitGrid(); settle(); }
+}
+
+/* Switching zoom animates the shelf from the old grid to the new one: each card on screen glides and
+   scales from where it was to where it lands (a "FLIP": the new layout is applied at once, then each
+   card is moved back to its old place with a transform and let go). Only transforms and opacity
+   animate, so the browser moves the cards on the graphics card without redrawing anything; the
+   swatches keep their current pictures, scaled, and are redrawn at their new size once the cards have
+   landed (see redrawCards). Card text fades in at its new size, and cards that only come into view at
+   the new zoom fade in. The card nearest the middle of the screen stays put (unless the shelf's top is
+   in view), so you stay where you were. With reduced motion, the grid just switches. */
+const ZOOM_MS = 420, ZOOM_EASE = "cubic-bezier(.2, .8, .2, 1)";
+let zoomBusyUntil = 0, zoomAnims = [];
+function zoomBusy() { return performance.now() < zoomBusyUntil; }
+function zoomFlip() {
+  const grid = $("#grid"), vh = innerHeight, wrapOf = c => c.querySelector(".swatch-wrap");
+  const near = r => r.bottom > -vh * .2 && r.top < vh * 1.2;
+  const cards = [...grid.querySelectorAll(":scope > .card:not([hidden])")].filter(wrapOf);
+  const before = new Map();
+  cards.forEach(c => { const r = wrapOf(c).getBoundingClientRect(); if (near(r)) before.set(c, r); });
+  // Stay with the card in the middle of the screen, unless the top of the shelf is showing.
+  let anchor = null, anchorY = vh / 2;
+  if (grid.getBoundingClientRect().top < 0) {
+    let best = Infinity;
+    before.forEach((r, c) => { const d = Math.abs(r.top + r.height / 2 - vh / 2); if (d < best) { best = d; anchor = c; anchorY = r.top + r.height / 2; } });
+  }
+  zoomAnims.forEach(a => a.cancel()); zoomAnims = [];
+  return () => {
+    if (anchor) { const r = wrapOf(anchor).getBoundingClientRect(), dy = r.top + r.height / 2 - anchorY; if (Math.abs(dy) > 1) scrollTo({ top: scrollY + dy, behavior: "instant" }); }
+    if (reduceMotion) return;
+    zoomBusyUntil = performance.now() + ZOOM_MS;
+    const opts = { duration: ZOOM_MS, easing: ZOOM_EASE };
+    cards.forEach(c => {
+      const a = before.get(c), cr = c.getBoundingClientRect(), b = wrapOf(c).getBoundingClientRect();
+      if (!a && !near(b)) return;
+      if (c.classList.contains("pour-wait") || (c.classList.contains("rise") && !c.classList.contains("in"))) return; // it hasn't arrived yet: it pours or rises in on its own
+      if (a) {
+        const s = a.width / b.width, ox = b.left - cr.left, oy = b.top - cr.top;
+        zoomAnims.push(c.animate([
+          { transformOrigin: `${ox}px ${oy}px`, transform: `translate(${a.left - b.left}px, ${a.top - b.top}px) scale(${s})` },
+          { transformOrigin: `${ox}px ${oy}px`, transform: "none" }], opts));
+        const text = c.querySelector(".card-text");
+        if (text && text.offsetParent) zoomAnims.push(text.animate([{ opacity: 0 }, { opacity: 1 }], { duration: ZOOM_MS * .55, delay: ZOOM_MS * .45, easing: "ease-out", fill: "backwards" }));
+      } else {
+        zoomAnims.push(c.animate([{ opacity: 0, transform: "scale(.94)" }, { opacity: 1, transform: "none" }], { ...opts, delay: ZOOM_MS * .25, fill: "backwards" }));
+      }
+    });
+  };
 }
 
 /* ---------- boot ---------- */
