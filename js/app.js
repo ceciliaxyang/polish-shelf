@@ -1055,6 +1055,13 @@ function effectsOf(p) {
   const fx = [...new Set((p.effects || [p.effect]).map(category))].filter(k => k !== "multichrome");
   return fx.length ? fx : ["shimmer"];
 }
+// What a polish is called on its card, detail view and layer: a magnetic polish's shimmer is part of being
+// magnetic, so "Magnetic · Shimmer" reads just "Magnetic" (the same for Magnetic topper), and it is left out
+// of the Shimmer filter.
+function labelsOf(p) {
+  const fx = effectsOf(p);
+  return fx.includes("magnetic") || fx.includes("magtopper") ? fx.filter(k => k !== "shimmer") : fx;
+}
 
 // Plus while the polish is off the bench; it spins away and a checkmark draws in once it's added.
 const PLUS_CHECK = `<svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><path class="plus" d="M10 3.5v13M3.5 10h13"/><path class="check" pathLength="1" d="M4.5 10.5l3.5 3.5 7.5-8"/></svg>`;
@@ -1065,7 +1072,7 @@ function renderShelf() {
   if (state.view === "combos") return renderCombos();
   const grid = $("#grid"); grid.innerHTML = "";
   if (!state.polishes.length) { grid.innerHTML = emptyMsg("Your shelf is empty", "Add your polishes to js/polishes.js and they will show up here."); return; }
-  const list = state.polishes.filter(p => !state.fx.size || effectsOf(p).some(k => state.fx.has(k)));
+  const list = state.polishes.filter(p => !state.fx.size || labelsOf(p).some(k => state.fx.has(k)));
   if (!list.length) { grid.innerHTML = emptyMsg("No matches", "No polishes with that effect yet."); return; }
   for (const p of list) {
     const card = document.createElement("article"); card.className = "card rise"; riseIn(card);
@@ -1084,10 +1091,10 @@ function renderShelf() {
     const br = document.createElement("p"); br.className = "brand"; br.textContent = p.brand || ""; br.title = br.textContent;
     const nm = document.createElement("p"); nm.className = "name"; nm.textContent = p.name || "Untitled"; nm.title = nm.textContent;
     // The effect types as one line of small text (shown at 3 per row, in place of the pills).
-    const ty = document.createElement("p"); ty.className = "card-type"; ty.textContent = effectsOf(p).map(k => EFFECTS[k] || k).join(" · "); ty.title = ty.textContent;
+    const ty = document.createElement("p"); ty.className = "card-type"; ty.textContent = labelsOf(p).map(k => EFFECTS[k] || k).join(" · "); ty.title = ty.textContent;
     title.append(br, nm, ty);
     const fx = document.createElement("div"); fx.className = "card-fx";
-    effectsOf(p).forEach(k => {
+    labelsOf(p).forEach(k => {
       const b = document.createElement("button"); b.type = "button"; b.className = "pill tiny"; b.textContent = EFFECTS[k] || k;
       b.setAttribute("aria-pressed", state.fx.has(k)); b.onclick = () => toggleFx(k);
       fx.appendChild(b);
@@ -1310,7 +1317,7 @@ function openDetail(p, card) {
   $("#mName").textContent = p.name || "Untitled";
   // Effect pills under the name (Figma "Action Header Web", node 2189:92047), same labels as on the card.
   $("#mPills").innerHTML = "";
-  effectsOf(p).forEach(k => { const t = document.createElement("span"); t.className = "pill tiny"; t.textContent = EFFECTS[k] || k; $("#mPills").appendChild(t); });
+  labelsOf(p).forEach(k => { const t = document.createElement("span"); t.className = "pill tiny"; t.textContent = EFFECTS[k] || k; $("#mPills").appendChild(t); });
   // The dialog's add button does what the swatch's + does, and shows the same + / check state.
   const addBtn = $("#mAdd");
   if (!addBtn.firstChild) addBtn.innerHTML = PLUS_CHECK;
@@ -1678,7 +1685,7 @@ function renderBench() {
     const th = document.createElement("canvas"); th.className = "layer-thumb";
     const mid = document.createElement("div"); mid.className = "layer-text";
     const nm = document.createElement("p"); nm.className = "layer-name"; nm.textContent = p ? (p.name || "Untitled") : "Removed polish";
-    const fx = document.createElement("p"); fx.className = "layer-fx"; fx.textContent = p ? effectsOf(p).map(k => EFFECTS[k] || k).join(" · ") : "No longer on your shelf";
+    const fx = document.createElement("p"); fx.className = "layer-fx"; fx.textContent = p ? labelsOf(p).map(k => EFFECTS[k] || k).join(" · ") : "No longer on your shelf";
     mid.append(nm, fx);
     const del = document.createElement("button"); del.type = "button"; del.className = "layer-del"; del.innerHTML = TRASH;
     del.setAttribute("aria-label", `Remove ${p ? p.name : "layer"}`);
@@ -1695,7 +1702,7 @@ function renderBench() {
 const GAP = 40, MAX_CARD = 336;
 // Zoom levels (see "zoom" below): swatches per row on a phone, and how much smaller desktop cards get.
 const ZOOMS = [2, 3, 4], ZOOM_SCALE = { 2: 1, 3: 2 / 3, 4: 1 / 2 };
-const zoom = { level: ZOOMS.includes(load(KEY.zoom, 3)) ? load(KEY.zoom, 3) : 3, drag: null };
+const zoom = { level: ZOOMS.includes(load(KEY.zoom, 3)) ? load(KEY.zoom, 3) : 3 };
 // Card swatches are drawn at the size they're actually shown (cards grow on bigger screens), so they
 // stay sharp instead of being stretched.
 // Cards rise into view as they're scrolled to. Cards arriving together (a new row, or the first screen)
@@ -1835,13 +1842,11 @@ let shapeRaf = 0;
 addEventListener("scroll", () => { if (!shapeRaf) shapeRaf = requestAnimationFrame(() => { shapeRaf = 0; shapeForScroll(); }); }, { passive: true });
 
 /* ---------- zoom ---------- */
-// The zoom control is a floating slider at the bottom of the screen: 2 (big, left), 3 (default) or 4
-// (dense, right) swatches per row on a phone. Drag the knob along the track (it snaps to the nearest
-// size and the shelf follows as you drag), tap a spot on the track, or tap the icon at either end to step
-// one size that way. Each icon is a grid of dots (droplet swatches) or rounded squares (rectangles). At 3
-// per row the cards show the name and effect types; at 4, only the swatch (no + button: add from the
+// The zoom control is a floating bar at the bottom of the screen with three icons: 2 (big), 3 (default) and
+// 4 (dense) swatches per row on a phone. Tap one to switch; the selected one sits on a dark circle. Arrow
+// keys move between them. Each icon is a grid of dots (droplet swatches) or rounded squares (rectangles).
+// At 3 per row the cards show the name and effect types; at 4, only the swatch (no + button: add from the
 // polish's page). The choice is kept in this browser.
-const ZOOM_STOPS = [2, 3, 4]; // left to right along the track
 function zoomIcon(n) {
   const icon = document.createElement("span"); icon.className = "zi"; icon.style.setProperty("--n", n); icon.dataset.n = n; icon.setAttribute("aria-hidden", "true");
   for (let i = 0; i < n * n; i++) icon.appendChild(document.createElement("i"));
@@ -1850,42 +1855,28 @@ function zoomIcon(n) {
 function buildZoom() {
   const box = $("#zoom"); box.innerHTML = "";
   box.classList.toggle("dots", typeof DROPS !== "undefined" && DROPS);
-  const end = (n, step, label) => {
-    const b = document.createElement("button"); b.type = "button"; b.className = "z-end"; b.setAttribute("aria-label", label);
+  box.appendChild(Object.assign(document.createElement("span"), { className: "z-thumb" }));
+  ZOOMS.forEach(n => {
+    const b = document.createElement("button"); b.type = "button"; b.className = "z-opt"; b.dataset.n = n;
+    b.setAttribute("role", "radio"); b.setAttribute("aria-label", `${n} per row`);
     b.appendChild(zoomIcon(n));
-    b.onclick = () => setZoom(ZOOM_STOPS[Math.max(0, Math.min(ZOOM_STOPS.length - 1, ZOOM_STOPS.indexOf(zoom.level) + step))]);
-    return b;
-  };
-  const track = document.createElement("div"); track.className = "z-track"; track.id = "zoomTrack"; track.tabIndex = 0;
-  track.setAttribute("role", "slider"); track.setAttribute("aria-label", "Swatches per row");
-  track.setAttribute("aria-valuemin", 2); track.setAttribute("aria-valuemax", 4);
-  track.innerHTML = '<span class="z-line"></span><span class="z-knob"></span>';
-  box.append(end(2, -1, "Bigger swatches"), track, end(4, 1, "Smaller swatches"));
-  // Which stop is nearest the finger.
-  const stopAt = x => { const r = track.getBoundingClientRect(); return ZOOM_STOPS[Math.round(Math.max(0, Math.min(1, (x - r.left) / r.width)) * (ZOOM_STOPS.length - 1))]; };
-  track.addEventListener("pointerdown", e => {
-    if (e.button > 0) return;
-    zoom.drag = e.pointerId; box.classList.add("dragging");
-    try { track.setPointerCapture(e.pointerId); } catch (err) {}
-    setZoom(stopAt(e.clientX));
+    b.onclick = () => setZoom(n);
+    box.appendChild(b);
   });
-  track.addEventListener("pointermove", e => { if (zoom.drag === e.pointerId) setZoom(stopAt(e.clientX)); });
-  const up = e => { if (zoom.drag === e.pointerId) { zoom.drag = null; box.classList.remove("dragging"); } };
-  track.addEventListener("pointerup", up); track.addEventListener("pointercancel", up);
-  track.addEventListener("keydown", e => {
-    const step = e.key === "ArrowRight" || e.key === "ArrowUp" ? 1 : e.key === "ArrowLeft" || e.key === "ArrowDown" ? -1 : 0;
+  box.addEventListener("keydown", e => {
+    const step = e.key === "ArrowRight" || e.key === "ArrowDown" ? 1 : e.key === "ArrowLeft" || e.key === "ArrowUp" ? -1 : 0;
     if (!step) return;
     e.preventDefault();
-    setZoom(ZOOM_STOPS[Math.max(0, Math.min(ZOOM_STOPS.length - 1, ZOOM_STOPS.indexOf(zoom.level) + step))]);
+    setZoom(ZOOMS[Math.max(0, Math.min(ZOOMS.length - 1, ZOOMS.indexOf(zoom.level) + step))]);
+    box.querySelector('[aria-checked="true"]').focus();
   });
   setZoom(zoom.level, true);
 }
 function setZoom(n, quiet) {
   const changed = n !== zoom.level; zoom.level = n;
   $("#grid").dataset.zoom = n;
-  const track = $("#zoomTrack");
-  track.style.setProperty("--p", ZOOM_STOPS.indexOf(n) / (ZOOM_STOPS.length - 1));
-  track.setAttribute("aria-valuenow", n); track.setAttribute("aria-valuetext", `${n} per row`);
+  const box = $("#zoom"); box.style.setProperty("--i", ZOOMS.indexOf(n));
+  box.querySelectorAll(".z-opt").forEach(b => { const on = +b.dataset.n === n; b.setAttribute("aria-checked", on); b.tabIndex = on ? 0 : -1; });
   if (changed && !quiet) { save(KEY.zoom, n); fitGrid(); }
 }
 
