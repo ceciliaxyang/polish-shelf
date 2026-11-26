@@ -1879,6 +1879,13 @@ function shelfBackdrop() {
   const mt = Math.min(m, Math.floor(Math.max(0, -pr.top) * S)), mb = Math.min(m, Math.floor(Math.max(0, pr.bottom - vh) * S));
   cv.width = w - 2 * m; cv.height = h - 2 * m + mt + mb;
   cv.getContext("2d").putImageData(img, -m, mt - m);
+  // Above the top of the page (a polish opened with the shelf at the top, or Safari's bounce) there's no page
+  // to blur, so Safari shows the page's background color under the status bar. While the polish page is up
+  // that color is the backdrop's top edge as it looks under the wash, so the status bar area matches it.
+  let r = 0, gg = 0, b = 0; const row = (m - mt) * w * 4;
+  for (let x = m; x < w - m; x++) { const o = row + x * 4; r += d[o]; gg += d[o + 1]; b += d[o + 2]; }
+  const n = w - 2 * m, washed = c => Math.round(255 * .72 + (c / n) * .28);
+  document.documentElement.style.setProperty("--detail-top", `rgb(${washed(r)}, ${washed(gg)}, ${washed(b)})`);
   Object.assign(cv.style, { left: -pr.left + "px", top: -pr.top - mt / S + "px", width: vw + "px", height: vh + (mt + mb) / S + "px" }); // (the picture is a few pixels larger: drawn just squeezed)
 }
 addEventListener("resize", () => { if (document.body.classList.contains("detail-open")) shelfBackdrop(); });

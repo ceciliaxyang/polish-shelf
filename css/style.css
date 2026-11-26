@@ -618,6 +618,10 @@ body.detail-open .shelf-blur { opacity: 1; visibility: visible; transition: opac
    rest of the dialog, so the dialog reads as running all the way to the top of the screen. */
 .page::after { content: ""; position: absolute; inset: 0; z-index: 11; background-image: linear-gradient(rgba(255, 255, 255, .72), rgba(255, 255, 255, .72)); opacity: 0; pointer-events: none; transition: opacity .25s ease; }
 body.detail-open .page::after { opacity: 1; }
+/* What Safari shows above the page's top (under the status bar) is the page's background: while the polish
+   page is up it's the backdrop's washed top edge (--detail-top, set by shelfBackdrop), fading in with the
+   wash and going at once on close, like it. */
+html:root:has(> body.detail-open) { background-color: var(--detail-top, #fff); transition: background-color .25s ease; }
 .modal-blur { position: fixed; inset: 0; }
 .modal-head { opacity: 0; transition: opacity .3s ease; }
 .modal.open .modal-head { opacity: 1; }
