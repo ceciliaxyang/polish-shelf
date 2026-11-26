@@ -334,6 +334,9 @@ body.detail-open .mini-nav { opacity: 0; visibility: hidden; pointer-events: non
   .combo-art .swatch-wrap { border-radius: 22%; }
 }
 .zoom { transition: opacity .2s ease, visibility 0s; }
+/* With the zoom bar gone, the Favorite combos button glides to the middle of the dock (centered on screen). */
+.combo-fab { transition: background .15s ease, left .35s cubic-bezier(.2, .8, .2, 1), translate .35s cubic-bezier(.2, .8, .2, 1); }
+.view-combos .combo-fab { left: 50%; translate: -50% 0; }
 .view-combos .zoom { opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .2s ease, visibility 0s .2s; }
 /* Dark combos page (a developer setting; Figma node 2406:3849): black page, #f7f7f7 title and names, #8c8c8c
    polish lists, and the Favorite combos button as grey glass. Only the combos page changes. */
