@@ -121,7 +121,9 @@ button, input, select { font: inherit; color: inherit; }
    glass (below). Shown by app.js (body.show-mini), lined up with the shelf column. */
 .mini-nav { position: fixed; z-index: 40; top: 0; left: 0; width: 100%; padding-top: calc(16px + env(safe-area-inset-top));
   pointer-events: none; opacity: 0; transform: translateY(-12px); visibility: hidden;
-  transition: opacity .25s ease, transform .3s cubic-bezier(.2, .8, .2, 1), visibility 0s linear .3s; }
+  transition: opacity .25s ease, transform .3s cubic-bezier(.2, .8, .2, 1), visibility 0s linear .3s;
+  will-change: transform; } /* its own layer for good, so Safari doesn't leave a stale copy of the pills when it hides
+  (not will-change: opacity, which would cut the pills' backdrop blur off from the swatches under them) */
 body.show-mini .mini-nav { opacity: 1; transform: none; visibility: visible; transition: opacity .25s ease, transform .3s cubic-bezier(.2, .8, .2, 1), visibility 0s; }
 .mini-row { display: flex; gap: 8px; margin: -12px -40px 0; padding: 12px 40px 16px; overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain; pointer-events: auto; }
 .mini-row::-webkit-scrollbar { display: none; }

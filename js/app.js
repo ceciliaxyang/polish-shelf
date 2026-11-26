@@ -1219,6 +1219,7 @@ function setView(v) {
   document.documentElement.classList.toggle("view-combos", v === "combos");
   $("#grid").dataset.zoom = zoomLevel();
   fitGrid();
+  if (miniReady) syncMiniNav(); // the mini nav belongs to the shelf: hide or show it for the new view
 }
 function syncComboBtn() {
   const btn = $("#comboBtn"), none = !combos.length;
@@ -2774,9 +2775,19 @@ function syncMiniNav() {
   document.body.classList.toggle("show-mini", show);
   miniNav.inert = !show;
 }
-let miniRaf = 0;
-addEventListener("scroll", () => { if (!miniRaf) miniRaf = requestAnimationFrame(() => { miniRaf = 0; syncMiniNav(); }); }, { passive: true });
+// Checked on every scroll event, not batched into a requestAnimationFrame: Safari can leave a requested frame
+// unrun (a tab or window in the background, momentum scrolling), and a batch flag that never cleared ignored
+// every later scroll, so the mini nav stayed up over the headline. The check is one rect read and returns early
+// when nothing changes. scrollend and an IntersectionObserver on the Brands row back it up, so the end of a
+// fast or momentum scroll back to the top always hides it.
+addEventListener("scroll", syncMiniNav, { passive: true });
+addEventListener("scrollend", syncMiniNav);
+addEventListener("pageshow", syncMiniNav);
+document.addEventListener("visibilitychange", syncMiniNav);
+{ const rows = filtersEl.querySelectorAll(".filter-row");
+  new IntersectionObserver(syncMiniNav, { rootMargin: "16px 0px 0px 0px" }).observe(rows[rows.length - 1] || filtersEl); }
 addEventListener("resize", () => { placeMiniNav(); syncMiniNav(); });
+var miniReady = true; // var, so setView (which can run before this point) sees undefined rather than throwing
 // The shelf column narrows when the Layers pane opens; keep the mini nav over it.
 new ResizeObserver(placeMiniNav).observe($("main"));
 syncMiniNav();
