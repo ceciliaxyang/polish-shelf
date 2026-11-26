@@ -1104,7 +1104,9 @@ $("#combosClose").onclick = () => closeCombos();
 const SHEET = { up: 520, down: 420, shelfY: 0, Z: 45 }; // above the filter bar (40), below the Layers pane (60)
 function freezePage() {
   const page = $(".page"), copy = page.cloneNode(true), wrap = document.createElement("div");
-  copy.querySelectorAll("[id]").forEach(e => e.removeAttribute("id")); // the real elements keep theirs
+  // The real elements keep their ids. Ids inside the droplets' SVG stay: their gloss, rim and shadow point
+  // to them (an SVG url(#id) finds the live twin, which is identical), and without them the copy goes matte.
+  copy.querySelectorAll("[id]").forEach(e => { if (!e.closest("svg")) e.removeAttribute("id"); });
   const from = page.querySelectorAll("canvas"), to = copy.querySelectorAll("canvas");
   from.forEach((c, i) => {
     const r = c.getBoundingClientRect();
@@ -1173,6 +1175,8 @@ async function openCombos() {
     await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
     sheet = freezePage(); sheet.style.zIndex = SHEET.Z + 2; sheet.style.transform = "translateY(100%)";
     body.append(sheet);
+    // One frame with the copy in place below the screen, so painting it doesn't eat the start of the slide.
+    await new Promise(r => requestAnimationFrame(r));
   } catch (e) { under.remove(); dim.remove(); if (sheet) sheet.remove(); throw e; }
   dim.animate([{ opacity: 0 }, { opacity: 1 }], { duration: SHEET.up, easing: "ease-out", fill: "forwards" });
   const move = sheet.animate([{ transform: "translateY(100%)" }, { transform: "none" }], { duration: SHEET.up, easing: "cubic-bezier(.2, .8, .2, 1)", fill: "forwards" });
