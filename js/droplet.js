@@ -57,7 +57,9 @@ function dropShape(key, vh) {
   const shape = { d: path(1, 1), cx: 50 - mx * k, cy: vh / 2 - my * k, vh, R, pts,
     // The outline in CSS pixels for an element w x h, as a clip-path. A clip-path (unlike a mask image)
     // applies on the very first paint and is cheap for the browser to keep applying while the swatch animates.
-    clip: (w, h) => `path("${path(w / 100, h / vh)}")` };
+    // With `inset`, the outline is pulled in by that many pixels all round.
+    clip: (w, h, inset = 0) => inset ? `path("${dropPath(pts.map(([x, y]) => [inset + x * (w - 2 * inset) / 100, inset + y * (h - 2 * inset) / vh]))}")`
+      : `path("${path(w / 100, h / vh)}")` };
   dropCache.set(id, shape);
   return shape;
 }
@@ -84,8 +86,14 @@ function dropMorph(s, push, w, h) {
 
 // Keep each drop's clip-path in step with its box's size (cards resize with the zoom and the screen).
 function dropClip(box) {
-  const w = box.clientWidth, h = box.clientHeight;
-  if (w && h && box._drop) box.style.setProperty("--drop-clip", box._drop.clip(w, h));
+  // The exact layout size, fractions included, and unaffected by any transform (clientWidth rounds to whole
+  // pixels, which left the swatch's edge up to a pixel off the gloss and rim drawn over it, so a sliver of
+  // the swatch showed past them).
+  const cs = getComputedStyle(box), w = parseFloat(cs.width) || box.clientWidth, h = parseFloat(cs.height) || box.clientHeight;
+  // The swatch is clipped .3px inside the outline its gloss and rim are drawn to. Where both edges were
+  // the same, their anti-aliased pixels stacked and the swatch (a combo's dark base, say) showed through
+  // the rim as a dark hairline; this way the very edge is the rim's alone.
+  if (w && h && box._drop) box.style.setProperty("--drop-clip", box._drop.clip(w, h, .3));
 }
 const dropRO = new ResizeObserver(entries => entries.forEach(e => dropClip(e.target)));
 

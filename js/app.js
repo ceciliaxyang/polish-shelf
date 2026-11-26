@@ -1101,10 +1101,12 @@ $("#combosClose").onclick = () => closeCombos();
 // of everything, the combos are built and drawn underneath, and a copy of them slides up over the dimmed
 // shelf; then the copies go, leaving the live combos page exactly where the sheet stopped. Closing does
 // the reverse: the shelf comes back underneath (where you left it) and a copy of the combos drops away.
-const SHEET = { up: 520, down: 420, shelfY: 0, Z: 45 }; // above the filter bar (40), below the Layers pane (60)
+const SHEET = { up: 580, down: 420, shelfY: 0, Z: 45 }; // above the filter bar (40), below the Layers pane (60)
 function freezePage() {
   const page = $(".page"), copy = page.cloneNode(true), wrap = document.createElement("div");
-  copy.querySelectorAll("[id]").forEach(e => e.removeAttribute("id")); // the real elements keep theirs
+  // The real elements keep their ids. Ids inside the droplets' SVG stay: their gloss, rim and shadow point
+  // to them (an SVG url(#id) finds the live twin, which is identical), and without them the copy goes matte.
+  copy.querySelectorAll("[id]").forEach(e => { if (!e.closest("svg")) e.removeAttribute("id"); });
   const from = page.querySelectorAll("canvas"), to = copy.querySelectorAll("canvas");
   from.forEach((c, i) => {
     const r = c.getBoundingClientRect();
@@ -1142,6 +1144,8 @@ function revealNow() {
   });
   shapeForScroll(true); // magnetic swatches take their resting shape for where they sit, without easing into it
 }
+// Pins the copies and dim to the part of the page on screen (they scroll with it; see .page-ghost).
+function pinToScreen(...els) { els.forEach(el => { el.style.top = scrollY + "px"; }); }
 function sheetDim(z) { const d = document.createElement("div"); d.className = "sheet-dim"; d.style.zIndex = z; return d; }
 // The shelf's cards (swatches already drawn) are set aside while the combos are up and put back on close, so
 // returning is instant instead of redrawing every swatch. Nothing on the shelf can change meanwhile.
@@ -1164,18 +1168,22 @@ async function openCombos() {
   if (reduceMotion) return showView("combos", 0);
   const body = document.body, under = freezePage(), dim = sheetDim(SHEET.Z + 1);
   under.style.zIndex = SHEET.Z; dim.style.opacity = 0;
+  pinToScreen(under, dim);
   body.append(under, dim); // the shelf, frozen, covers the page while it changes underneath
   let sheet = null;
   try {
     showView("combos", 0);
+    pinToScreen(under, dim); // the page is now at the top
     revealNow();
     // Two frames for the moving swatches (magnetic, shimmer...) to start, so the copy shows them as they'll be.
     await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
     sheet = freezePage(); sheet.style.zIndex = SHEET.Z + 2; sheet.style.transform = "translateY(100%)";
-    body.append(sheet);
+    pinToScreen(sheet); body.append(sheet);
+    // One frame with the copy in place below the screen, so painting it doesn't eat the start of the slide.
+    await new Promise(r => requestAnimationFrame(r));
   } catch (e) { under.remove(); dim.remove(); if (sheet) sheet.remove(); throw e; }
   dim.animate([{ opacity: 0 }, { opacity: 1 }], { duration: SHEET.up, easing: "ease-out", fill: "forwards" });
-  const move = sheet.animate([{ transform: "translateY(100%)" }, { transform: "none" }], { duration: SHEET.up, easing: "cubic-bezier(.2, .8, .2, 1)", fill: "forwards" });
+  const move = sheet.animate([{ transform: "translateY(100%)" }, { transform: "none" }], { duration: SHEET.up, easing: "cubic-bezier(.32, .72, 0, 1)", fill: "forwards" }); // iOS's sheet curve: visibly rises from the bottom
   afterSheet(SHEET.up, move, under, dim);
   // Once it lands, the copy fades into the live page (whose swatches have started moving) instead of
   // swapping in one frame.
@@ -1187,8 +1195,8 @@ async function closeCombos() {
   if (reduceMotion) return showView("shelf", SHEET.shelfY);
   const sheet = freezePage(), dim = sheetDim(SHEET.Z + 1);
   sheet.style.zIndex = SHEET.Z + 2;
-  document.body.append(dim, sheet);
-  try { showView("shelf", SHEET.shelfY); } catch (e) { sheet.remove(); dim.remove(); throw e; }
+  pinToScreen(dim, sheet); document.body.append(dim, sheet);
+  try { showView("shelf", SHEET.shelfY); pinToScreen(dim, sheet); } catch (e) { sheet.remove(); dim.remove(); throw e; }
   await new Promise(r => requestAnimationFrame(r)); // the shelf paints under the copy before it drops
   dim.animate([{ opacity: 1 }, { opacity: 0 }], { duration: SHEET.down, easing: "ease-in", fill: "forwards" });
   const move = sheet.animate([{ transform: "none" }, { transform: "translateY(100%)" }], { duration: SHEET.down, easing: "cubic-bezier(.4, 0, .7, .2)", fill: "forwards" });
