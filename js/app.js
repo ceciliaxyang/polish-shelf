@@ -1104,8 +1104,14 @@ function syncComboBtn() {
   if (none && state.view === "combos") { setView("shelf"); renderShelf(); }
 }
 function renderComboThumbs() {
+  if (renderComboThumbs.hold) return; // a combo is still being saved; the button updates when it's done
   syncComboBtn();
-  if (renderComboThumbs.hold) return; // a saved swatch is still flying in; it updates when it lands
+  // The count after the label ("Combos 5"); it ticks up (a small pop) when it changes.
+  const count = $("#comboCount"), n = String(combos.length);
+  if (count.textContent !== n) {
+    const was = count.textContent; count.textContent = n;
+    if (was && !reduceMotion) count.animate([{ transform: "translateY(6px) scale(.8)", opacity: 0 }, { transform: "none", opacity: 1 }], { duration: 320, easing: "cubic-bezier(.2, .8, .2, 1)" });
+  }
   const picks = combos.slice(-2).reverse().map(c => ({ layers: c.layers }));
   for (const p of state.polishes) { if (picks.length >= 2) break; picks.push({ p }); }
   [".tp-front", ".tp-back"].forEach((sel, i) => {
@@ -1390,63 +1396,47 @@ function comboName(layers) {
   return out;
 }
 function saveCombo() {
-  if (liveLayers(bench.layers).length < 2 || benchCombo()) return;
+  if (liveLayers(bench.layers).length < 2 || benchCombo() || renderComboThumbs.hold) return;
   const c = { id: newId(), name: comboName(bench.layers), layers: bench.layers.map(l => ({ pid: l.pid, coats: l.coats })), createdAt: new Date().toISOString() };
+  // The Combos button keeps showing the old combos until the pane is gone (see below).
+  renderComboThumbs.hold = true;
   combos.push(c); saveCombos();
-  // Like checking out a cart: the combo's swatch lifts off the Layers preview and flies into the Combos
-  // button while the Layers pane closes behind it (and its layers clear, as with Clear).
-  flyToCombos(c.layers);
-  clearBench();
-  if (state.view === "combos") renderShelf();
+  saveSequence(() => { if (state.view === "combos") renderShelf(); });
+}
+// Saving, in three beats, each moving only transform and opacity (nothing is laid out again until the end):
+// 1. the button reads "Saving…" for a moment;
+// 2. the Layers pane slides out to the right and disappears (on phones too, from wherever the sheet is);
+// 3. the Combos button grows a little and settles as the new combo appears in its thumbnails and the count
+//    ticks up.
+// Only then does the shelf take back the pane's room and the dock recenter, and the layers clear (as with Clear).
+function saveSequence(after) {
+  const b = $("#bench"), save = $("#saveCombo"), btn = $("#comboBtn");
+  const T = reduceMotion ? [0, 0, 0] : [550, 420, 460];
+  b.inert = true; // nothing in the pane can be pressed while it saves
+  save.textContent = "Saving…"; save.classList.add("saving");
+  setTimeout(() => {
+    if (!reduceMotion) {
+      const cur = getComputedStyle(b).transform;
+      b.style.transition = `transform ${T[1]}ms cubic-bezier(.5, 0, .75, 0), opacity ${T[1]}ms ease-in`;
+      b.style.transform = "translateX(105%) " + (cur === "none" ? "" : cur);
+      b.style.opacity = "0";
+    }
+    setTimeout(() => {
+      b.hidden = true;
+      renderComboThumbs.hold = false; renderComboThumbs();
+      if (!reduceMotion) btn.animate([{ transform: "scale(1)" }, { transform: "scale(1.14)", offset: .4 }, { transform: "scale(.97)", offset: .75 }, { transform: "scale(1)" }], { duration: T[2], easing: "cubic-bezier(.2, .8, .2, 1)" });
+      setTimeout(() => {
+        // Hand the pane back to its normal closed state (hidden, no inline styles) and clear the layers.
+        b.style.transition = "none"; b.style.transform = ""; b.style.opacity = ""; b.classList.remove("open", "expanded");
+        void b.offsetWidth; b.style.transition = "";
+        b.inert = false; save.classList.remove("saving");
+        clearBench();
+        after();
+      }, T[2]);
+    }, T[1]);
+  }, T[0]);
 }
 $("#saveCombo").onclick = () => { const saved = benchCombo(); saved ? deleteCombo(saved) : saveCombo(); };
-// Like dropping something into a shopping cart: a copy of the layered swatch leaves the Layers preview
-// (or the phone's peek bar) and, in one smooth arc, shrinks into the Combos button, which gives a little
-// bump as it lands and then shows the new combo in its thumbnails. The Layers pane closes as it flies, which
-// moves the button (the dock recenters), so the flight steers toward wherever the button is on every frame.
-function flyToCombos(layers) {
-  // The first save is what makes the button appear: show it right away (no rise, which would move the
-  // landing spot) so it's there to catch the swatch.
-  syncComboBtn(); $("#comboBtn").classList.remove("rise-in");
-  const btn = $("#comboBtn"), thumbs = $("#comboThumbs"), tr = thumbs.getBoundingClientRect();
-  const src = [$("#stage"), $("#peekMini")].find(el => { const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0; });
-  if (reduceMotion || !src || !tr.width) return;
-  const from = src.getBoundingClientRect();
-  const cv = document.createElement("canvas");
-  if (!drawStack(cv, layers, Math.round(from.width), Math.round(from.height))) return;
-  const radius = DROPS ? 0 : parseFloat(getComputedStyle(src).borderTopLeftRadius) || 12;
-  cv.className = "fly-swatch";
-  if (DROPS) cv.style.clipPath = dropShape(dropKeyFor(layers), 100 * from.height / from.width).clip(from.width, from.height);
-  Object.assign(cv.style, { left: from.left + "px", top: from.top + "px", width: from.width + "px", height: from.height + "px", borderRadius: radius + "px" });
-  document.body.appendChild(cv);
-  renderComboThumbs.hold = true;
-  const s = tr.width / from.width;
-  const end = DROPS ? 0 : 4 / s; // the thumbnails' 4px corners, measured before scaling
-  // One continuous motion that heads for the button from the first frame: a curve that rises toward the
-  // button's height first and then sweeps across into it (never above it and back), with a single ease over
-  // the whole flight. It shrinks at an even visual rate (geometrically) while its corners round down to the
-  // thumbnail's.
-  const ease = cubicBezier(.35, 0, .25, 1), DUR = 650, t0 = performance.now();
-  const step = now => {
-    const t = ease(Math.min(1, (now - t0) / DUR)), u = 1 - t, r = thumbs.getBoundingClientRect();
-    const dx = r.left + r.width / 2 - (from.left + from.width / 2), dy = r.top + r.height / 2 - (from.top + from.height / 2);
-    const x = 2 * u * t * dx * .3 + t * t * dx, y = 2 * u * t * dy + t * t * dy;
-    cv.style.transform = `translate(${x}px, ${y}px) scale(${Math.pow(s, t)})`;
-    cv.style.borderRadius = radius + (end - radius) * t + "px"; cv.style.opacity = 1 - .1 * t;
-    if (now - t0 < DUR) return requestAnimationFrame(step);
-    cv.remove();
-    renderComboThumbs.hold = false; renderComboThumbs();
-    btn.animate([{ transform: "scale(1)" }, { transform: "scale(1.1)" }, { transform: "scale(.97)" }, { transform: "scale(1)" }], { duration: 420, easing: "cubic-bezier(.2, .8, .2, 1)" });
-  };
-  requestAnimationFrame(step);
-}
-// A CSS-style cubic-bezier easing curve as a function of time (0 to 1), solved by Newton's method.
-function cubicBezier(x1, y1, x2, y2) {
-  const f = (a, b, t) => ((1 - 3 * b + 3 * a) * t + (3 * b - 6 * a)) * t * t + 3 * a * t;
-  const df = (a, b, t) => 3 * (1 - 3 * b + 3 * a) * t * t + 2 * (3 * b - 6 * a) * t + 3 * a;
-  return x => { let t = x; for (let i = 0; i < 8; i++) { const d = df(x1, x2, t); if (Math.abs(d) < 1e-6) break; t -= (f(x1, x2, t) - x) / d; } return f(y1, y2, Math.max(0, Math.min(1, t))); };
-}
-
 /* ---------- detail view ---------- */
 // Tapping a swatch opens the detail view over a blurred shelf (Figma "Polish detail / Desktop (1440)",
 // node 2398:3167): the live swatch grows out of its card into a centered hero, with "Brand — Name" in

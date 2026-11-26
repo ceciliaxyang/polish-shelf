@@ -172,6 +172,9 @@ body.detail-open .mini-nav { opacity: 0; visibility: hidden; pointer-events: non
 .combo-fab[hidden] { display: none; }
 .combo-fab:hover { background: rgba(255, 255, 255, .5); }
 .combo-fab[aria-pressed="true"] { background: #222; color: #fff; }
+/* The number of saved combos after the label, lighter, in even-width digits so it doesn't shift as it changes. */
+.combo-count { display: inline-block; margin-left: -1px; color: #8a8a8a; font-variant-numeric: tabular-nums; }
+.combo-fab[aria-pressed="true"] .combo-count { color: rgba(255, 255, 255, .6); }
 /* On phones the zoom bar and the pill are centered together as one group so the pill stays inside the screen. */
 @media (max-width: 600px) {
   .dock { display: flex; gap: 8px; }
@@ -370,6 +373,8 @@ body.detail-open .mini-nav { opacity: 0; visibility: hidden; pointer-events: non
 /* The Save combo pill under the layers (Figma node 2200:97821). */
 .save-combo { flex-shrink: 0; align-self: flex-start; min-width: 56px; padding: 12px 16px; border: 0; border-radius: 32px; background: var(--text); color: #fff; font-size: 12px; line-height: 16px; font-weight: 500; cursor: pointer; transition: opacity .15s ease; }
 .save-combo:hover { background: #000; }
+.save-combo.saving { cursor: default; animation: saving 1s ease-in-out infinite alternate; }
+@keyframes saving { to { opacity: .55; } }
 /* Save combo rises and fades in when the second layer arrives. */
 .save-combo.rise-in { animation: save-in .45s cubic-bezier(.2, .8, .2, 1) both; }
 .combo-fab.rise-in { animation: save-in .45s cubic-bezier(.2, .8, .2, 1) both; }
@@ -526,8 +531,6 @@ body.detail-open .page::after { opacity: 1; }
 }
 .swatch[role="button"] { cursor: pointer; }
 
-/* The swatch that flies into the Favorite combos button when a combo is saved (see flyToCombos). */
-.fly-swatch { position: fixed; z-index: 200; pointer-events: none; transform-origin: 50% 50%; box-shadow: 0 12px 32px rgba(0, 0, 0, .18); will-change: transform; }
 
 /* ---------- droplet swatches (see js/droplet.js) ---------- */
 /* As droplets, a swatch box loses its card (fill, rounded corners, clipping): its canvas and the gloss
@@ -550,7 +553,6 @@ body.detail-open .page::after { opacity: 1; }
 .drops .peek-thumbs .drop-thumb { width: 24px; height: 24px; margin-left: -6px; }
 .drops .zi canvas { border-radius: 50% !important; }
 .drops .tp { box-shadow: none; }
-.drops .fly-swatch { box-shadow: none; filter: drop-shadow(0 10px 18px rgba(0, 0, 0, .18)); }
 
 /* Developer settings (five taps on the title) */
 .dev-panel { position: fixed; z-index: 300; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom)); translate: -50% 0; width: min(360px, calc(100% - 32px));
