@@ -329,14 +329,23 @@ function pourStart(card, delay, dur) {
   fade(wrap.querySelector(".swatch-btn"), .45);
   fade(card.querySelector(".card-text"), .35, { opacity: 0, transform: "translateY(6px)" }, { opacity: 1, transform: "none" }, 700);
   // The real swatch fades in once the drop has mostly landed and the swatch has been drawn, whichever is later.
-  setTimeout(() => { card._pourLanded = true; pourLight(card); }, delay + dur * .28);
+  // On a slow computer the page's own frames, which draw the drop's outline, can fall far behind the clock
+  // (fading the swatch in by the clock alone then showed it full size around a drop that was still small),
+  // so it also waits, if need be, until a frame has drawn the drop to within 300ms of that point. (On a
+  // computer that keeps up, the drop is drawn within that already and nothing changes.)
+  const landAt = delay + dur * .28;
+  const landed = () => {
+    if (!card.isConnected || anim.playState === "idle") return;
+    if ((anim.currentTime || 0) >= landAt - 300) { card._pourLanded = true; pourLight(card); } else requestAnimationFrame(landed);
+  };
+  setTimeout(landed, landAt);
   anim.onfinish = () => { card._pourSettled = true; pourDone(card); };
 }
 // app.js calls this after drawing a swatch.
 function pourDrawn(cv) { const card = cv.closest(".card"); if (card && card.classList.contains("pouring")) pourLight(card); }
 function pourLight(card) {
   const cv = card.querySelector("canvas.swatch");
-  if (!card._pourLanded || !cv._w || card.classList.contains("pour-lit")) return;
+  if (!card._pourLanded || !cv._w || cv._pending || card.classList.contains("pour-lit")) return; // _pending: its picture is still being drawn (app.js)
   card.classList.add("pour-lit");
   cv.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 650, easing: "cubic-bezier(.4, 0, .2, 1)" }).onfinish = () => { card._pourShown = true; pourDone(card); };
 }

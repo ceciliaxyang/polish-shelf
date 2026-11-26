@@ -241,7 +241,7 @@ const POLISHES = [
   {
     id: "cracked-hibernaty",
     name: "Hibernaty",
-    desc: "Bronze magnetic topper.",
+    desc: "Sheer bronze magnetic topper with a rose-pink to copper cat eye flash.",
     brand: "Cracked Polish",
     effect: "sheermag",
     effects: ["magtopper"],

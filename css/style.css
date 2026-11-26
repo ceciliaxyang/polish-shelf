@@ -6,6 +6,14 @@
 @font-face { font-family: "Instrument Serif"; font-style: normal; font-weight: 400; font-display: swap;
   src: url("../fonts/instrument-serif-latin-ext.woff2") format("woff2");
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+/* EB Garamond (SIL Open Font License), self-hosted: the serif fallback if Instrument Serif can't load.
+   Not preloaded, so browsers only fetch it when it's actually needed. */
+@font-face { font-family: "EB Garamond"; font-style: normal; font-weight: 400; font-display: swap;
+  src: url("../fonts/eb-garamond-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "EB Garamond"; font-style: normal; font-weight: 400; font-display: swap;
+  src: url("../fonts/eb-garamond-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF; }
 /* Inter (SIL Open Font License), self-hosted: the fallback where SF Pro Display and the Apple system font
    aren't available (Windows, Android). Variable weight, 400 to 600. Named "Inter Fallback" so the font check
    in index.html can still ask for an installed "Inter" by its own name. */
@@ -54,7 +62,7 @@ button, input, select { font: inherit; color: inherit; }
      washed backdrop runs continuously underneath it. */
   body.detail-open .bench { --bench-bg: transparent; border-left-color: transparent; }
   /* Layers title in the polish page's title style (Instrument Serif 40 on 40, -1.5px, #222). */
-  .bench .bench-title { font-family: "Instrument Serif", Georgia, serif; font-weight: 400; letter-spacing: -1.5px; color: #222; padding: 0 0 12px; }
+  .bench .bench-title { font-family: "Instrument Serif", "EB Garamond", serif; font-weight: 400; letter-spacing: -1.5px; color: #222; padding: 0 0 12px; }
   /* Over the detail page, the pane's top row moves up to the buttons' row (32px down, 40px tall), so the
      title and Clear line up with add / link / close. */
   .bench { transition: transform .45s cubic-bezier(.2, .8, .2, 1), --bench-bg .35s ease, border-color .35s ease, padding-top .35s cubic-bezier(.2, .8, .2, 1); }
@@ -84,7 +92,7 @@ button, input, select { font: inherit; color: inherit; }
 /* Title in Instrument Serif, 84px on 84px with -3px tracking, at the top of the page's own padding (64px down)
    and 32px above the filters (Figma node 2384:82780). It scales down with the window, to 48px on a phone.
    Favorite combos keeps the roomier 64px below the title. */
-.shelf-title { flex: 1; min-width: 0; margin: 0; font-family: "Instrument Serif", Georgia, serif; font-size: clamp(48px, 4vw + 27px, 84px); line-height: 1; font-weight: 400; letter-spacing: -.0357em; color: #222; }
+.shelf-title { flex: 1; min-width: 0; margin: 0; font-family: "Instrument Serif", "EB Garamond", serif; font-size: clamp(48px, 4vw + 27px, 84px); line-height: 1; font-weight: 400; letter-spacing: -.0357em; color: #222; }
 .shelf-head.combos-view { margin-bottom: 64px; }
 .shelf-top { align-items: center; }
 .scopes { display: flex; gap: 8px; padding: 8px 0; margin: -8px -8px; padding-inline: 8px; overflow-x: auto; scrollbar-width: none; }
@@ -103,7 +111,7 @@ button, input, select { font: inherit; color: inherit; }
 .filter-row:last-child { border-bottom: 0; } /* no divider under the last row (Brands) */
 /* On desktop, keep at least 300px between the label and its pills, growing with the window on wider screens
    (about 350px at 1280, 400px at 1440, 490px at 1728, 550px at 1920, up to 640px). */
-.filter-label { flex-shrink: 0; margin: 0; font-family: "Instrument Serif", Georgia, serif; font-size: 20px; line-height: 24px; font-weight: 400; color: #222; } /* Figma node 2384:82738 */
+.filter-label { flex-shrink: 0; margin: 0; font-family: "Instrument Serif", "EB Garamond", serif; font-size: 20px; line-height: 24px; font-weight: 400; color: #222; } /* Figma node 2384:82738 */
 /* The space between a label and its pills (--label-gap) is padding inside the pill scroller rather than a gap,
    so pills scrolled sideways keep showing until they reach the label (8px short of it), not 24-640px before. */
 .filter-row { --label-gap: 24px; gap: 8px; }
@@ -121,7 +129,9 @@ button, input, select { font: inherit; color: inherit; }
    glass (below). Shown by app.js (body.show-mini), lined up with the shelf column. */
 .mini-nav { position: fixed; z-index: 40; top: 0; left: 0; width: 100%; padding-top: calc(16px + env(safe-area-inset-top));
   pointer-events: none; opacity: 0; transform: translateY(-12px); visibility: hidden;
-  transition: opacity .25s ease, transform .3s cubic-bezier(.2, .8, .2, 1), visibility 0s linear .3s; }
+  transition: opacity .25s ease, transform .3s cubic-bezier(.2, .8, .2, 1), visibility 0s linear .3s;
+  will-change: transform; } /* its own layer for good, so Safari doesn't leave a stale copy of the pills when it hides
+  (not will-change: opacity, which would cut the pills' backdrop blur off from the swatches under them) */
 body.show-mini .mini-nav { opacity: 1; transform: none; visibility: visible; transition: opacity .25s ease, transform .3s cubic-bezier(.2, .8, .2, 1), visibility 0s; }
 .mini-row { display: flex; gap: 8px; margin: -12px -40px 0; padding: 12px 40px 16px; overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain; pointer-events: auto; }
 .mini-row::-webkit-scrollbar { display: none; }
@@ -267,20 +277,25 @@ body.detail-open .mini-nav { opacity: 0; visibility: hidden; pointer-events: non
    showing the two newest combos as a thumbnail pair and the label "Combos". It turns dark while the combos
    page is open. */
 .combo-fab { position: absolute; top: 0; left: calc(100% + 8px); height: 48px; padding: 0 18px 0 10px; border: 0; border-radius: 100px;
-  display: flex; align-items: center; gap: 6px; white-space: nowrap; cursor: pointer; color: #222; font-size: 14px; line-height: 18px; font-weight: 500;
+  display: flex; align-items: center; gap: 6px; white-space: nowrap; cursor: pointer; color: #222; font-size: 14px; line-height: 18px; font-weight: 400;
   background: rgba(255, 255, 255, .32); -webkit-backdrop-filter: blur(16px) saturate(1.8); backdrop-filter: blur(16px) saturate(1.8);
   box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .6), 0 0 0 .5px rgba(0, 0, 0, .08), 0 6px 20px rgba(0, 0, 0, .12);
   -webkit-tap-highlight-color: transparent; transition: background .15s ease; }
 .combo-fab[hidden] { display: none; }
 .combo-fab:hover { background: rgba(255, 255, 255, .5); }
 .combo-fab[aria-pressed="true"] { background: #222; color: #fff; }
-/* The number of saved combos after the label, in Foggy (Figma's grey 700, #6a6a6a, the --muted token), the regular
-   weight (the label is medium) and even-width digits so it doesn't shift as it changes. On the dark pressed pill it
-   becomes a soft white so it stays readable. */
-.combo-count { position: relative; display: inline-grid; overflow: hidden; margin-left: -1px; font-weight: 400; font-variant-numeric: tabular-nums; color: var(--muted); }
-.combo-fab[aria-pressed="true"] .combo-count { color: rgba(255, 255, 255, .6); }
-/* Its numbers share one grid cell, so the old one can roll out while the new one rolls in (see rollCount). */
-.cc-num { grid-area: 1 / 1; justify-self: end; }
+/* The number of saved combos sits in a round badge at the pill's right end: 22px across, centered in the 48px pill
+   (13px from its end on every side, so the circle is concentric with the pill's rounded end), a dark #222 disc
+   with a white number, 12px semibold, even-width digits. Two or more digits stretch it into a pill of the same
+   height. With no combos there's no badge at all. On the dark pressed pill it flips to a white disc with a dark number. */
+.combo-fab:has(.combo-count:not(:empty)) { padding-right: 13px; }
+.combo-count { position: relative; display: inline-grid; place-items: center; overflow: hidden; box-sizing: border-box;
+  min-width: 22px; height: 22px; padding: 0 6px; margin-left: 2px; border-radius: 100px; background: #222;
+  font-size: 12px; line-height: 22px; font-weight: 600; font-variant-numeric: tabular-nums; color: #fff; }
+.combo-count:empty { display: none; }
+.combo-fab[aria-pressed="true"] .combo-count { background: #fff; color: #222; }
+/* Its numbers share one grid cell inside the circle, so the old one can roll out while the new one rolls in (see rollCount). */
+.cc-num { grid-area: 1 / 1; }
 /* On phones the zoom bar and the pill are centered together as one group so the pill stays inside the screen. */
 @media (max-width: 600px) {
   .dock { display: flex; gap: 8px; }
@@ -574,12 +589,12 @@ body { transition: background-color .3s ease; }
   .peek-mini.pulse { animation: peek-pulse .5s cubic-bezier(.2, .8, .2, 1); }
   @keyframes peek-pulse { 40% { transform: scale(1.12); } }
   /* Layers title in the headline serif (Instrument Serif 22 on 22, #222), like the shelf title and polish names. */
-  .bench-title { font-family: "Instrument Serif", Georgia, serif; font-size: 22px; line-height: 22px; font-weight: 400; letter-spacing: -.4px; color: #222; padding: 0; }
+  .bench-title { font-family: "Instrument Serif", "EB Garamond", serif; font-size: 22px; line-height: 22px; font-weight: 400; letter-spacing: -.4px; color: #222; padding: 0; }
   /* Header row (Figma node 2412:20759): swatch, "Layers (2)" on one line with the count in grey, thumbnails, Clear.
      The "1 layer" line is gone; the sub line only shows the hint while the sheet is empty. */
   .bench-titles { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 5px; }
   .bench-titles .bench-title { flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .peek-count { display: block; font-family: "Instrument Serif", Georgia, serif; font-size: 22px; line-height: 22px; letter-spacing: -.4px; color: #6c6c6c; }
+  .peek-count { display: block; font-family: "Instrument Serif", "EB Garamond", serif; font-size: 22px; line-height: 22px; letter-spacing: -.4px; color: #6c6c6c; }
   .peek-count:empty { display: none; }
   .bench:not(.no-layers) .peek-sub { display: none; }
   .peek-sub { flex-basis: 100%; display: block; margin: 2px 0 0; font-size: 13px; line-height: 18px; color: #6c6c6c; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -656,7 +671,7 @@ body.detail-open .page::after { opacity: 1; }
 /* Titles: name, description and pills, centered, 24px apart */
 .mh-content { display: flex; flex-direction: column; align-items: center; gap: 24px; max-width: 100%; text-align: center; }
 /* "Brand — Name": Instrument Serif 40 on 40, -1.5px, #222 */
-.mh-name { margin: 0; font-family: "Instrument Serif", Georgia, serif; font-size: 40px; line-height: 40px; font-weight: 400; letter-spacing: -1.5px; color: #222; text-wrap: balance; overflow-wrap: anywhere; }
+.mh-name { margin: 0; font-family: "Instrument Serif", "EB Garamond", serif; font-size: 40px; line-height: 40px; font-weight: 400; letter-spacing: -1.5px; color: #222; text-wrap: balance; overflow-wrap: anywhere; }
 /* One-line description (polishes.js desc): 14 on 18, grey 700 */
 .mh-desc { margin: 0; font-size: 14px; line-height: 18px; letter-spacing: -.5px; color: #6c6c6c; text-wrap: balance; overflow-wrap: anywhere; }
 .mh-desc[hidden] { display: none; }
