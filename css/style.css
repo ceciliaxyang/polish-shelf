@@ -53,6 +53,12 @@ button, input, select { font: inherit; color: inherit; }
   /* Over the detail dialog, the pane drops its white background and divider, so the dialog's blurred,
      washed backdrop runs continuously underneath it. */
   body.detail-open .bench { background-color: transparent; border-left-color: transparent; }
+  /* Layers title in the polish page's title style (Instrument Serif 40 on 40, -1.5px, #222). */
+  .bench .bench-title { font-family: "Instrument Serif", Georgia, serif; font-weight: 400; letter-spacing: -1.5px; color: #222; padding: 0 0 12px; }
+  /* Over the detail page, the pane's top row moves up to the buttons' row (32px down, 40px tall), so the
+     title and Clear line up with add / link / close. */
+  .bench { transition: transform .45s cubic-bezier(.2, .8, .2, 1), background-color .35s ease, border-color .35s ease, padding-top .35s cubic-bezier(.2, .8, .2, 1); }
+  body.detail-open .bench { padding-top: calc(32px + env(safe-area-inset-top)); }
 }
 @media (prefers-reduced-motion: reduce) { .layout, .bench { transition: none !important; } }
 @media (max-width: 760px) { .layout { grid-template-columns: minmax(0, 1fr); } }
@@ -78,7 +84,7 @@ button, input, select { font: inherit; color: inherit; }
 /* Title in Instrument Serif, 128px on 100px with -3px tracking, 48px below the top of the page (Figma node
    2384:82780). It scales down with the window, to 64px on a phone. */
 .shelf-head { padding-top: 48px; }
-.shelf-title { flex: 1; min-width: 0; margin: 0; font-family: "Instrument Serif", Georgia, serif; font-size: clamp(64px, 10vw - 16px, 128px); line-height: .78125; font-weight: 400; letter-spacing: -.0234em; color: #000; }
+.shelf-title { flex: 1; min-width: 0; margin: 0; font-family: "Instrument Serif", Georgia, serif; font-size: clamp(64px, 10vw - 16px, 128px); line-height: .78125; font-weight: 400; letter-spacing: -.0234em; color: #222; }
 .shelf-top { align-items: center; }
 .scopes { display: flex; gap: 8px; padding: 8px 0; margin: -8px -8px; padding-inline: 8px; overflow-x: auto; scrollbar-width: none; }
 .scopes::-webkit-scrollbar { display: none; }
@@ -86,10 +92,6 @@ button, input, select { font: inherit; color: inherit; }
 .scope:hover { background: #ededed; }
 .scope[aria-pressed="true"] { background: var(--text); color: #fff; mix-blend-mode: normal; }
 .scope:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
-/* Favorite combos (Figma node 2218:2545) sits at the title's top right on #f7f7f7; the effect pills below are #f2f2f2. */
-.combo-btn { flex-shrink: 0; display: flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 4px 16px; border-radius: 100px; background: #f7f7f7; }
-.combo-btn:hover { background: #ededed; }
-.combo-btn[aria-pressed="true"] { background: var(--text); }
 /* Filters (Figma node 2384:82776): a row each for Effects and Brands, the label on the left (16/20) and
    the pills on the right, with a 1px #ebebeb line under each row and 20px around it. If the pills run out
    of room they scroll sideways (the auto margin keeps them right-aligned without cutting off the start). */
@@ -97,59 +99,85 @@ button, input, select { font: inherit; color: inherit; }
 .filter-rows { display: flex; flex-direction: column; }
 .filter-row { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 20px 0; border-bottom: 1px solid #ebebeb; }
 .filter-row:first-child { padding-top: 0; }
+.filter-row:last-child { border-bottom: 0; } /* no divider under the last row (Brands) */
 /* On desktop, keep at least 300px between the label and its pills, growing with the window on wider screens
    (about 350px at 1280, 400px at 1440, 490px at 1728, 550px at 1920, up to 640px). */
-@media (min-width: 761px) { .filter-row { gap: clamp(300px, 32vw - 60px, 640px); } }
 .filter-label { flex-shrink: 0; margin: 0; font-family: "Instrument Serif", Georgia, serif; font-size: 20px; line-height: 24px; font-weight: 400; color: #222; } /* Figma node 2384:82738 */
-.filter-row .scopes { min-width: 0; margin: -8px 0; padding: 8px 0; }
+/* The space between a label and its pills (--label-gap) is padding inside the pill scroller rather than a gap,
+   so pills scrolled sideways keep showing until they reach the label (8px short of it), not 24-640px before. */
+.filter-row { --label-gap: 24px; gap: 8px; }
+@media (min-width: 761px) { .filter-row { --label-gap: clamp(300px, 32vw - 60px, 640px); } }
+.filter-row .scopes { min-width: 0; margin: -8px 0; padding: 8px 0 8px calc(var(--label-gap) - 8px); }
 .filter-row .scope:first-child { margin-left: auto; }
 .filter-row .scopes.more-end { -webkit-mask-image: linear-gradient(to left, transparent, #000 48px); mask-image: linear-gradient(to left, transparent, #000 48px); }
 .filter-row .scopes.more-start { -webkit-mask-image: linear-gradient(to right, transparent, #000 48px); mask-image: linear-gradient(to right, transparent, #000 48px); }
 .filter-row .scopes.more-start.more-end { -webkit-mask-image: linear-gradient(to right, transparent, #000 48px, #000 calc(100% - 48px), transparent); mask-image: linear-gradient(to right, transparent, #000 48px, #000 calc(100% - 48px), transparent); }
-/* Sticky: the filter rows stay pinned at the top of the window as the shelf scrolls (the title scrolls
-   away). They sit on a solid white bar that runs edge to edge, so swatches slide under it cleanly; the extra
-   top padding is cancelled by a matching negative margin, so nothing moves until it sticks. */
-.filters { position: sticky; z-index: 40; top: 0; padding-top: calc(16px + env(safe-area-inset-top)); margin-top: calc(-16px - env(safe-area-inset-top)); background: var(--bg); box-shadow: 0 0 0 100vmax var(--bg); clip-path: inset(0 -100vmax); }
 /* On the combos page the filters fade out (they only apply to the shelf). */
 .shelf-head.combos-view + .filters { opacity: 0; pointer-events: none; }
-/* Collapsed (as soon as the page scrolls down, set in app.js): effects and brands run together in one row that scrolls
-   sideways, labels and hairlines hidden, with no bar behind them. The pills themselves look exactly as they do
-   open (same grey fill, no added strokes or shadows). The filters keep their full height (--fh) so nothing below moves, but the empty part
-   lets clicks through to the swatches under it. */
-.filters.collapsed { height: var(--fh); padding-top: calc(16px + env(safe-area-inset-top)); background: none; box-shadow: none; clip-path: none; pointer-events: none; }
-.filters.collapsed .filter-rows { flex-direction: row; gap: 8px; margin: -12px -40px; padding: 12px 40px 16px; overflow-x: auto; scrollbar-width: none; pointer-events: auto; overscroll-behavior-x: contain; }
-.filters.collapsed .filter-rows::-webkit-scrollbar { display: none; }
-.filters.collapsed .filter-row { flex-shrink: 0; gap: 0; padding: 0; border: 0; }
-.filters.collapsed .filter-row + .filter-row { margin-left: 12px; } /* a little more room between effects and brands */
-.filters.collapsed .filter-label { display: none; }
-.filters.collapsed .scopes { overflow: visible; margin: 0; padding: 0; -webkit-mask-image: none; mask-image: none; }
-.filters.collapsed .scope:first-child { margin-left: 0; }
-.filters.swapping .filter-rows { animation: filters-swap .28s cubic-bezier(.2, .8, .2, 1); }
-@keyframes filters-swap { from { opacity: 0; transform: translateY(-6px); } }
-@media (prefers-reduced-motion: reduce) { .filters.swapping .filter-rows { animation: none; } }
+/* Mini nav: once the filters have scrolled out of view, a copy of the effect and brand pills slides in at the
+   top of the window as one row that scrolls sideways, with no labels and no bar behind it. Its pills are
+   glass (below). Shown by app.js (body.show-mini), lined up with the shelf column. */
+.mini-nav { position: fixed; z-index: 40; top: 0; left: 0; width: 100%; padding-top: calc(16px + env(safe-area-inset-top));
+  pointer-events: none; opacity: 0; transform: translateY(-12px); visibility: hidden;
+  transition: opacity .25s ease, transform .3s cubic-bezier(.2, .8, .2, 1), visibility 0s linear .3s; }
+body.show-mini .mini-nav { opacity: 1; transform: none; visibility: visible; transition: opacity .25s ease, transform .3s cubic-bezier(.2, .8, .2, 1), visibility 0s; }
+.mini-row { display: flex; gap: 8px; margin: -12px -40px 0; padding: 12px 40px 16px; overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain; pointer-events: auto; }
+.mini-row::-webkit-scrollbar { display: none; }
+.mini-row .mini-gap { flex: 0 0 4px; } /* a little more room between effects and brands */
+/* Over the swatches the mini nav's pills turn frosted: a mostly opaque light grey that still blurs what passes
+   under it, with a soft shadow and no rim. The pills in the filters stay grey. */
+.mini-row.fx-row .scope:not([aria-pressed="true"]) { background: rgba(242, 242, 242, .82); -webkit-backdrop-filter: blur(14px) saturate(1.3); backdrop-filter: blur(14px) saturate(1.3);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, .08); }
+.mini-row.fx-row .scope:not([aria-pressed="true"]):hover { background: rgba(232, 232, 232, .9); }
+.mini-row.fx-row .scope[aria-pressed="true"] { box-shadow: 0 4px 16px rgba(0, 0, 0, .18); }
+@media (prefers-reduced-motion: reduce) { .mini-nav, body.show-mini .mini-nav { transition: none; transform: none; } }
 .fx-row .scope { background: #f2f2f2; }
 .fx-row .scope:hover { background: #e8e8e8; }
 .fx-row .scope[aria-pressed="true"] { background: var(--text); }
 /* Effect pills with icons (Figma "Filters", node 2383:2326): a 24px icon, 8px gap, then 14px regular text;
    11px top and bottom, 16px sides, so each pill is 46px tall. */
 .fx-row .scope { display: inline-flex; align-items: center; gap: 8px; padding: 11px 16px; font-size: 14px; line-height: 18px; font-weight: 400; }
+/* In SF Pro Display the pill text is tracked -0.4px (the Inter fallback keeps its own tracking). */
+html:not(.no-sf) .fx-row .scope { letter-spacing: -.4px; }
 .scope-icon { flex-shrink: 0; display: block; width: 24px; height: 24px; }
 /* Zoom control: a see-through frosted floating bar low at the bottom center with three icons, 2, 3 and 4 per row (big to
    dense, left to right). The selected one sits on a dark circle that slides between them. It moves up above
    the Layers peek bar on phones, centers on the shelf beside the Layers pane on wider screens, and hides
    behind the polish detail view. Icons are grids of dots with droplet swatches (.dots), else squares. */
-.zoom { --i: 1; position: fixed; z-index: 50; left: 50%; translate: -50% 0; bottom: calc(8px + env(safe-area-inset-bottom));
+/* The dock holds the zoom bar and sits at the bottom center; the Favorite combos button hangs off its right
+   side, so the zoom bar stays centered whether or not the button is showing. */
+.dock { position: fixed; z-index: 50; left: 50%; translate: -50% 0; bottom: calc(8px + env(safe-area-inset-bottom));
+  transition: bottom .38s cubic-bezier(.2, .8, .2, 1), left .45s cubic-bezier(.2, .8, .2, 1), opacity .2s ease; }
+.zoom { --i: 1; position: relative;
   display: flex; gap: 4px; padding: 4px; border-radius: 100px; color: #222;
   background: rgba(255, 255, 255, .32); -webkit-backdrop-filter: blur(16px) saturate(1.8); backdrop-filter: blur(16px) saturate(1.8);
   box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .6), 0 0 0 .5px rgba(0, 0, 0, .08), 0 6px 20px rgba(0, 0, 0, .12);
-  -webkit-tap-highlight-color: transparent;
-  transition: bottom .38s cubic-bezier(.2, .8, .2, 1), left .45s cubic-bezier(.2, .8, .2, 1), opacity .2s ease; }
-body.detail-open .zoom { opacity: 0; pointer-events: none; }
-@media (max-width: 760px) { body.bench-open .zoom { bottom: calc(108px + env(safe-area-inset-bottom)); } }
+  -webkit-tap-highlight-color: transparent; }
+body.detail-open .dock { opacity: 0; pointer-events: none; }
+/* The detail page covers everything behind it: the shelf's one-row nav (fixed, outside the blurred page) hides too. */
+body.detail-open .mini-nav { opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .2s ease, visibility 0s .2s; }
+@media (max-width: 760px) { body.bench-open .dock { bottom: calc(108px + env(safe-area-inset-bottom)); } }
 @media (min-width: 761px) {
-  .zoom { bottom: calc(16px + env(safe-area-inset-bottom)); }
-  body.bench-open .zoom { left: calc((100% - 28px - 348px - 40px - env(safe-area-inset-right)) / 2); }
+  .dock { bottom: calc(16px + env(safe-area-inset-bottom)); }
+  body.bench-open .dock { left: calc((100% - 28px - 348px - 40px - env(safe-area-inset-right)) / 2); }
 }
+/* Favorite combos FAB: a 48px frosted pill, the same glass and height as the zoom bar, 8px to its right,
+   showing the two newest combos as a thumbnail pair and the label "Combos". It turns dark while the combos
+   page is open. */
+.combo-fab { position: absolute; top: 0; left: calc(100% + 8px); height: 48px; padding: 0 18px 0 10px; border: 0; border-radius: 100px;
+  display: flex; align-items: center; gap: 6px; white-space: nowrap; cursor: pointer; color: #222; font-size: 14px; line-height: 18px; font-weight: 500;
+  background: rgba(255, 255, 255, .32); -webkit-backdrop-filter: blur(16px) saturate(1.8); backdrop-filter: blur(16px) saturate(1.8);
+  box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .6), 0 0 0 .5px rgba(0, 0, 0, .08), 0 6px 20px rgba(0, 0, 0, .12);
+  -webkit-tap-highlight-color: transparent; transition: background .15s ease; }
+.combo-fab[hidden] { display: none; }
+.combo-fab:hover { background: rgba(255, 255, 255, .5); }
+.combo-fab[aria-pressed="true"] { background: #222; color: #fff; }
+/* On phones the zoom bar and the pill are centered together as one group so the pill stays inside the screen. */
+@media (max-width: 600px) {
+  .dock { display: flex; gap: 8px; }
+  .combo-fab { position: static; }
+}
+.combo-fab:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
 /* The dark circle carries a white copy of the three icons, shifted back by the same amount it moves, so the
    white icon is always exactly over the grey one under it. As the circle slides, the selected icon turns
    white where the circle covers it, with no fade in between (which made icons vanish and flash). */
@@ -167,7 +195,7 @@ body.detail-open .zoom { opacity: 0; pointer-events: none; }
 .zi[data-n="3"] { --t: 4px; --g: 1px; left: 13px; top: 13px; } .zi[data-n="3"] i { border-radius: 1px; }
 .zi[data-n="4"] { --t: 3px; --g: 1px; left: 12px; top: 12px; } .zi[data-n="4"] i { border-radius: .75px; }
 .zoom.dots .zi i { border-radius: 50%; }
-@media (prefers-reduced-motion: reduce) { .zoom, .z-thumb, .z-thumb-row { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .dock, .z-thumb, .z-thumb-row { transition: none; } }
 /* Thumbnail Pair: two 19.25px cards, the back one turned 10deg and the front one -3deg. */
 .thumb-pair { position: relative; flex-shrink: 0; width: 28px; height: 28px; }
 .tp { position: absolute; width: 19.25px; height: 19.25px; border-radius: 4px; overflow: hidden; background: #fff;
@@ -187,9 +215,18 @@ body.detail-open .zoom { opacity: 0; pointer-events: none; }
   .filter-row .scopes { margin-inline: -16px; padding-inline: 16px; }
   .filter-row .scope:first-child { margin-left: 0; }
   .scopes { margin-inline: -16px; padding-inline: 16px; }
-  .filters.collapsed { padding-top: calc(8px + env(safe-area-inset-top)); }
-  .filters.collapsed .filter-rows { margin-inline: -16px; padding-inline: 16px; }
-  .filters.collapsed .filter-row .scopes { margin-inline: 0; padding-inline: 0; }
+  .mini-nav { padding-top: calc(8px + env(safe-area-inset-top)); }
+  .mini-row { margin-inline: -16px; padding-inline: 16px; }
+  /* Native phone reference (Figma node 2401:20488): each label sits beside its pills, 48px apart, and the pills
+     run off the right edge and scroll sideways. 16px between the rows, a line only under Effects. */
+  .filter-row { --label-gap: 48px; flex-direction: row; align-items: center; gap: 8px; padding: 16px 0; }
+  .filter-row:first-child { padding-top: 0; }
+  .filter-row .scopes { margin-left: 0; margin-right: -16px; padding-left: calc(var(--label-gap) - 8px); padding-right: 16px; }
+  .filter-label { font-size: 18px; line-height: 22px; } /* a bit smaller than the 20px on wider screens */
+  /* Smaller pills: a 20px icon, 4px gap, 12/18 text, 8px top and bottom, 12px sides (34px tall), 4px apart. */
+  .scopes, .mini-row { gap: 4px; }
+  .fx-row .scope { gap: 4px; min-width: 0; padding: 8px 12px; font-size: 12px; line-height: 18px; }
+  .fx-row .scope-icon { width: 20px; height: 20px; }
 }
 .fx-row .scope { mix-blend-mode: normal; }
 .pill.small { padding: 6px 12px; font-size: 13px; line-height: 16px; }
@@ -253,6 +290,13 @@ body.detail-open .zoom { opacity: 0; pointer-events: none; }
 .drops .grid .card-fx, .drops .grid .combo-stack { justify-content: center; }
 .grid[data-zoom="3"] .swatch-btn { top: 12px; right: 12px; width: 36px; height: 36px; padding: 8px; }
 .grid[data-zoom="4"] .card-text, .grid[data-zoom="4"] .swatch-btn { display: none; }
+/* On desktop the + still shows at 4 per row, but only while the pointer is over the swatch (or the button has
+   keyboard focus): a smaller 32px button that fades in at the top right. */
+@media (hover: hover) and (min-width: 601px) {
+  .grid[data-zoom="4"] .swatch-btn { display: flex; top: 10px; right: 10px; width: 32px; height: 32px; padding: 7px; opacity: 0; transition: opacity .15s ease, background .15s ease; }
+  .grid[data-zoom="4"] .swatch-btn svg { width: 18px; height: 18px; }
+  .grid[data-zoom="4"] .swatch-wrap:hover .swatch-btn, .grid[data-zoom="4"] .swatch-btn:focus-visible { opacity: 1; }
+}
 .grid[data-zoom="4"] { gap: 24px; }
 @media (max-width: 600px) {
   .grid[data-zoom="3"] { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px 10px; }
@@ -310,7 +354,8 @@ body.detail-open .zoom { opacity: 0; pointer-events: none; }
   display: flex; flex-direction: column; gap: 24px; background: var(--bg); border-left: 1px solid #ebebeb; scrollbar-width: none; }
 /* With the pane open, the detail dialog uses the space to its left. */
 @media (min-width: 761px) {
-  body.bench-open .modal, body.bench-open .modal-head { right: calc(28px + 348px + 40px + env(safe-area-inset-right)); }
+  body.bench-open .modal { right: calc(28px + 348px + 40px + env(safe-area-inset-right)); }
+  body.bench-open .modal-head { right: calc(28px + 348px + 40px + 48px + env(safe-area-inset-right)); }
 }
 .bench::-webkit-scrollbar { display: none; }
 .bench-head { display: flex; align-items: flex-start; gap: 16px; }
@@ -327,9 +372,9 @@ body.detail-open .zoom { opacity: 0; pointer-events: none; }
 .save-combo:hover { background: #000; }
 /* Save combo rises and fades in when the second layer arrives. */
 .save-combo.rise-in { animation: save-in .45s cubic-bezier(.2, .8, .2, 1) both; }
-.combo-btn.rise-in { animation: save-in .45s cubic-bezier(.2, .8, .2, 1) both; }
+.combo-fab.rise-in { animation: save-in .45s cubic-bezier(.2, .8, .2, 1) both; }
 @keyframes save-in { from { opacity: 0; transform: translateY(10px) scale(.92); } to { opacity: 1; transform: none; } }
-@media (prefers-reduced-motion: reduce) { .save-combo.rise-in, .combo-btn.rise-in { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .save-combo.rise-in, .combo-fab.rise-in { animation: none; } }
 .save-combo:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
 .layer { position: relative; display: flex; align-items: center; gap: 16px; height: 72px; border-bottom: 1px solid #ebebeb; transition: transform .2s cubic-bezier(.2, .8, .2, 1); user-select: none; -webkit-user-select: none; }
 /* Drag to reorder: on touch screens a grip is the handle to drag by; with a mouse there's no grip, just
@@ -393,20 +438,25 @@ body.detail-open .zoom { opacity: 0; pointer-events: none; }
   @media (prefers-reduced-motion: reduce) { .bench, .peek-mini.pulse { transition: none; animation: none; } }
 }
 
-/* Detail view (Figma "Desktop - 2") */
+/* Detail view (Figma "Polish detail / Desktop (1440)", node 2398:3167) */
 .modal { position: fixed; inset: 0; z-index: 50; outline: none; overflow-y: auto; overscroll-behavior: contain; } /* scrolls when the photos run past the screen */
-/* Figma: background blur 100 + white 40%. The shelf itself is blurred (reliable in every browser), with the white wash on top. */
-.page { position: relative; transition: filter .35s ease; }
-body.detail-open .page { filter: blur(50px); }
+/* A thick material: the shelf itself is blurred (reliable in every browser), with a mostly opaque white
+   wash on top (72%; it was 40%, too see-through). */
+/* The blur is the heaviest thing on screen, so it comes in once the swatch has landed (body.detail-blur, see
+   openDetail), fading in; while the swatch flies only the white wash fades in. On close it goes at once. */
+.page { position: relative; }
+body.detail-blur .page { filter: blur(60px); transition: filter .35s ease; }
 /* The white wash lives on the shelf itself, not on a fixed layer. Safari on iOS 26 shows the page (not
    fixed layers) under the status bar, and paints the bar solid in the color of any fixed layer at the
    top. With the wash part of the page, the area under the clock is blurred and washed exactly like the
    rest of the dialog, so the dialog reads as running all the way to the top of the screen. */
-.page::after { content: ""; position: absolute; inset: 0; background-image: linear-gradient(rgba(255, 255, 255, .4), rgba(255, 255, 255, .4)); opacity: 0; pointer-events: none; transition: opacity .35s ease; }
+.page::after { content: ""; position: absolute; inset: 0; background-image: linear-gradient(rgba(255, 255, 255, .72), rgba(255, 255, 255, .72)); opacity: 0; pointer-events: none; transition: opacity .35s ease; }
 body.detail-open .page::after { opacity: 1; }
 .modal-blur { position: fixed; inset: 0; }
 .modal-head { opacity: 0; transition: opacity .3s ease; }
 .modal.open .modal-head { opacity: 1; }
+.mh-content { opacity: 0; transition: opacity .3s ease; }
+.modal.open .mh-content { opacity: 1; transition-delay: .1s; }
 /* Photos drift up and fade in one after another; each gets its own slightly varied delay (--d, set in
    app.js) so the entry feels organic rather than mechanical. On close they fade out together, quickly. */
 /* Each photo rises in once it has actually loaded (so the motion is never spent on an empty frame), a beat
@@ -418,27 +468,9 @@ body.detail-open .page::after { opacity: 1; }
 .card.rise { opacity: 0; transform: translateY(16px); }
 .card.rise.in { opacity: 1; transform: none; transition: opacity .5s ease var(--d, 0s), transform .65s cubic-bezier(.2, .8, .2, 1) var(--d, 0s); }
 @media (prefers-reduced-motion: reduce) { .m-photos img, .card.rise { transform: none !important; } }
-/* The header row is 96px tall (starting 32px down): brand, name and effect pills, with the swatch spanning
-   the same height and the buttons centered on it.
-   Left: 17px past the swatch. */
-/* The nav (header and swatch) is fixed, so it stays put while the photos scroll underneath. Once the
-   photos start to scroll, the brand and name fade away; the swatch and buttons stay. */
-.modal-head { position: fixed; z-index: 2; top: 0; left: 0; right: 0; display: flex; align-items: center; gap: 16px; box-sizing: content-box; height: auto; min-height: 96px; padding: calc(32px + env(safe-area-inset-top)) 48px 16px calc(36px + 96px + 17px); }
-.mh-trail { display: flex; align-items: center; justify-content: flex-end; gap: 8px; width: 97px; flex-shrink: 0; }
-.mh-content { transition: opacity .2s ease; }
-.modal.scrolled .mh-content { opacity: 0; pointer-events: none; } /* once the photos scroll, only the swatch and buttons stay */
-.mh-content { flex: 1; min-width: 0; align-self: stretch; display: flex; flex-direction: column; justify-content: space-between; gap: 6px; }
-.mh-title { padding: 2px 0; }
-/* Effect pills under the name: 12px below it, like the card's pills but not clickable here */
-.mh-pills { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
-/* Frosted glass with no stroke (the same material as the zoom toggle), so it sits on the tinted blur; not clickable here */
-.mh-pills .pill { cursor: default; border: 0; padding: 7px 13px; background: rgba(255, 255, 255, .4); -webkit-backdrop-filter: blur(16px) saturate(1.4); backdrop-filter: blur(16px) saturate(1.4); }
-.mh-brand, .mh-name { margin: 0; color: #000; overflow-wrap: anywhere; }
-.mh-brand { font-size: 14px; }
-.mh-name { font-size: 20px; font-weight: 500; }
-/* One-line description under the name (polishes.js desc) */
-.mh-desc { margin: -4px 0 0; font-size: 14px; line-height: 18px; color: #555; overflow-wrap: anywhere; }
-.mh-desc[hidden] { display: none; }
+/* The add / link / close buttons are pinned to the top right (32px down, 48px in) while the page scrolls under them. */
+.modal-head { position: fixed; z-index: 4; top: calc(32px + env(safe-area-inset-top)); right: calc(48px + env(safe-area-inset-right)); }
+.mh-trail { display: flex; align-items: center; gap: 8px; }
 /* Material buttons: translucent, blurring whatever passes behind them (photos, as they scroll) */
 .mh-btn { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; padding: 12px; border: 0; border-radius: 100px;
   background: rgba(242, 242, 242, .7); -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6);
@@ -452,30 +484,43 @@ body.detail-open .page::after { opacity: 1; }
 .bench .mh-btn:hover { background: #ebebeb; }
 .mh-btn:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
 .mh-btn[hidden] { display: none; }
-/* Detail view layout (Figma "Desktop - 4"): the live swatch sits small in the header's upper-left
-   slot. Below the header the product photos are a 2 x 2 grid of squares (bigger than the Figma's single
-   row, per your ask), lined up with the swatch on the left (36px) and the close button on the right
-   (48px); the dialog scrolls if they run past the screen. Phones get a single column. */
-/* The swatch spans the full title block: its top lines up with the brand, its bottom with the effect pills. */
-.m-swatch { position: fixed; z-index: 3; top: calc(32px + env(safe-area-inset-top)); left: 36px; width: 96px; height: 96px; border-radius: 21px; overflow: hidden; background: var(--swatch); }
+/* Page column: 60px down, 36px in on the left and 48px on the right. A centered hero (swatch, then the
+   titles 24px below it), then the photos 76px further down, two squares a row 24px apart. The dialog
+   scrolls when the photos run past the screen. */
+.modal-body { position: absolute; left: 36px; right: 48px; top: calc(60px + env(safe-area-inset-top)); display: flex; flex-direction: column; align-items: center; padding-bottom: calc(48px + env(safe-area-inset-bottom)); }
+.mh-content { margin-top: 24px; }
+.m-photos { margin-top: 76px; }
+/* The live swatch, in the card's shape (240 x 260), at 180 x 195. It grows out of its card when the page
+   opens and flies back into it on close, and scrolls away with the page. */
+.m-swatch { position: relative; z-index: 3; flex-shrink: 0; width: 180px; height: 195px; border-radius: 36px; overflow: hidden; background: var(--swatch); }
 .m-swatch canvas { display: block; width: 100%; height: 100%; }
-.m-swatch { transition: box-shadow .25s ease; }
-.modal.scrolled .m-swatch { box-shadow: 0 10px 28px rgba(0, 0, 0, .22), 0 2px 6px rgba(0, 0, 0, .14); } /* lifts off the photos while pinned */
-.modal-body { position: absolute; left: 36px; right: 48px; top: calc(var(--head, 156px) + 8px); padding-bottom: calc(48px + env(safe-area-inset-bottom)); }
-.m-photos { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+/* Titles: name, description and pills, centered, 24px apart */
+.mh-content { display: flex; flex-direction: column; align-items: center; gap: 24px; max-width: 100%; text-align: center; }
+/* "Brand — Name": Instrument Serif 40 on 40, -1.5px, #222 */
+.mh-name { margin: 0; font-family: "Instrument Serif", Georgia, serif; font-size: 40px; line-height: 40px; font-weight: 400; letter-spacing: -1.5px; color: #222; text-wrap: balance; overflow-wrap: anywhere; }
+/* One-line description (polishes.js desc): 14 on 18, grey 700 */
+.mh-desc { margin: 0; font-size: 14px; line-height: 18px; letter-spacing: -.5px; color: #6c6c6c; text-wrap: balance; overflow-wrap: anywhere; }
+.mh-desc[hidden] { display: none; }
+/* Effect pills: the filter pill (24px icon, 8px gap, 11/16 padding, 14 on 18) in white frosted glass, the
+   material the detail page's pills used before (white 40%, blurring the tinted backdrop); not clickable here */
+.mh-pills { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.mh-pill { display: inline-flex; align-items: center; gap: 8px; padding: 11px 16px; border-radius: 32px; color: #222; font-size: 14px; line-height: 18px; white-space: nowrap;
+  background: rgba(255, 255, 255, .4); -webkit-backdrop-filter: blur(16px) saturate(1.4); backdrop-filter: blur(16px) saturate(1.4); }
+.m-photos { align-self: stretch; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
 .m-photos img { display: block; width: 100%; aspect-ratio: 1; height: auto; object-fit: cover; border-radius: 48px; background: var(--swatch); }
 @media (max-width: 1000px) {
   .m-photos { gap: 16px; }
   .m-photos img { border-radius: 32px; }
 }
 @media (max-width: 600px) {
-  /* Phones: the swatch and the buttons share the top row (centered on each other), and the brand and
-     name stack underneath the swatch. */
-  .modal-head { display: grid; grid-template-columns: 1fr auto; grid-template-rows: 64px auto; align-items: center; height: auto; padding: calc(16px + env(safe-area-inset-top)) 16px 12px; gap: 0; }
-  .mh-trail { grid-row: 1; grid-column: 2; width: auto; }
-  .mh-content { grid-row: 2; grid-column: 1 / -1; padding-top: 12px; }
-  .m-swatch { top: calc(16px + env(safe-area-inset-top)); left: 16px; width: 64px; height: 64px; border-radius: 14px; }
-  .modal-body { left: 16px; right: 16px; top: calc(var(--head, 118px) + 8px); padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
+  /* Phones: the buttons sit 16px in from the top right, and the hero starts 16px under them so the
+     swatch never runs into them. A smaller swatch and title; one photo a row. */
+  .modal-head { top: calc(16px + env(safe-area-inset-top)); right: 16px; }
+  .modal-body { left: 16px; right: 16px; top: calc(72px + env(safe-area-inset-top)); padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
+  .m-swatch { width: 144px; height: 156px; border-radius: 29px; }
+  .mh-content { gap: 16px; margin-top: 20px; }
+  .m-photos { margin-top: 40px; }
+  .mh-name { font-size: 32px; line-height: 34px; letter-spacing: -1.2px; }
   .m-photos { grid-template-columns: 1fr; gap: 12px; }
   .m-photos img { border-radius: 24px; }
 }
@@ -505,9 +550,6 @@ body.detail-open .page::after { opacity: 1; }
 .drops .peek-thumbs .drop-thumb { width: 24px; height: 24px; margin-left: -6px; }
 .drops .zi canvas { border-radius: 50% !important; }
 .drops .tp { box-shadow: none; }
-/* The polish page's swatch lifts off the photos with a shadow in its own shape. */
-.drops .modal.scrolled .m-swatch { box-shadow: none; filter: drop-shadow(0 8px 14px rgba(0, 0, 0, .2)) drop-shadow(0 2px 3px rgba(0, 0, 0, .12)); }
-.drops .m-swatch { transition: filter .25s ease; }
 .drops .fly-swatch { box-shadow: none; filter: drop-shadow(0 10px 18px rgba(0, 0, 0, .18)); }
 
 /* Developer settings (five taps on the title) */

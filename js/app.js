@@ -1409,10 +1409,9 @@ function flyToCombos(layers) {
   const src = [$("#stage"), $("#peekMini")].find(el => { const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0; });
   if (reduceMotion || !src || !tr.width) return;
   const from = src.getBoundingClientRect();
-  // The button has to be in sight to catch it: scroll the page back up if it's scrolled away, and on
-  // phones let the expanded sheet drop back to its peek bar.
-  let target = tr;
-  if (tr.top < 0) { target = { left: tr.left, top: tr.top + scrollY, width: tr.width, height: tr.height }; scrollTo({ top: 0, behavior: "smooth" }); }
+  // The button floats beside the zoom bar, so it's always in sight; on phones let the expanded sheet
+  // drop back to its peek bar first.
+  const target = tr;
   if (sheetMQ.matches) setSheet(false);
   const cv = document.createElement("canvas");
   if (!drawStack(cv, layers, Math.round(from.width), Math.round(from.height))) return;
@@ -1445,20 +1444,29 @@ function flyToCombos(layers) {
 }
 
 /* ---------- detail view ---------- */
-// Tapping a swatch opens the detail view over a blurred shelf: the live swatch moves into the header's
-// upper-left slot and the product photos run in a row across the page; the link button opens the product page.
+// Tapping a swatch opens the detail view over a blurred shelf (Figma "Polish detail / Desktop (1440)",
+// node 2398:3167): the live swatch grows out of its card into a centered hero, with "Brand — Name" in
+// Instrument Serif, the one-line description and the effect pills under it, then the product photos.
+// The swatch and the add / link / close buttons stay pinned while the photos scroll under them; the name,
+// description and pills fade away once the page scrolls. The link button opens the product page.
 const detail = { p: null, card: null, cv: null };
 const EASE = "cubic-bezier(.2, .8, .2, 1)";
 
 function openDetail(p, card) {
   detail.p = p; detail.card = card;
-  $("#mBrand").textContent = p.brand || "";
-  $("#mName").textContent = p.name || "Untitled";
+  // One line: the brand's short name (as on its filter pill), an em dash, then the polish's name.
+  const brand = BRAND_LABELS[p.brand] || p.brand || "";
+  $("#mName").textContent = (brand ? brand + " — " : "") + (p.name || "Untitled");
   // One line on color and finish, from the product page (polishes.js desc), under the name.
   $("#mDesc").textContent = p.desc || ""; $("#mDesc").hidden = !p.desc;
-  // Effect pills under the name (Figma "Action Header Web", node 2189:92047), same labels as on the card.
+  // Effect pills under the description (Figma "Pill / Magnetic"): the filter pill's icon and label, same
+  // labels as on the card. Not clickable here. Icons are fitted once the dialog is showing (see below).
   $("#mPills").innerHTML = "";
-  labelsOf(p).forEach(k => { const t = document.createElement("span"); t.className = "pill tiny"; t.textContent = EFFECTS[k] || k; $("#mPills").appendChild(t); });
+  labelsOf(p).forEach(k => {
+    const t = document.createElement("span"); t.className = "mh-pill";
+    if (EFFECT_ICONS[k]) t.innerHTML = `<svg class="scope-icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><g>${EFFECT_ICONS[k]}</g></svg>`;
+    t.append(EFFECTS[k] || k); $("#mPills").appendChild(t);
+  });
   // The dialog's add button does what the swatch's + does, and shows the same + / check state.
   const addBtn = $("#mAdd");
   if (!addBtn.firstChild) addBtn.innerHTML = PLUS_CHECK;
@@ -1469,59 +1477,72 @@ function openDetail(p, card) {
   link.hidden = !p.url; if (p.url) link.href = p.url;
 
   // Show the dialog first so the swatch can be drawn at the size it will actually appear.
-  const m = $("#modal"); m.hidden = false; document.body.style.overflow = "hidden"; document.body.classList.add("detail-open");
-  m.scrollTop = 0; m.classList.remove("scrolled");
-  sizeDetail();
+  // The dialog's backdrop (body.detail-open) starts with the swatch's flight, below, not now: starting it in
+  // the same frame as all this setup used to eat the flight before it was ever painted.
+  const m = $("#modal"); m.hidden = false; document.body.style.overflow = "hidden";
+  m.scrollTop = 0;
+  $("#mPills").querySelectorAll(".scope-icon").forEach(fitIcon);
   const stage = $("#mStage"); stage.innerHTML = "";
   const cv = document.createElement("canvas"); cv.className = "swatch";
   stage.appendChild(cv); detail.cv = cv;
-  dropify(stage, p.id, 1);
+  dropify(stage, p.id, 260 / 240); // the card's shape (180 x 195 here), so it grows out of the card cleanly
   const sr = stage.getBoundingClientRect();
   renderSwatch(cv, p, Math.round(sr.width), Math.round(sr.height));
   if (autoIO) autoIO.observe(cv);
 
   // Photos: a plain row of the saved product photos (not interactive).
   const row = $("#mPhotos"); row.innerHTML = "";
+  const photoImgs = [];
   (p.photos || []).slice(0, 4).forEach((src, i) => {
     // Photos load lazily: the ones near the top of the dialog right away, the rest as you scroll to them.
-    const im = document.createElement("img"); im.loading = "lazy"; im.decoding = "async"; im.src = src; im.alt = `${p.name} photo ${i + 1}`;
+    // The source is set once the swatch has landed (below), so loading and decoding them doesn't stall the flight.
+    const im = document.createElement("img"); im.loading = "lazy"; im.decoding = "async"; im.dataset.src = src; im.alt = `${p.name} photo ${i + 1}`;
     // Staggered entry: each photo a beat after the last, with a little randomness so it feels organic.
     // It starts once the photo has loaded, so the rise is actually seen.
     im.style.setProperty("--d", (.12 + i * .1 + Math.random() * .05).toFixed(3) + "s");
     const reveal = () => requestAnimationFrame(() => requestAnimationFrame(() => im.classList.add("in")));
-    if (im.complete && im.naturalWidth) reveal(); else im.addEventListener("load", reveal, { once: true });
-    row.appendChild(im);
+    im.addEventListener("load", reveal, { once: true });
+    row.appendChild(im); photoImgs.push(im);
   });
 
-  // Grow the swatch out of its card.
+  // Grow the swatch out of its card (a shared element). First paint it sitting exactly over its card, with
+  // the rest of the dialog still invisible, so nothing seems to change; the flight, the shelf's blur and the
+  // text fade start on the frame after that, once the setup above has been painted, so the whole flight is seen.
   const from = card.getBoundingClientRect(), to = stage.getBoundingClientRect();
   stage.style.transition = "none";
   stage.style.transformOrigin = "0 0";
   stage.style.transform = `translate(${from.left - to.left}px, ${from.top - to.top}px) scale(${from.width / to.width}, ${from.height / to.height})`;
   m.classList.remove("open"); void m.offsetWidth;
-  stage.style.transition = `transform .45s ${EASE}`;
-  stage.style.transform = "";
-  m.classList.add("open");
   card.style.visibility = "hidden";
+  const token = detail.token = {};
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    if (detail.token !== token || m.hidden) return; // closed (or another polish opened) meanwhile
+    document.body.classList.add("detail-open");
+    stage.style.transition = `transform .5s ${EASE}`;
+    stage.style.transform = "";
+    m.classList.add("open");
+    // Once it has landed: the shelf's blur, then the photos.
+    setTimeout(() => { if (detail.token !== token) return; document.body.classList.add("detail-blur"); photoImgs.forEach(im => { im.src = im.dataset.src; }); }, 520);
+  }));
   m.focus({ preventScroll: true }); // keyboard focus moves into the dialog (Tab reaches the buttons)
   history.replaceState(null, "", SITE_ROOT + "p/" + encodeURIComponent(p.id) + "/");
   document.title = `${p.name} · ${p.brand} · ${SITE_TITLE}`;
 }
 
-// The photo row must stay below the header, whose height depends on the text; measure it.
-$("#modal").addEventListener("scroll", e => e.currentTarget.classList.toggle("scrolled", e.currentTarget.scrollTop > 4), { passive: true });
-function sizeDetail() { $("#modal").style.setProperty("--head", $(".modal-head").offsetHeight + "px"); }
-addEventListener("resize", () => { if (!$("#modal").hidden) sizeDetail(); });
 
 function closeDetail() {
   const m = $("#modal"); if (m.hidden) return;
+  detail.token = null; // cancels an opening flight or photo load still waiting to start
   const stage = $("#mStage"), card = detail.card;
+  // The swatch flies back into its card from wherever it has scrolled to (a shared element, both ways).
+  const fly = stage;
   const done = () => { m.hidden = true; m.classList.remove("open"); stage.style.transform = ""; document.body.style.overflow = ""; if (card) card.style.visibility = ""; };
-  m.classList.remove("open"); document.body.classList.remove("detail-open");
+  m.classList.remove("open"); document.body.classList.remove("detail-open", "detail-blur");
   history.replaceState(null, "", SITE_ROOT); document.title = SITE_TITLE;
   if (card && card.isConnected) {
-    const from = stage.getBoundingClientRect(), to = card.getBoundingClientRect();
-    stage.style.transform = `translate(${to.left - from.left}px, ${to.top - from.top}px) scale(${to.width / from.width}, ${to.height / from.height})`;
+    const from = fly.getBoundingClientRect(), to = card.getBoundingClientRect();
+    fly.style.transition = `transform .45s ${EASE}`; fly.style.transformOrigin = "0 0";
+    fly.style.transform = `translate(${to.left - from.left}px, ${to.top - from.top}px) scale(${to.width / from.width}, ${to.height / from.height})`;
     setTimeout(done, 450);
   } else done();
 }
@@ -1866,7 +1887,9 @@ function renderBench() {
 const GAP = 40, MAX_CARD = 336;
 // Zoom levels (see "zoom" below): swatches per row on a phone, and how much smaller desktop cards get.
 const ZOOMS = [2, 3, 4], ZOOM_SCALE = { 2: 1, 3: 2 / 3, 4: 1 / 2 };
-const zoom = { level: ZOOMS.includes(load(KEY.zoom, 4)) ? load(KEY.zoom, 4) : 4 };
+// The shelf opens at the middle zoom (3 per row) on larger screens and the most zoomed out (4 per row) on
+// phones (600px and narrower, where the grid switches to its phone layout). A zoom picked during a visit isn't remembered.
+const zoom = { level: matchMedia("(max-width: 600px)").matches ? 4 : 3 };
 // Card swatches are drawn at the size they're actually shown (cards grow on bigger screens), so they
 // stay sharp instead of being stretched.
 // Cards rise into view as they're scrolled to. Cards arriving together (a new row, or the first screen)
@@ -2068,7 +2091,7 @@ function setZoom(n, quiet) {
   $("#grid").dataset.zoom = n;
   const box = $("#zoom"); box.style.setProperty("--i", ZOOMS.indexOf(n));
   box.querySelectorAll(".z-opt").forEach(b => { const on = +b.dataset.n === n; b.setAttribute("aria-checked", on); b.tabIndex = on ? 0 : -1; });
-  if (changed && !quiet) { save(KEY.zoom, n); fitGrid(); settle(); }
+  if (changed && !quiet) { fitGrid(); settle(); }
 }
 
 /* Switching zoom animates the shelf from the old grid to the new one: each card on screen glides and
@@ -2132,36 +2155,42 @@ function fadeScopes() {
 document.querySelectorAll(".filter-row .scopes").forEach(el => el.addEventListener("scroll", fadeScopes, { passive: true }));
 addEventListener("resize", fadeScopes);
 fadeScopes();
-// As soon as the page scrolls down, the filters collapse into one row (see .filters.collapsed in style.css). They
-// keep their full height while collapsed, so the shelf under them doesn't jump; that height is measured
-// with the filters open, and again on resize.
-const filtersEl = $("#filters");
-function measureFilters() {
-  const was = filtersEl.classList.contains("collapsed");
-  filtersEl.classList.remove("collapsed");
-  filtersEl.style.setProperty("--fh", filtersEl.offsetHeight + "px");
-  filtersEl.classList.toggle("collapsed", was);
+// Mini nav: once the filters have scrolled out of view, the same pills slide in at the top of the window in
+// one row (.mini-nav in style.css). Each mini pill is a copy that presses the real pill, and mirrors its
+// pressed state, so the filters stay the one source of truth.
+const filtersEl = $("#filters"), miniNav = $("#miniNav"), miniRow = $("#miniRow");
+(() => {
+  const groups = ["#fxPills", "#brandPills"].map(sel => [...document.querySelectorAll(sel + " .scope")]);
+  groups.forEach((pills, gi) => {
+    if (gi) { const gap = document.createElement("span"); gap.className = "mini-gap"; miniRow.appendChild(gap); }
+    pills.forEach(orig => {
+      const copy = orig.cloneNode(true); copy.removeAttribute("id");
+      copy.onclick = () => orig.click();
+      new MutationObserver(() => copy.setAttribute("aria-pressed", orig.getAttribute("aria-pressed"))).observe(orig, { attributes: true, attributeFilter: ["aria-pressed"] });
+      miniRow.appendChild(copy);
+    });
+  });
+})();
+function placeMiniNav() {
+  const r = $("main").getBoundingClientRect();
+  miniNav.style.left = r.left + "px"; miniNav.style.width = r.width + "px";
 }
-// Scrolling back up opens them again right away (on their white bar), without waiting to reach the top;
-// scrolling down collapses them again. A few pixels of slack keep small jitters from flipping it.
-let lastY = scrollY, scrollDir = 1, dirFrom = scrollY;
-function collapseFilters() {
-  const y = scrollY, dir = y > lastY ? 1 : y < lastY ? -1 : scrollDir;
-  if (dir !== scrollDir) { scrollDir = dir; dirFrom = lastY; }
-  lastY = y;
-  const goingUp = scrollDir < 0 && dirFrom - y > 8;
-  const c = y > 4 && (filtersEl.classList.contains("collapsed") ? !goingUp : scrollDir > 0 && y - dirFrom > 8);
-  if (c === filtersEl.classList.contains("collapsed")) return;
-  if (c) measureFilters();
-  filtersEl.classList.toggle("collapsed", c);
-  filtersEl.classList.remove("swapping"); void filtersEl.offsetWidth; filtersEl.classList.add("swapping");
-  if (!c) fadeScopes();
+function syncMiniNav() {
+  // Only once the last filter row (Brands), hairline included, has scrolled fully off the top, plus a little
+  // more, so the two never show at once.
+  const rows = filtersEl.querySelectorAll(".filter-row"), last = rows[rows.length - 1] || filtersEl;
+  const show = state.view !== "combos" && last.getBoundingClientRect().bottom < -16;
+  if (show === document.body.classList.contains("show-mini")) return;
+  if (show) placeMiniNav();
+  document.body.classList.toggle("show-mini", show);
+  miniNav.inert = !show;
 }
-filtersEl.addEventListener("animationend", () => filtersEl.classList.remove("swapping"));
-let collapseRaf = 0;
-addEventListener("scroll", () => { if (!collapseRaf) collapseRaf = requestAnimationFrame(() => { collapseRaf = 0; collapseFilters(); }); }, { passive: true });
-addEventListener("resize", () => { if (filtersEl.classList.contains("collapsed")) measureFilters(); collapseFilters(); });
-collapseFilters();
+let miniRaf = 0;
+addEventListener("scroll", () => { if (!miniRaf) miniRaf = requestAnimationFrame(() => { miniRaf = 0; syncMiniNav(); }); }, { passive: true });
+addEventListener("resize", () => { placeMiniNav(); syncMiniNav(); });
+// The shelf column narrows when the Layers pane opens; keep the mini nav over it.
+new ResizeObserver(placeMiniNav).observe($("main"));
+syncMiniNav();
 buildZoom();
 renderShelf();
 renderBench();
