@@ -84,7 +84,10 @@ function dropMorph(s, push, w, h) {
 
 // Keep each drop's clip-path in step with its box's size (cards resize with the zoom and the screen).
 function dropClip(box) {
-  const w = box.clientWidth, h = box.clientHeight;
+  // The exact layout size, fractions included, and unaffected by any transform (clientWidth rounds to whole
+  // pixels, which left the swatch's edge up to a pixel off the gloss and rim drawn over it, so a sliver of
+  // the swatch showed past them).
+  const cs = getComputedStyle(box), w = parseFloat(cs.width) || box.clientWidth, h = parseFloat(cs.height) || box.clientHeight;
   if (w && h && box._drop) box.style.setProperty("--drop-clip", box._drop.clip(w, h));
 }
 const dropRO = new ResizeObserver(entries => entries.forEach(e => dropClip(e.target)));

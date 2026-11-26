@@ -519,7 +519,8 @@ body { transition: background-color .3s ease; }
 @keyframes saving { to { opacity: .55; } }
 /* Save combo rises and fades in when the second layer arrives. */
 .save-combo.rise-in { animation: save-in .45s cubic-bezier(.2, .8, .2, 1) both; }
-.combo-fab.rise-in { animation: save-in .45s cubic-bezier(.2, .8, .2, 1) both; }
+/* backwards, not both: a held end state would pin its opacity at 1 and stop it fading out on the combos page. */
+.combo-fab.rise-in { animation: save-in .45s cubic-bezier(.2, .8, .2, 1) backwards; }
 @keyframes save-in { from { opacity: 0; transform: translateY(10px) scale(.92); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .save-combo.rise-in, .combo-fab.rise-in { animation: none; } }
 .save-combo:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
