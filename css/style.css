@@ -449,7 +449,7 @@ body.detail-open .mini-nav { opacity: 0; visibility: hidden; pointer-events: non
 }
 .zoom { transition: opacity .2s ease, visibility 0s; }
 /* With the zoom bar gone, the Favorite combos button glides to the middle of the dock (centered on screen). */
-.combo-fab { transition: background .15s ease, left .35s cubic-bezier(.2, .8, .2, 1), translate .35s cubic-bezier(.2, .8, .2, 1); }
+.combo-fab { transition: background .15s ease, opacity .2s ease, left .35s cubic-bezier(.2, .8, .2, 1), translate .35s cubic-bezier(.2, .8, .2, 1); }
 .view-combos .combo-fab { left: 50%; translate: -50% 0; }
 .view-combos .zoom { opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .2s ease, visibility 0s .2s; }
 @media (max-width: 600px) { .view-combos .zoom { display: none; } .view-combos .combo-fab { translate: none; } } /* phones center the dock's contents, so the pill centers once the bar is out */
@@ -743,7 +743,11 @@ html.combos-dark.view-combos .combos-close svg { stroke: #f7f7f7; }
 .page-ghost { position: fixed; inset: 0; overflow: hidden; contain: paint; pointer-events: none; will-change: transform; }
 .page-ghost > .page { margin-top: var(--gy, 0); }
 .sheet-dim { position: fixed; inset: 0; background: rgba(0, 0, 0, .22); pointer-events: none; }
-body.sheet-moving > .page { z-index: 3; will-change: transform; }
+/* The Combos pill fades out once the combos page is up (the close button takes you back), unless a combo is
+   being saved from there, when it shows to catch the swatch. */
+html.view-combos .dock .combo-fab { opacity: 0; pointer-events: none; transition: opacity .2s ease; }
+html.view-combos body.saving-combo .dock .combo-fab { opacity: 1; }
+.page-ghost .card { transition: none !important; }
 /* The combos page always fills the screen, however few combos there are, so the sheet covers the shelf
    completely (lvh: the full height with Safari's toolbars hidden, so no strip of shelf shows below). */
 html.view-combos body > .page { min-height: 100vh; min-height: 100lvh; }
