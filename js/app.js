@@ -214,10 +214,13 @@ function clumpField(R, cw, ch, cell) {
   const octave = (size, amp) => {
     const gx = Math.ceil(cw / size) + 2, gy = Math.ceil(ch / size) + 2, lat = new Float32Array(gx * gy);
     for (let i = 0; i < lat.length; i++) lat[i] = R();
+    // Each column's lattice cell and blend are the same on every row: worked out once (same numbers).
+    const IX = new Int32Array(cw), SX = new Float64Array(cw);
+    for (let x = 0; x < cw; x++) { const fx = x / size, ix = fx | 0, tx = fx - ix; IX[x] = ix; SX[x] = tx * tx * (3 - 2 * tx); }
     for (let y = 0; y < ch; y++) {
-      const fy = y / size, iy = fy | 0, ty = fy - iy, sy = ty * ty * (3 - 2 * ty);
+      const fy = y / size, iy = fy | 0, ty = fy - iy, sy = ty * ty * (3 - 2 * ty), row = iy * gx;
       for (let x = 0; x < cw; x++) {
-        const fx = x / size, ix = fx | 0, tx = fx - ix, sx = tx * tx * (3 - 2 * tx), o = iy * gx + ix;
+        const sx = SX[x], o = row + IX[x];
         const top = lat[o] + (lat[o + 1] - lat[o]) * sx, bot = lat[o + gx] + (lat[o + gx + 1] - lat[o + gx]) * sx;
         out[y * cw + x] += (top + (bot - top) * sy) * amp;
       }
@@ -316,6 +319,7 @@ function magneticSwatch(cv, p, W, H) {
   let raf = 0, skip = false, hovering = false;
 
   function draw(fast = false) {
+    cv._v = (cv._v || 0) + 1; // counts redraws, so a stack built from this swatch knows when to recompose (see liveStack)
     const h = cur.h, k = 1 - h;
     // Glow shape: round and centered for the bead, a long thin stripe through the pointer for the cat eye.
     const cx = (.5 * k + cur.x * h) * cw, cy = (.5 * k + cur.y * h) * ch;
@@ -542,6 +546,7 @@ function holoSwatch(cv, p, W, H) {
   let raf = 0;
 
   function draw() {
+    cv._v = (cv._v || 0) + 1; // counts redraws, so a stack built from this swatch knows when to recompose (see liveStack)
     const lx = cur.x, ly = cur.y * H / W, rot = opt.angle + (cur.x - .5) * .4, cos = Math.cos(rot), sin = Math.sin(rot);
     const turn = cur.x * 2.3 + cur.y * 1.7; // moving the light turns every particle's facet a little
     blooms.length = 0;
@@ -665,6 +670,7 @@ function thermalSwatch(cv, p, W, H) {
   let raf = 0;
 
   function draw() {
+    cv._v = (cv._v || 0) + 1; // counts redraws, so a stack built from this swatch knows when to recompose (see liveStack)
     for (let y = 0, i = 0; y < gh; y++) {
       for (let x = 0; x < gw; x++, i++) {
         // Diagonal: coldest at the top-left tip corner, warmest toward the bottom-right.
@@ -768,6 +774,7 @@ function multichromeSwatch(cv, p, W, H) {
   let raf = 0;
 
   function draw() {
+    cv._v = (cv._v || 0) + 1; // counts redraws, so a stack built from this swatch knows when to recompose (see liveStack)
     const axis = .5 + (cur.x - .5) * (isShimmer ? 1.1 : .7); // where the facing band sits
     const shift = (cur.y - .5) * .5;               // slide the whole range of colors
     for (let cy = 0; cy < gy; cy++) {
@@ -862,6 +869,7 @@ function powderSwatch(cv, p, W, H) {
   let raf = 0;
   const sstep = (e0, e1, x) => { const t = Math.min(1, Math.max(0, (x - e0) / (e1 - e0))); return t * t * (3 - 2 * t); };
   function draw(fast = false) {
+    cv._v = (cv._v || 0) + 1; // counts redraws, so a stack built from this swatch knows when to recompose (see liveStack)
     const hi = .46 + (cur.x - .5) * .8, shift = (cur.y - .5) * .35, st = fast ? 2 : 1, band = opt.band;
     const tilt = -opt.tilt + (cur.x - .5) * .15; // the diagonal leans a little as the nail tilts
     for (let y = 0; y < ch; y += st) {
@@ -946,6 +954,7 @@ function glowSwatch(cv, p, W, H) {
   let raf = 0, last = 0;
 
   function draw() {
+    cv._v = (cv._v || 0) + 1; // counts redraws, so a stack built from this swatch knows when to recompose (see liveStack)
     const n = st.night;
     for (let y = 0; y < gy; y++) {
       const ny = (y + .5) / gy;
@@ -1107,6 +1116,24 @@ function freezePage() {
   wrap.append(copy);
   return wrap;
 }
+// While the page slides up it starts below the screen, and Safari doesn't recheck what's on screen as a
+// transform animation moves it, so the combos would stay undrawn and unrisen until you scrolled. The
+// first screen of them is drawn and shown right away instead.
+function revealNow() {
+  const limit = innerHeight * 1.5;
+  $("#grid").querySelectorAll(".card").forEach((card, k) => {
+    if (card.offsetTop > limit) return;
+    if (card.classList.contains("rise") && !card.classList.contains("in")) {
+      if (riseIO) riseIO.unobserve(card);
+      card.style.setProperty("--d", (k * .07 + .12).toFixed(2) + "s"); card.classList.add("in");
+    }
+    card.querySelectorAll("canvas").forEach(cv => {
+      if (!cv._p || cv._w) return;
+      if (drawIO) drawIO.unobserve(cv);
+      drawCard(cv);
+    });
+  });
+}
 function sheetDim() { const d = document.createElement("div"); d.className = "sheet-dim"; d.style.zIndex = 2; return d; }
 // The shelf's cards (swatches already drawn) are set aside while the combos are up and put back on close, so
 // returning is instant instead of redrawing every swatch. Nothing on the shelf can change meanwhile.
@@ -1127,21 +1154,23 @@ function openCombos() {
   showView("combos", 0);
   page.style.background = document.documentElement.classList.contains("combos-dark") ? "#000" : "var(--bg)";
   dim.animate([{ opacity: 0 }, { opacity: 1 }], { duration: SHEET.up, easing: "ease-out", fill: "forwards" });
-  page.animate([{ transform: "translateY(100vh)" }, { transform: "none" }], { duration: SHEET.up, easing: "cubic-bezier(.2, .8, .2, 1)" }).finished.then(() => {
-    ghost.remove(); dim.remove(); body.classList.remove("sheet-moving"); page.style.background = "";
-  });
+  revealNow();
+  const done = () => { ghost.remove(); dim.remove(); body.classList.remove("sheet-moving"); page.style.background = ""; };
+  page.animate([{ transform: "translateY(100vh)" }, { transform: "none" }], { duration: SHEET.up, easing: "cubic-bezier(.2, .8, .2, 1)" }).finished.then(done, done);
+  setTimeout(done, SHEET.up + 200); // in case the animation is interrupted
 }
 async function closeCombos() {
   if (state.view !== "combos") return;
   if (reduceMotion) return showView("shelf", SHEET.shelfY);
   const ghost = freezePage(), dim = sheetDim();
-  Object.assign(ghost.style, { zIndex: 3, borderRadius: "20px 20px 0 0", boxShadow: "0 -12px 40px rgba(0, 0, 0, .14)" });
+  ghost.style.zIndex = 3;
   document.body.append(dim, ghost);
   showView("shelf", SHEET.shelfY);
   await new Promise(r => requestAnimationFrame(r)); // the shelf paints under the copy before it drops
   dim.animate([{ opacity: 1 }, { opacity: 0 }], { duration: SHEET.down, easing: "ease-in", fill: "forwards" });
   ghost.animate([{ transform: "none" }, { transform: "translateY(100vh)" }], { duration: SHEET.down, easing: "cubic-bezier(.4, 0, .7, .2)", fill: "forwards" })
-    .finished.then(() => { ghost.remove(); dim.remove(); });
+    .finished.then(() => { ghost.remove(); dim.remove(); }, () => { ghost.remove(); dim.remove(); });
+  setTimeout(() => { ghost.remove(); dim.remove(); }, SHEET.down + 200);
 }
 // The button's two thumbnails: the two newest saved combos, or the first polishes on the shelf until
 // there are any.
@@ -1728,6 +1757,7 @@ function openDetail(p, card) {
   stage.style.transform = `translate(${from.left - to.left}px, ${from.top - to.top}px) scale(${from.width / to.width}, ${from.height / to.height})`;
   m.classList.remove("open"); void m.offsetWidth;
   card.style.visibility = "hidden";
+  shelfBackdrop(); // drawn now, with the rest of the setup, so it doesn't hold up the flight's first frame
   const token = detail.token = {};
   requestAnimationFrame(() => requestAnimationFrame(() => {
     if (detail.token !== token || m.hidden) return; // closed (or another polish opened) meanwhile
@@ -1744,6 +1774,75 @@ function openDetail(p, card) {
   document.title = `${p.name} · ${p.brand} · ${SITE_TITLE}`;
 }
 
+
+/* The polish page's backdrop: the shelf, heavily blurred (60px) under a white wash. Blurring the live page
+   with a CSS filter redid a full-screen 60px blur on every frame of the fade (slow on older computers), so
+   instead the part of the shelf on screen is drawn once into a small picture (1/8 size: the swatches as
+   they are right now, the pills and text as soft blocks of their color), blurred once, and faded in. At that
+   blur nothing finer than the colors survives, so it looks the same. The wash is still .page::after. */
+const BACKDROP = { blur: 60, scale: 1 / 8 };
+function shelfBackdrop() {
+  const page = $(".page");
+  let cv = page.querySelector(":scope > .shelf-blur");
+  if (!cv) { cv = document.createElement("canvas"); cv.className = "shelf-blur"; cv.setAttribute("aria-hidden", "true"); page.appendChild(cv); }
+  // The picture covers the screen plus a margin (the blur reaches in this far from offscreen); only the
+  // screen's part is kept, so the page doesn't grow wider.
+  const S = BACKDROP.scale, vw = innerWidth, vh = innerHeight, m = Math.ceil(BACKDROP.blur * 3 * S), M = m / S;
+  const w = Math.ceil(vw * S) + 2 * m, h = Math.ceil(vh * S) + 2 * m;
+  const work = document.createElement("canvas"); work.width = w; work.height = h;
+  const g = work.getContext("2d", { willReadFrequently: true });
+  g.setTransform(S, 0, 0, S, M * S, M * S); // draw in screen coordinates
+  g.fillStyle = getComputedStyle(document.body).backgroundColor || "#fff"; g.fillRect(-M, -M, vw + 2 * M, vh + 2 * M);
+  const onScreen = r => r.width > 0 && r.height > 0 && r.right > -M && r.left < vw + M && r.bottom > -M && r.top < vh + M;
+  // Pills: their fill. Text: a soft block of its color, about as dark as its ink averages out to.
+  page.querySelectorAll(".scope, .pill").forEach(el => {
+    const r = el.getBoundingClientRect(), cs = getComputedStyle(el); if (!onScreen(r) || cs.visibility === "hidden") return;
+    g.fillStyle = cs.backgroundColor; g.beginPath(); g.roundRect(r.left, r.top, r.width, r.height, r.height / 2); g.fill();
+  });
+  page.querySelectorAll(".shelf-title, .filter-label, .scope, .card-text .name, .card-text .brand, .card-fx").forEach(el => {
+    const r = el.getBoundingClientRect(), cs = getComputedStyle(el); if (!onScreen(r) || cs.visibility === "hidden" || !el.textContent.trim()) return;
+    const big = parseFloat(cs.fontSize) > 30;
+    g.globalAlpha = big ? .3 : .18; g.fillStyle = cs.color;
+    if (el.classList.contains("scope") || el.classList.contains("card-fx")) { const pad = Math.min(16, r.width * .2); g.fillRect(r.left + pad, r.top + r.height * .35, r.width - pad * 2, r.height * .3); }
+    else g.fillRect(r.left, r.top + r.height * .2, r.width, r.height * .6);
+    g.globalAlpha = 1;
+  });
+  // Swatches: the picture each one is showing right now, in its drop shape. (The one being opened is hidden.)
+  page.querySelectorAll(".swatch-wrap, .combo-sat").forEach(wrap => {
+    const r = wrap.getBoundingClientRect(); if (!onScreen(r)) return;
+    const card = wrap.closest(".card"); if (card && (card.hidden || card.style.visibility === "hidden")) return;
+    if (getComputedStyle(wrap).visibility === "hidden") return;
+    const sw = wrap.querySelector(":scope > canvas.swatch");
+    g.save(); g.translate(r.left, r.top);
+    if (wrap._drop) g.clip(new Path2D(wrap._drop.clip(r.width, r.height).slice(6, -2)));
+    else { g.beginPath(); g.roundRect(0, 0, r.width, r.height, parseFloat(getComputedStyle(wrap).borderTopLeftRadius) || 0); g.clip(); }
+    g.fillStyle = getComputedStyle(wrap).backgroundColor; g.fillRect(0, 0, r.width, r.height);
+    if (sw && sw.width) try { g.drawImage(sw, 0, 0, r.width, r.height); } catch (e) {}
+    g.restore();
+  });
+  // A gaussian blur, as three box blurs (radius 7 at 1/8 size is a 60px gaussian at full size).
+  const img = g.getImageData(0, 0, w, h), d = img.data, rad = Math.round((Math.sqrt(4 * (BACKDROP.blur * S) ** 2 + 1) - 1) / 2);
+  const tmp = new Float32Array(Math.max(w, h) * 3);
+  const pass = (n, len, stride, step) => { // blur `n` lines of `len` pixels each
+    for (let k = 0; k < n; k++) {
+      const o0 = k * stride;
+      for (let i = 0; i < len; i++) { const o = o0 + i * step; tmp[i * 3] = d[o]; tmp[i * 3 + 1] = d[o + 1]; tmp[i * 3 + 2] = d[o + 2]; }
+      let r = 0, gg = 0, b = 0; const at = i => (i < 0 ? 0 : i >= len ? len - 1 : i) * 3;
+      for (let i = -rad; i <= rad; i++) { const q = at(i); r += tmp[q]; gg += tmp[q + 1]; b += tmp[q + 2]; }
+      const n2 = 2 * rad + 1;
+      for (let i = 0; i < len; i++) {
+        const o = o0 + i * step; d[o] = r / n2; d[o + 1] = gg / n2; d[o + 2] = b / n2;
+        const add = at(i + rad + 1), sub = at(i - rad); r += tmp[add] - tmp[sub]; gg += tmp[add + 1] - tmp[sub + 1]; b += tmp[add + 2] - tmp[sub + 2];
+      }
+    }
+  };
+  for (let p = 0; p < 3; p++) { pass(h, w, w * 4, 4); pass(w, h, 4, w * 4); }
+  cv.width = w - 2 * m; cv.height = h - 2 * m;
+  cv.getContext("2d").putImageData(img, -m, -m);
+  const pr = page.getBoundingClientRect();
+  Object.assign(cv.style, { left: -pr.left + "px", top: -pr.top + "px", width: vw + "px", height: vh + "px" }); // (the picture is a few pixels larger: drawn just squeezed)
+}
+addEventListener("resize", () => { if (document.body.classList.contains("detail-open")) shelfBackdrop(); });
 
 function closeDetail() {
   const m = $("#modal"); if (m.hidden || detail.closing) return;
@@ -2050,6 +2149,10 @@ function flashCover(o) {
   const src = o.cv, w = src.width, h = src.height;
   if (!w || !h) return src;
   const c = o._cover || (o._cover = document.createElement("canvas"));
+  // The flash hasn't been redrawn since the last time: the cover made then is still right. (Reading the
+  // pixels back every frame was the most expensive part of hovering a stack.)
+  if (o._covered && o._coverV === src._v && c.width === w && c.height === h) return c;
+  o._covered = true; o._coverV = src._v;
   if (c.width !== w || c.height !== h) { c.width = w; c.height = h; }
   const img = src.getContext("2d").getImageData(0, 0, w, h), d = img.data;
   for (let i = 0; i < d.length; i += 4) {
@@ -2069,6 +2172,10 @@ function composeOps(ctx, ops, ow, oh) {
   }
   ctx.globalCompositeOperation = "source-over"; ctx.globalAlpha = 1;
 }
+// A number that changes whenever any of a stack's live layer canvases has been redrawn (each swatch counts
+// its own redraws in cv._v). The stack is only recomposed when it changes: once every layer has settled,
+// recomposing again would paint exactly the same picture.
+function opsVersion(ops) { let v = 0; for (const o of ops) if (o.cv) v += o.cv._v || 0; return v; }
 function stackCanvas(W, H) {
   const out = document.createElement("canvas");
   return drawStack(out, bench.layers, W, H) ? out : null;
@@ -2096,8 +2203,12 @@ function liveStack(out, layers, W, H) {
   ops.forEach(o => o.cv && holder.appendChild(o.cv));
   box.append(holder);
   composeOps(ctx, ops, out.width, out.height);
-  let until = 0, raf = 0;
-  const loop = now => { if (!mine()) { raf = 0; return; } composeOps(ctx, ops, out.width, out.height); raf = now < until ? requestAnimationFrame(loop) : 0; };
+  let until = 0, raf = 0, drawn = opsVersion(ops);
+  const loop = now => {
+    if (!mine()) { raf = 0; return; }
+    const v = opsVersion(ops); if (v !== drawn) { drawn = v; composeOps(ctx, ops, out.width, out.height); }
+    raf = now < until ? requestAnimationFrame(loop) : 0;
+  };
   const kick = () => { until = performance.now() + 3500; if (!raf) raf = requestAnimationFrame(loop); };
   out.onpointermove = e => { ops.forEach(o => o.cv && o.cv.onpointermove && o.cv.onpointermove(e)); kick(); };
   out.onpointerleave = e => { ops.forEach(o => o.cv && o.cv.onpointerleave && o.cv.onpointerleave(e)); kick(); };
@@ -2123,8 +2234,11 @@ function renderStage() {
     box.append(holder, out);
     dropify(box, dropKeyFor(bench.layers), box.clientHeight / box.clientWidth || 360 / 348);
     composeOps(ctx, ops, out.width, out.height);
-    let until = 0, raf = 0;
-    const loop = now => { composeOps(ctx, ops, out.width, out.height); raf = now < until ? requestAnimationFrame(loop) : 0; };
+    let until = 0, raf = 0, drawn = opsVersion(ops);
+    const loop = now => {
+      const v = opsVersion(ops); if (v !== drawn) { drawn = v; composeOps(ctx, ops, out.width, out.height); }
+      raf = now < until ? requestAnimationFrame(loop) : 0;
+    };
     const kick = () => { until = performance.now() + 3500; if (!raf) raf = requestAnimationFrame(loop); }; // long enough for glow fades
     out.onpointermove = e => { ops.forEach(o => o.cv && o.cv.onpointermove && o.cv.onpointermove(e)); kick(); };
     out.onpointerleave = e => { ops.forEach(o => o.cv && o.cv.onpointerleave && o.cv.onpointerleave(e)); kick(); };
@@ -2156,6 +2270,18 @@ function setSheet(expanded) {
   if (!expanded) { b.scrollTop = 0; $(".bench-title").blur(); }
   // Wait out the tap that opened the sheet, so it doesn't also start editing the name.
   clearTimeout(setSheet.t); setSheet.t = setTimeout(syncTitleEditing, expanded ? 400 : 0);
+}
+// While the phone sheet is expanded, the page behind it doesn't scroll: the html element stops scrolling, and
+// touch drags outside the sheet are cancelled (iOS can still pan a page with overflow hidden). Kept in sync with
+// the sheet's classes, so every way it collapses or closes unlocks the page.
+{
+  const b = $("#bench"), root = document.documentElement;
+  const sync = () => root.classList.toggle("sheet-lock", sheetMQ.matches && !b.hidden && b.classList.contains("expanded"));
+  new MutationObserver(sync).observe(b, { attributes: true, attributeFilter: ["class", "hidden"] });
+  sheetMQ.addEventListener("change", sync);
+  document.addEventListener("touchmove", e => {
+    if (root.classList.contains("sheet-lock") && !b.contains(e.target)) e.preventDefault();
+  }, { passive: false });
 }
 // A saved combo's name is edited in place by tapping it, with nothing on screen saying so. It saves when focus
 // leaves (Enter does the same, Escape cancels). On phones the collapsed sheet's header only opens the sheet.
@@ -2281,7 +2407,11 @@ function pump() {
   if (zoomBusy()) { pumping = requestAnimationFrame(pump); return; } // wait for the zoom animation to finish first
   const t = performance.now(); let drew = false;
   while (drawQueue.length && (!drew || performance.now() - t < 12)) {
-    const cv = drawQueue.shift();
+    // A swatch that's only being sharpened at its new size (after a zoom or the Layers pane opening) waits
+    // while the page is being scrolled or a swatch hovered: its old picture is already showing, scaled.
+    let i = 0;
+    if (t - activeAt < 300) { i = drawQueue.findIndex(c => !c._soft); if (i < 0) break; }
+    const cv = drawQueue.splice(i, 1)[0];
     if (!cv._w && cv.isConnected) { drawCard(cv); drew = true; }
   }
   if (drew) shapeForScroll(true);
@@ -2294,11 +2424,19 @@ function queueDraw(cv) {
   }, { rootMargin: "50% 0px" });
   drawIO.observe(cv);
 }
+// Background drawing waits while the page is being scrolled or a swatch is being hovered: one draw can
+// take longer than a frame on a slower computer, and landing in the middle of a scroll or a hover
+// animation made it stutter. (Swatches coming into view are still drawn right away, by the queue above.)
+let activeAt = 0;
+const markActive = () => { activeAt = performance.now(); };
+addEventListener("scroll", markActive, { passive: true });
+addEventListener("wheel", markActive, { passive: true });
+document.addEventListener("pointermove", e => { if (e.target.classList && e.target.classList.contains("swatch")) markActive(); }, { passive: true });
 function fillIdle() {
   idle(deadline => {
     const next = [...document.querySelectorAll("#grid .swatch")].find(cv => !cv._w && cv.parentElement.clientWidth); // hidden cards wait until shown
     if (!next) return;
-    if (deadline.timeRemaining() > 4 && !zoomBusy()) { drawIO && drawIO.unobserve(next); drawCard(next); shapeForScroll(true); }
+    if (deadline.timeRemaining() > 4 && !zoomBusy() && performance.now() - activeAt > 300) { drawIO && drawIO.unobserve(next); drawCard(next); shapeForScroll(true); }
     fillIdle();
   });
 }

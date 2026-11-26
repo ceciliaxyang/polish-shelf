@@ -264,19 +264,25 @@ function pourRand(key) { const h = [...String(key)].reduce((a, ch) => a * 31 + c
 // keyframes play linearly), so the motion is one smooth curve. The puddle layer is 10% larger than the
 // swatch on every side so the overshoot isn't cut off.
 function pourFrames(s, key, w, h) {
-  const d = s.clip(w, h).slice(6, -2), nums = d.match(/-?\d+(\.\d+)?/g).map(Number), cmds = d.replace(/-?\d+(\.\d+)?/g, "#");
+  const d = s.clip(w, h).slice(6, -2), nums = d.match(/-?\d+(\.\d+)?/g).map(Number), cmds = d.replace(/-?\d+(\.\d+)?/g, "#").split("#");
   const lx = s.cx / 100 * w, ly = s.cy / s.vh * h, R = dropRand(dropHash(key + "#pour")), ph = [R(), R(), R()].map(v => v * 6.28);
-  const frames = [];
+  // Each point's offset and angle from the middle are the same in every frame, so they're worked out once
+  // (this runs for a whole row of cards at once as they scroll into view). Same numbers as before, in the same order.
+  const P = nums.length / 2, DX = new Float64Array(P), DY = new Float64Array(P), A2 = new Float64Array(P), A3 = new Float64Array(P), A5 = new Float64Array(P);
+  for (let q = 0; q < P; q++) {
+    const dx = nums[2 * q] - lx, dy = nums[2 * q + 1] - ly, a = Math.atan2(dy, dx);
+    DX[q] = dx; DY[q] = dy; A2[q] = 2 * a + ph[0]; A3[q] = 3 * a + ph[1]; A5[q] = 5 * a + ph[2];
+  }
+  const ox = w * .1, oy = h * .1, frames = [];
   for (let i = 0, N = 48; i <= N; i++) {
-    const t = i / N, e = pourSpring(t), lump = .2 * Math.exp(-3.2 * t) * (1 - t), out = [];
-    for (let j = 0; j < nums.length; j += 2) {
-      const dx = nums[j] - lx, dy = nums[j + 1] - ly, a = Math.atan2(dy, dx);
-      const n = .55 * Math.sin(2 * a + ph[0] + 1.6 * t) + .3 * Math.sin(3 * a + ph[1] - 2.1 * t) + .15 * Math.sin(5 * a + ph[2] + 3 * t);
+    const t = i / N, e = pourSpring(t), lump = .2 * Math.exp(-3.2 * t) * (1 - t), t2 = 1.6 * t, t3 = 2.1 * t, t5 = 3 * t;
+    let path = cmds[0];
+    for (let q = 0; q < P; q++) {
+      const n = .55 * Math.sin(A2[q] + t2) + .3 * Math.sin(A3[q] - t3) + .15 * Math.sin(A5[q] + t5);
       const f = Math.min(1.09, Math.max(0, e * (1 + lump * n)));
-      out.push((lx + dx * f + w * .1).toFixed(2), (ly + dy * f + h * .1).toFixed(2));
+      path += (lx + DX[q] * f + ox).toFixed(2) + cmds[2 * q + 1] + (ly + DY[q] * f + oy).toFixed(2) + cmds[2 * q + 2];
     }
-    let k = 0;
-    frames.push({ clipPath: `path("${cmds.replace(/#/g, () => out[k++])}")`, offset: t });
+    frames.push({ clipPath: `path("${path}")`, offset: t });
   }
   return frames;
 }
