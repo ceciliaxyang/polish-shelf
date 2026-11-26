@@ -394,10 +394,9 @@ body.detail-open .mini-nav { opacity: 0; visibility: hidden; pointer-events: non
 .swatch-btn.on .plus, .m-add.on .plus { transform: rotate(90deg) scale(0); opacity: 0; }
 .swatch-btn.on .check, .m-add.on .check { stroke-dashoffset: 0; transition: stroke-dashoffset .35s cubic-bezier(.3,.7,.3,1) .12s; }
 .m-add { color: #222; }
-/* The plus/check sits inside a 20px box, so it draws a bit larger than the 16px link and close icons to
-   match them; the plus is scaled down to about the same visual size as the check. */
+/* The plus/check sits inside a 20px box (pulled in by -2px so the button keeps its size). Its + is drawn
+   11px across at the same 1.5px stroke as the 16px link and close icons beside it (see MODAL_PLUS_CHECK). */
 .m-add svg { display: block; width: 20px; height: 20px; margin: -2px; overflow: visible; }
-.m-add .plus { transform: scale(.8); }
 @media (prefers-reduced-motion: reduce) { .swatch-btn .plus, .swatch-btn .check, .swatch-btn.on .check, .m-add .plus, .m-add .check, .m-add.on .check { transition: none; } }
 /* Zoom: 3 per row shows the name and, under it, the effect types as one line of small grey text instead of
    pills (pills would stack and make rows uneven); 4 per row is swatches only, without the + button (add
