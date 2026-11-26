@@ -1130,12 +1130,17 @@ function revealNow() {
       if (riseIO) riseIO.unobserve(card);
       card.style.setProperty("--d", "0s"); card.classList.add("in");
     }
+    // Droplet outlines are normally fitted a frame later, once their size is known; fit them now so the
+    // copy that slides up (and the page under it) has the right shapes rather than plain ovals.
+    if (typeof dropClip === "function") card.querySelectorAll(".drop").forEach(dropClip);
     card.querySelectorAll("canvas").forEach(cv => {
       if (cv._w || !(cv._p || cv._combo)) return;
       if (drawIO) drawIO.unobserve(cv);
       try { drawCard(cv); } catch (e) {}
+      if (autoIO && !drifting.has(cv)) drifting.set(cv, newPath()); // start drifting now, not once it's seen
     });
   });
+  shapeForScroll(true); // magnetic swatches take their resting shape for where they sit, without easing into it
 }
 function sheetDim(z) { const d = document.createElement("div"); d.className = "sheet-dim"; d.style.zIndex = z; return d; }
 // The shelf's cards (swatches already drawn) are set aside while the combos are up and put back on close, so
@@ -1154,7 +1159,7 @@ function afterSheet(ms, anim, ...els) {
   const end = () => { if (done) return; done = true; els.forEach(e => e.remove()); };
   anim.finished.then(end, end); setTimeout(end, ms + 250);
 }
-function openCombos() {
+async function openCombos() {
   SHEET.shelfY = scrollY;
   if (reduceMotion) return showView("combos", 0);
   const body = document.body, under = freezePage(), dim = sheetDim(SHEET.Z + 1);
@@ -1164,12 +1169,18 @@ function openCombos() {
   try {
     showView("combos", 0);
     revealNow();
+    // Two frames for the moving swatches (magnetic, shimmer...) to start, so the copy shows them as they'll be.
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
     sheet = freezePage(); sheet.style.zIndex = SHEET.Z + 2; sheet.style.transform = "translateY(100%)";
     body.append(sheet);
   } catch (e) { under.remove(); dim.remove(); if (sheet) sheet.remove(); throw e; }
   dim.animate([{ opacity: 0 }, { opacity: 1 }], { duration: SHEET.up, easing: "ease-out", fill: "forwards" });
   const move = sheet.animate([{ transform: "translateY(100%)" }, { transform: "none" }], { duration: SHEET.up, easing: "cubic-bezier(.2, .8, .2, 1)", fill: "forwards" });
-  afterSheet(SHEET.up, move, under, dim, sheet);
+  afterSheet(SHEET.up, move, under, dim);
+  // Once it lands, the copy fades into the live page (whose swatches have started moving) instead of
+  // swapping in one frame.
+  const fade = () => sheet.isConnected && sheet.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 260, easing: "ease-out", fill: "forwards" });
+  afterSheet(SHEET.up + 260, { finished: move.finished.then(() => { const f = fade(); return f && f.finished; }) }, sheet);
 }
 async function closeCombos() {
   if (state.view !== "combos") return;
