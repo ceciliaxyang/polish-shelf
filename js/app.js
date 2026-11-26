@@ -1535,6 +1535,34 @@ $("#saveCombo").onclick = () => { const saved = benchCombo(); saved ? deleteComb
 const detail = { p: null, card: null, cv: null };
 const EASE = "cubic-bezier(.2, .8, .2, 1)";
 
+// The swatch's flight out of its card, as a liquid rather than a rigid card: while it moves it stretches
+// along the direction of travel (most at the start, when it's fastest), and when it stops the polish keeps
+// going for a moment, squashing against its landing spot and wobbling a few times before it settles. The
+// stretch keeps the area the same (1 + a one way, 1 / (1 + a) the other). Returns keyframes for
+// element.animate, sampled finely and played linearly so every frame follows these curves exactly.
+const LIQUID = { total: 850, flight: 500, stretch: .18, squash: .14, settleAt: 300, decay: 150, period: 230 };
+function liquidFlight(from, to) {
+  const w = to.width, h = to.height;
+  const dx = (from.left + from.width / 2) - (to.left + w / 2), dy = (from.top + from.height / 2) - (to.top + h / 2);
+  const kx0 = from.width / w, ky0 = from.height / h;
+  const ang = Math.atan2(-dy, -dx) * 180 / Math.PI; // the direction of travel
+  const still = reduceMotion, N = 60, frames = [];
+  for (let i = 0; i <= N; i++) {
+    const t = i / N * LIQUID.total, u = Math.min(1, t / LIQUID.flight);
+    const e = 1 - Math.pow(1 - u, 3.5);                 // position: a strong ease-out, like the old flight
+    const v = u < 1 ? Math.pow(1 - u, 2.5) : 0;         // its speed, 1 at the start and 0 on landing
+    const tau = t - LIQUID.settleAt;
+    const wob = tau > 0 ? -LIQUID.squash * Math.exp(-tau / LIQUID.decay) * Math.sin(2 * Math.PI * tau / LIQUID.period) : 0;
+    const a = still || i === N ? 0 : LIQUID.stretch * v + wob;
+    const kx = kx0 + (1 - kx0) * e, ky = ky0 + (1 - ky0) * e;
+    frames.push({ transformOrigin: "0 0", transform:
+      `translate(${(w / 2 + dx * (1 - e)).toFixed(2)}px, ${(h / 2 + dy * (1 - e)).toFixed(2)}px) rotate(${ang.toFixed(2)}deg) ` +
+      `scale(${(1 + a).toFixed(4)}, ${(1 / (1 + a)).toFixed(4)}) rotate(${(-ang).toFixed(2)}deg) ` +
+      `scale(${kx.toFixed(4)}, ${ky.toFixed(4)}) translate(${(-w / 2).toFixed(2)}px, ${(-h / 2).toFixed(2)}px)` });
+  }
+  return frames;
+}
+
 function openDetail(p, card) {
   if (detail.closing) detail.closing(); // a close still flying: land it first
   detail.p = p; detail.card = card;
@@ -1602,8 +1630,8 @@ function openDetail(p, card) {
   requestAnimationFrame(() => requestAnimationFrame(() => {
     if (detail.token !== token || m.hidden) return; // closed (or another polish opened) meanwhile
     document.body.classList.add("detail-open");
-    stage.style.transition = `transform .5s ${EASE}`;
     stage.style.transform = "";
+    detail.anim = stage.animate(liquidFlight(from, to), { duration: LIQUID.total, easing: "linear" });
     m.classList.add("open");
     // The photos load once it has landed, so decoding them doesn't stall the flight.
     setTimeout(() => { if (detail.token === token) photoImgs.forEach(im => { im.src = im.dataset.src; }); }, 520);
@@ -1617,6 +1645,7 @@ function openDetail(p, card) {
 function closeDetail() {
   const m = $("#modal"); if (m.hidden || detail.closing) return;
   detail.token = null; // cancels an opening flight or photo load still waiting to start
+  if (detail.anim) { detail.anim.finish(); detail.anim = null; } // closing mid-flight: from where it lands
   const stage = $("#mStage"), card = detail.card;
   // The swatch flies back into its card from wherever it has scrolled to (a shared element, both ways).
   // The dialog stops catching the pointer and the shelf can scroll again right away. If the shelf does
