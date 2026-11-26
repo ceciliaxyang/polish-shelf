@@ -1411,11 +1411,14 @@ function saveCombo() {
 // Only then does the shelf take back the pane's room and the dock recenter, and the layers clear (as with Clear).
 function saveSequence(after) {
   const b = $("#bench"), save = $("#saveCombo"), btn = $("#comboBtn");
-  const T = reduceMotion ? [0, 0, 0] : [550, 420, 460];
+  const T = reduceMotion ? [0, 0, 0] : [550, 450, 460];
   b.inert = true; // nothing in the pane can be pressed while it saves
   save.textContent = "Saving…"; save.classList.add("saving");
   setTimeout(() => {
-    if (!reduceMotion) {
+    // On desktop this is the pane's usual slide out to the right; on phones the sheet slides off to the
+    // right from wherever it is.
+    if (!sheetMQ.matches) b.classList.remove("open");
+    else if (!reduceMotion) {
       const cur = getComputedStyle(b).transform;
       b.style.transition = `transform ${T[1]}ms cubic-bezier(.5, 0, .75, 0), opacity ${T[1]}ms ease-in`;
       b.style.transform = "translateX(105%) " + (cur === "none" ? "" : cur);
@@ -1555,7 +1558,11 @@ function setBenchOpen(open) {
   clearTimeout(b._hideT);
   if (open) { b.hidden = false; void b.offsetWidth; b.classList.add("open"); }
   else { b.classList.remove("open"); b._hideT = setTimeout(() => { if (!benchIsOpen()) b.hidden = true; }, sheetMQ.matches || reduceMotion ? 0 : 450); }
+  // On desktop the shelf makes or gives back room for the pane: note where the cards are, switch the
+  // column, then glide them to their new places (the same animation as changing the zoom).
+  const settle = sheetMQ.matches || $("#layout").classList.contains("closed") === !open ? null : zoomFlip();
   $("#layout").classList.toggle("closed", !open);
+  if (settle) { fitGrid(); settle(); }
   document.body.classList.toggle("bench-open", open);
   setSheet(false);
   if (open) renderBench();
