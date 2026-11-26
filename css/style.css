@@ -277,17 +277,15 @@ body.detail-open .mini-nav { opacity: 0; visibility: hidden; pointer-events: non
 .combo-fab:hover { background: rgba(255, 255, 255, .5); }
 .combo-fab[aria-pressed="true"] { background: #222; color: #fff; }
 /* The number of saved combos sits in a round badge at the pill's right end: 22px across, centered in the 48px pill
-   (13px from its end on every side, so the circle is concentric with the pill's rounded end), a frosted white disc
-   (opaque enough that the number stays readable when a dark swatch sits behind the glass) with the number in Foggy (Figma's grey 700, #6a6a6a, the --muted token), 12px semibold, even-width
-   digits. Two or more digits stretch it into a pill of the same height. With no combos there's no badge at all.
-   On the dark pressed pill the tint and number turn a soft white. */
+   (13px from its end on every side, so the circle is concentric with the pill's rounded end), a dark #222 disc
+   with a white number, 12px semibold, even-width digits. Two or more digits stretch it into a pill of the same
+   height. With no combos there's no badge at all. On the dark pressed pill it flips to a white disc with a dark number. */
 .combo-fab:has(.combo-count:not(:empty)) { padding-right: 13px; }
 .combo-count { position: relative; display: inline-grid; place-items: center; overflow: hidden; box-sizing: border-box;
-  min-width: 22px; height: 22px; padding: 0 6px; margin-left: 2px; border-radius: 100px; background: rgba(255, 255, 255, .72);
-  box-shadow: 0 0 0 .5px rgba(0, 0, 0, .06);
-  font-size: 12px; line-height: 22px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--muted); }
+  min-width: 22px; height: 22px; padding: 0 6px; margin-left: 2px; border-radius: 100px; background: #222;
+  font-size: 12px; line-height: 22px; font-weight: 600; font-variant-numeric: tabular-nums; color: #fff; }
 .combo-count:empty { display: none; }
-.combo-fab[aria-pressed="true"] .combo-count { background: rgba(255, 255, 255, .16); color: rgba(255, 255, 255, .75); }
+.combo-fab[aria-pressed="true"] .combo-count { background: #fff; color: #222; }
 /* Its numbers share one grid cell inside the circle, so the old one can roll out while the new one rolls in (see rollCount). */
 .cc-num { grid-area: 1 / 1; }
 /* On phones the zoom bar and the pill are centered together as one group so the pill stays inside the screen. */
