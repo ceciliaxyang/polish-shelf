@@ -2271,6 +2271,18 @@ function setSheet(expanded) {
   // Wait out the tap that opened the sheet, so it doesn't also start editing the name.
   clearTimeout(setSheet.t); setSheet.t = setTimeout(syncTitleEditing, expanded ? 400 : 0);
 }
+// While the phone sheet is expanded, the page behind it doesn't scroll: the html element stops scrolling, and
+// touch drags outside the sheet are cancelled (iOS can still pan a page with overflow hidden). Kept in sync with
+// the sheet's classes, so every way it collapses or closes unlocks the page.
+{
+  const b = $("#bench"), root = document.documentElement;
+  const sync = () => root.classList.toggle("sheet-lock", sheetMQ.matches && !b.hidden && b.classList.contains("expanded"));
+  new MutationObserver(sync).observe(b, { attributes: true, attributeFilter: ["class", "hidden"] });
+  sheetMQ.addEventListener("change", sync);
+  document.addEventListener("touchmove", e => {
+    if (root.classList.contains("sheet-lock") && !b.contains(e.target)) e.preventDefault();
+  }, { passive: false });
+}
 // A saved combo's name is edited in place by tapping it, with nothing on screen saying so. It saves when focus
 // leaves (Enter does the same, Escape cancels). On phones the collapsed sheet's header only opens the sheet.
 function syncTitleEditing() {

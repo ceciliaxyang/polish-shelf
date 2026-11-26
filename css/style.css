@@ -753,3 +753,7 @@ html.view-combos body > .page { min-height: 100vh; min-height: 100lvh; }
   .grid .card { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
   .grid .swatch { -webkit-tap-highlight-color: transparent; }
 }
+/* Phones: the page behind the expanded Layers sheet doesn't scroll, and scrolling the sheet past its ends
+   doesn't hand the scroll on to the page. */
+html.sheet-lock, html.sheet-lock body { overflow: hidden; }
+@media (max-width: 760px) { .bench { overscroll-behavior: contain; } }
