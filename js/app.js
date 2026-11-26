@@ -2656,23 +2656,38 @@ function startTilt() {
   if (tilt.listening) return;
   tilt.listening = true; addEventListener("deviceorientation", onTilt);
 }
-const TILT_KEY = "polish-shelf-tilt"; // "granted", "denied" or "dismissed" (iPhone only)
+const TILT_KEY = "polish-shelf-tilt"; // "granted" or "dismissed" (iPhone only; a "no" isn't kept, so it's offered again next visit)
 const tiltNeedsAsk = noHover && typeof DeviceOrientationEvent !== "undefined" && typeof DeviceOrientationEvent.requestPermission === "function";
+const tiltDbg = { answer: "-", readings: 0 };
 function askTilt() {
-  return DeviceOrientationEvent.requestPermission().then(s => { save(TILT_KEY, s); if (s === "granted") startTilt(); return s; }, () => "denied");
+  tiltDbg.answer = "asking";
+  return DeviceOrientationEvent.requestPermission().then(s => {
+    tiltDbg.answer = s; save(TILT_KEY, s === "granted" ? s : null); if (s === "granted") startTilt(); return s;
+  }, e => { tiltDbg.answer = "error: " + (e && e.name || e); return "denied"; });
 }
 // The hint: a frosted pill over the zoom bar, "Tilt to see the shimmer" with Turn on and a close button.
+// It stays until answered. If Safari says no (it answers no without asking when motion access was
+// refused earlier in this Safari session), the pill says so instead of vanishing.
 function tiltAsk() {
   if ($("#tiltAsk")) return;
   const el = document.createElement("div"); el.id = "tiltAsk"; el.className = "tilt-ask";
   el.innerHTML = `<button type="button" class="ta-on"><svg class="ta-icon" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect class="ta-phone" x="6.5" y="3" width="7" height="14" rx="2"/><path d="M2.5 8a6 6 0 0 0 0 4M17.5 8a6 6 0 0 1 0 4"/></svg><span class="ta-text">Tilt to see the shimmer</span><span class="ta-go">Turn on</span></button><button type="button" class="ta-x" aria-label="No thanks"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M2.5 2.5l7 7M9.5 2.5l-7 7"/></svg></button>`;
   const hide = () => { el.classList.remove("show"); setTimeout(() => el.remove(), 400); };
-  el.querySelector(".ta-on").onclick = () => { askTilt(); hide(); };
-  el.querySelector(".ta-x").onclick = () => { save(TILT_KEY, "dismissed"); hide(); };
+  el.querySelector(".ta-on").onclick = () => {
+    if (el.classList.contains("ta-off")) return;
+    askTilt().then(s => {
+      if (s === "granted") return hide();
+      el.classList.add("ta-off"); el.querySelector(".ta-text").textContent = "Motion access is off. Reopen the tab to ask again";
+    });
+  };
+  el.querySelector(".ta-x").onclick = () => { if (!el.classList.contains("ta-off")) save(TILT_KEY, "dismissed"); hide(); };
   $("#dock").appendChild(el);
   requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add("show")));
 }
 window.offerTilt = () => { save(TILT_KEY, null); tiltAsk(); }; // developer settings: offer it again
+// ?tilt=ask offers it again; ?tilt=debug also shows a status line (for checking on a real phone).
+const tiltParam = new URLSearchParams(location.search).get("tilt");
+if (tiltParam) save(TILT_KEY, null);
 if (noHover && !tiltNeedsAsk) startTilt(); // Android and others: readings start without asking
 else if (tiltNeedsAsk) {
   const was = load(TILT_KEY, null);
@@ -2680,8 +2695,15 @@ else if (tiltNeedsAsk) {
   else if (!was) {
     // Offer it once the shelf has settled in, and not over the polish page.
     const offer = () => document.body.classList.contains("detail-open") || document.documentElement.classList.contains("view-combos") ? setTimeout(offer, 1500) : tiltAsk();
-    setTimeout(offer, 2500);
+    setTimeout(offer, tiltParam ? 300 : 2500);
   }
+}
+if (tiltParam === "debug") {
+  addEventListener("deviceorientation", e => { if (e.beta != null) tiltDbg.readings++; });
+  const d = document.createElement("div"); d.className = "tilt-debug"; document.body.appendChild(d);
+  setInterval(() => {
+    d.textContent = `hover:none ${noHover} · ask ${tiltNeedsAsk} · answer ${tiltDbg.answer} · readings ${tiltDbg.readings} · live ${tiltLive(performance.now())} · x ${tilt.x.toFixed(2)} y ${tilt.y.toFixed(2)} · ${navigator.userAgent.replace(/^.*?\(|\).*$/g, "").slice(0, 60)}`;
+  }, 250);
 }
 
 /* ---------- scroll: magnetic shapes ---------- */

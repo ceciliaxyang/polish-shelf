@@ -791,3 +791,9 @@ html.sheet-lock, html.sheet-lock body { overflow: hidden; }
 .tilt-ask button:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { .ta-phone { animation: none; } .tilt-ask { transition: opacity .2s ease; } }
 body.detail-open .tilt-ask, .view-combos .tilt-ask { opacity: 0; pointer-events: none; }
+/* After a "no" from Safari the hint reads as a note: no Turn on button. */
+.tilt-ask.ta-off .ta-go { display: none; }
+.tilt-ask.ta-off .ta-on { cursor: default; font-size: 13px; }
+/* ?tilt=debug: a status line pinned under the status bar. */
+.tilt-debug { position: fixed; z-index: 400; left: 8px; right: 8px; top: calc(8px + env(safe-area-inset-top)); padding: 6px 10px; border-radius: 10px;
+  background: rgba(0, 0, 0, .75); color: #fff; font: 11px/1.4 ui-monospace, monospace; pointer-events: none; }
