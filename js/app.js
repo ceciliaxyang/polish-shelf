@@ -2045,6 +2045,7 @@ const sheetMQ = matchMedia("(max-width: 760px)");
 function renderPeek() {
   if (!sheetMQ.matches) return;
   const n = bench.layers.length, mini = $("#peekMini"); mini.innerHTML = "";
+  $("#peekCount").textContent = n ? `(${n})` : ""; // "Layers (2)", Figma node 2412:20759
   $("#peekSub").textContent = n ? `${n} layer${n > 1 ? "s" : ""}` : "Start adding polishes to see how they layer together.";
   const cv = stackCanvas(44, 44); if (cv) { mini.appendChild(cv); dropify(mini, dropKeyFor(bench.layers), 1, { small: true }); }
   const th = $("#peekThumbs"); th.innerHTML = "";

@@ -548,13 +548,13 @@ body { transition: background-color .3s ease; }
 .layout { position: relative; }
 .bench-titles { flex: 1; min-width: 0; }
 .peek { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; }
-.sheet-handle, .peek-mini, .peek-sub, .peek-thumbs { display: none; }
+.sheet-handle, .peek-mini, .peek-sub, .peek-count, .peek-thumbs { display: none; }
 /* Phones: the pane is a bottom sheet. Collapsed, only the peek bar shows (combined swatch, layer count,
    thumbnails); tap or drag it up to expand, drag down to tuck it away. */
 @media (max-width: 760px) {
   .bench { --peek: calc(84px + env(safe-area-inset-bottom)); position: fixed; z-index: 60; left: 0; right: 0; top: auto; bottom: 0; width: auto; border-left: 0;
     max-height: 78vh; margin: 0; gap: 16px; padding: 0 16px calc(24px + env(safe-area-inset-bottom)); background: var(--bg);
-    border-radius: 24px 24px 0 0; box-shadow: 0 -4px 24px rgba(0, 0, 0, .12); overflow: hidden;
+    border-radius: 24px 24px 0 0; box-shadow: 0 -4px 12px rgba(0, 0, 0, .12); overflow: hidden;
     transform: translateY(calc(100% - var(--peek))); transition: transform .38s cubic-bezier(.2, .8, .2, 1); }
   .bench.expanded { transform: none; overflow-y: auto; }
   .bench-head { position: sticky; top: 0; z-index: 1; flex-direction: column; align-items: stretch; gap: 0; padding: 8px 0 12px; background: var(--bg); touch-action: none; cursor: grab; }
@@ -574,9 +574,16 @@ body { transition: background-color .3s ease; }
   @keyframes peek-pulse { 40% { transform: scale(1.12); } }
   /* Layers title in the headline serif (Instrument Serif 22 on 22, #222), like the shelf title and polish names. */
   .bench-title { font-family: "Instrument Serif", Georgia, serif; font-size: 22px; line-height: 22px; font-weight: 400; letter-spacing: -.4px; color: #222; padding: 0; }
-  .peek-sub { display: block; margin: 2px 0 0; font-size: 13px; line-height: 18px; color: #6c6c6c; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .peek-thumbs { display: flex; flex-shrink: 0; padding-left: 8px; }
-  .peek-thumbs canvas { width: 24px; height: 24px; margin-left: -8px; border-radius: 7px; box-shadow: 0 0 0 2px var(--bg); }
+  /* Header row (Figma node 2412:20759): swatch, "Layers (2)" on one line with the count in grey, thumbnails, Clear.
+     The "1 layer" line is gone; the sub line only shows the hint while the sheet is empty. */
+  .bench-titles { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 5px; }
+  .bench-titles .bench-title { flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .peek-count { display: block; font-family: "Instrument Serif", Georgia, serif; font-size: 22px; line-height: 22px; letter-spacing: -.4px; color: #6c6c6c; }
+  .peek-count:empty { display: none; }
+  .bench:not(.no-layers) .peek-sub { display: none; }
+  .peek-sub { flex-basis: 100%; display: block; margin: 2px 0 0; font-size: 13px; line-height: 18px; color: #6c6c6c; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .peek-thumbs { display: flex; flex-shrink: 0; padding-left: 8px; } /* 2px in from the title, thumbnails overlapping 6px */
+  .peek-thumbs canvas { width: 24px; height: 24px; margin-left: -6px; border-radius: 7px; box-shadow: 0 0 0 2px var(--bg); }
   .bench.expanded .peek-thumbs { opacity: 0; }
   .peek-thumbs { transition: opacity .2s ease; }
   .stage { width: min(100%, 280px); border-radius: 40px; align-self: center; }
