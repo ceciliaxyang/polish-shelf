@@ -772,3 +772,22 @@ html.view-combos body > .page { min-height: 100vh; min-height: 100lvh; }
    doesn't hand the scroll on to the page. */
 html.sheet-lock, html.sheet-lock body { overflow: hidden; }
 @media (max-width: 760px) { .bench { overscroll-behavior: contain; } }
+
+/* Tilt hint (iPhone): a frosted pill centered 10px over the zoom bar, the same glass, offering to turn on tilt
+   (Safari only asks for motion access from a tap). It rises and fades in, and fades out once answered. */
+.tilt-ask { position: absolute; left: 50%; bottom: calc(100% + 10px); translate: -50% 6px; opacity: 0;
+  display: flex; align-items: center; gap: 2px; padding: 4px; border-radius: 100px; white-space: nowrap; color: #222;
+  background: rgba(255, 255, 255, .32); -webkit-backdrop-filter: blur(16px) saturate(1.8); backdrop-filter: blur(16px) saturate(1.8);
+  box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .6), 0 0 0 .5px rgba(0, 0, 0, .08), 0 6px 20px rgba(0, 0, 0, .12);
+  transition: opacity .3s ease, translate .4s cubic-bezier(.2, .8, .2, 1); pointer-events: none; -webkit-tap-highlight-color: transparent; }
+.tilt-ask.show { opacity: 1; translate: -50% 0; pointer-events: auto; }
+.tilt-ask button { border: 0; background: none; color: inherit; font: inherit; cursor: pointer; display: flex; align-items: center; }
+.ta-on { gap: 8px; padding: 0 0 0 10px; font-size: 14px; line-height: 18px; }
+.ta-icon { flex-shrink: 0; }
+.ta-phone { transform-origin: 10px 10px; animation: ta-rock 2.4s ease-in-out infinite; }
+@keyframes ta-rock { 0%, 100% { rotate: -12deg; } 50% { rotate: 12deg; } }
+.ta-go { margin-left: 4px; padding: 8px 14px; border-radius: 100px; background: #222; color: #fff; font-weight: 500; }
+.ta-x { width: 32px; height: 32px; justify-content: center; border-radius: 50%; color: var(--muted); }
+.tilt-ask button:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .ta-phone { animation: none; } .tilt-ask { transition: opacity .2s ease; } }
+body.detail-open .tilt-ask, .view-combos .tilt-ask { opacity: 0; pointer-events: none; }

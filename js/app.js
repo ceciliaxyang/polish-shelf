@@ -316,7 +316,7 @@ function magneticSwatch(cv, p, W, H) {
   const ELUT = 1024, eI = new Float32Array(ELUT), eT = new Float32Array(ELUT);
   const PLUT = 256, pal = new Float32Array(PLUT * 3);
   for (let i = 0; i < PLUT; i++) pal.set(rgb(palette(flashes, i / (PLUT - 1))), i * 3);
-  let raf = 0, skip = false, hovering = false;
+  let raf = 0, skip = Math.random() < .5, late = 0, hovering = false; // a random start staggers swatches across frames
 
   function draw(fast = false) {
     cv._v = (cv._v || 0) + 1; // counts redraws, so a stack built from this swatch knows when to recompose (see liveStack)
@@ -463,13 +463,17 @@ function magneticSwatch(cv, p, W, H) {
     ctx.globalCompositeOperation = "source-over"; ctx.globalAlpha = 1;
   }
 
-  function tick() {
+  function tick(now) {
     if (!mine()) { raf = 0; return; } // the canvas was redrawn (e.g. at a new zoom): this animation is stale
     cur.x += (target.x - cur.x) * .2; cur.y += (target.y - cur.y) * .2; cur.h += (target.h - cur.h) * .14;
     const moving = Math.abs(target.x - cur.x) + Math.abs(target.y - cur.y) + Math.abs(target.h - cur.h) > .002;
     // The slow touch-screen drift is redrawn every other frame (30 a second is plenty for it, and
     // several swatches drift at once); a finger or mouse on the swatch, and the final frame, every frame.
     skip = moving && !hovering && !skip;
+    // Tilting moves every swatch on screen at once: once this frame's drawing has taken ~10ms, the rest
+    // wait for the next frame (but never more than two in a row), so the page keeps up on slower phones.
+    if (!skip && moving && !hovering && now && late < 2 && performance.now() - now > 10) { skip = true; late++; }
+    else if (!skip) late = 0;
     if (!skip) draw(moving);
     raf = moving ? requestAnimationFrame(tick) : 0;
   }
@@ -2585,23 +2589,100 @@ let lastDrift = 0;
 function drift(now) {
   const dt = Math.min(.1, (now - (lastDrift || now)) / 1000); lastDrift = now;
   const detailOpen = document.body.classList.contains("detail-open");
+  const tilting = tiltLive(now), vw = innerWidth, h = innerHeight;
   for (const [cv, p] of drifting) {
     if (!cv.isConnected) { drifting.delete(cv); continue; }
     const inDetail = !!cv.closest("#mStage");
     if (detailOpen && !inDetail) continue; // the shelf is hidden behind the dialog
     const r = cv.getBoundingClientRect();
-    const mid = r.top + r.height / 2, h = innerHeight;
-    if (!inDetail && (mid < h / 3 || mid > h * 2 / 3)) continue; // outside the middle third: hold still
-    p.t += dt;
-    const w = (f, ph, t) => Math.sin(t * f * 6.283 + ph);
-    const x = .5 + p.ax * w(p.fx[0], p.px[0], p.t) + p.ax * .45 * w(p.fx[1], p.px[1], p.t);
-    const y = .5 + p.ay * w(p.fy[0], p.py[0], p.t) + p.ay * .45 * w(p.fy[1], p.py[1], p.t);
+    const mid = r.top + r.height / 2;
+    let x, y;
+    if (tilting) {
+      // Tilting: every swatch on screen catches one light. Each sees it a little off its own center, away
+      // from where it sits on screen, so tilting sweeps the light across the whole shelf like a real
+      // reflection. Only a new aim wakes a swatch, so holding the phone still costs nothing.
+      if (r.bottom < 0 || r.top > h) continue;
+      const ox = inDetail ? 0 : ((r.left + r.width / 2) / vw - .5) * TILT.spread, oy = inDetail ? 0 : (mid / h - .5) * TILT.spread;
+      x = Math.min(.9, Math.max(.1, .5 - tilt.x * TILT.reach - ox));
+      y = Math.min(.9, Math.max(.1, .5 - tilt.y * TILT.reach - oy));
+      if (Math.abs(x - (p.lx ?? -1)) + Math.abs(y - (p.ly ?? -1)) < .012) continue; // ignores hand tremor (about half a degree)
+    } else {
+      if (!inDetail && (mid < h / 3 || mid > h * 2 / 3)) continue; // outside the middle third: hold still
+      p.t += dt;
+      const w = (f, ph, t) => Math.sin(t * f * 6.283 + ph);
+      x = .5 + p.ax * w(p.fx[0], p.px[0], p.t) + p.ax * .45 * w(p.fx[1], p.px[1], p.t);
+      y = .5 + p.ay * w(p.fy[0], p.py[0], p.t) + p.ay * .45 * w(p.fy[1], p.py[1], p.t);
+    }
+    p.lx = x; p.ly = y;
     if (cv.drift) cv.drift(x, y);
     else cv.onpointermove && cv.onpointermove({ clientX: r.left + x * r.width, clientY: r.top + y * r.height });
   }
   requestAnimationFrame(drift);
 }
 if (noHover) requestAnimationFrame(drift);
+
+/* ---------- tilt ---------- */
+// On phones and tablets with motion sensors, tilting the device moves the light on the swatches in place
+// of the slow drift: the same glow, cat eye, shimmer and gloss that a mouse moves on desktop. The angle
+// you hold the phone at slowly becomes the new "straight on" (over a few seconds), so the light always
+// starts centered and only the tilt itself moves it. While no tilt readings arrive (no sensor, permission
+// not given, or the page in the background), swatches keep drifting on their own.
+// iPhones ask for permission first, and only from a tap: a small frosted hint over the zoom bar offers it
+// once (see tiltAsk); after a yes, later visits ask again quietly on the first tap anywhere (Safari
+// remembers the answer, so there's usually no second prompt).
+const TILT = { range: 16, reach: .36, spread: .3, settle: 3 }; // degrees for a full swing; how far the light travels; how much it
+// differs across the screen; seconds for a held angle to become the new center
+const tilt = { listening: false, at: 0, x: 0, y: 0, a: null, b: null, ba: 0, bb: 0, t: 0 };
+const tiltLive = now => now - tilt.at < 800;
+const angDiff = d => ((d + 540) % 360) - 180; // shortest way around, for beta's wrap at +/-180
+function onTilt(e) {
+  if (e.beta == null || e.gamma == null) return;
+  const now = performance.now();
+  // Side to side and front to back as the screen is turned (landscape swaps them).
+  const ang = (screen.orientation && screen.orientation.angle) ?? (+window.orientation || 0);
+  let a = e.gamma, b = e.beta;
+  if (ang === 90) [a, b] = [b, -a]; else if (ang === 270 || ang === -90) [a, b] = [-b, a]; else if (ang === 180) [a, b] = [-a, -b];
+  const fresh = tilt.a === null || now - tilt.at > 800;
+  // Holding the phone past upright flips gamma by ~180: start over from there instead of jumping.
+  if (fresh || Math.abs(a - tilt.a) > 60) { tilt.a = tilt.ba = a; tilt.b = tilt.bb = b; tilt.t = now; tilt.at = now; return; }
+  const dt = Math.min(.25, (now - tilt.t) / 1000); tilt.t = now; tilt.at = now;
+  tilt.a += (a - tilt.a) * .25; tilt.b += angDiff(b - tilt.b) * .25; // a little smoothing for hand tremor
+  const k = Math.min(1, dt / TILT.settle);
+  tilt.ba += (tilt.a - tilt.ba) * k; tilt.bb += angDiff(tilt.b - tilt.bb) * k;
+  const c = v => Math.max(-1, Math.min(1, v / TILT.range));
+  tilt.x = c(tilt.a - tilt.ba); tilt.y = c(angDiff(tilt.b - tilt.bb));
+}
+function startTilt() {
+  if (tilt.listening) return;
+  tilt.listening = true; addEventListener("deviceorientation", onTilt);
+}
+const TILT_KEY = "polish-shelf-tilt"; // "granted", "denied" or "dismissed" (iPhone only)
+const tiltNeedsAsk = noHover && typeof DeviceOrientationEvent !== "undefined" && typeof DeviceOrientationEvent.requestPermission === "function";
+function askTilt() {
+  return DeviceOrientationEvent.requestPermission().then(s => { save(TILT_KEY, s); if (s === "granted") startTilt(); return s; }, () => "denied");
+}
+// The hint: a frosted pill over the zoom bar, "Tilt to see the shimmer" with Turn on and a close button.
+function tiltAsk() {
+  if ($("#tiltAsk")) return;
+  const el = document.createElement("div"); el.id = "tiltAsk"; el.className = "tilt-ask";
+  el.innerHTML = `<button type="button" class="ta-on"><svg class="ta-icon" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect class="ta-phone" x="6.5" y="3" width="7" height="14" rx="2"/><path d="M2.5 8a6 6 0 0 0 0 4M17.5 8a6 6 0 0 1 0 4"/></svg><span class="ta-text">Tilt to see the shimmer</span><span class="ta-go">Turn on</span></button><button type="button" class="ta-x" aria-label="No thanks"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M2.5 2.5l7 7M9.5 2.5l-7 7"/></svg></button>`;
+  const hide = () => { el.classList.remove("show"); setTimeout(() => el.remove(), 400); };
+  el.querySelector(".ta-on").onclick = () => { askTilt(); hide(); };
+  el.querySelector(".ta-x").onclick = () => { save(TILT_KEY, "dismissed"); hide(); };
+  $("#dock").appendChild(el);
+  requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add("show")));
+}
+window.offerTilt = () => { save(TILT_KEY, null); tiltAsk(); }; // developer settings: offer it again
+if (noHover && !tiltNeedsAsk) startTilt(); // Android and others: readings start without asking
+else if (tiltNeedsAsk) {
+  const was = load(TILT_KEY, null);
+  if (was === "granted") addEventListener("click", () => askTilt(), { once: true, capture: true });
+  else if (!was) {
+    // Offer it once the shelf has settled in, and not over the polish page.
+    const offer = () => document.body.classList.contains("detail-open") || document.documentElement.classList.contains("view-combos") ? setTimeout(offer, 1500) : tiltAsk();
+    setTimeout(offer, 2500);
+  }
+}
 
 /* ---------- scroll: magnetic shapes ---------- */
 // On touch screens, as the shelf scrolls, each magnetic swatch shifts with its place on screen: a cat eye as it comes in at

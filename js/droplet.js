@@ -373,6 +373,8 @@ function pourDone(card) {
             <button type="button" role="radio" data-combos="light">Light</button>
             <button type="button" role="radio" data-combos="dark">Dark</button>
           </div></div>
+        ${typeof DeviceOrientationEvent !== "undefined" && typeof DeviceOrientationEvent.requestPermission === "function" ? `<div class="dev-row"><span>Tilt to move the light</span>
+          <button type="button" class="dev-close dev-tilt">Ask again</button></div>` : ""}
         <button type="button" class="dev-close">Done</button>`;
       panel.querySelectorAll("[data-shape]").forEach(b => {
         b.setAttribute("aria-checked", b.dataset.shape === SHAPE);
@@ -392,7 +394,9 @@ function pourDone(card) {
         document.documentElement.classList.toggle("combos-dark", COMBOS_THEME === "dark");
       });
       syncCombos();
-      panel.querySelector(".dev-close").onclick = () => { panel.hidden = true; };
+      panel.querySelector(".dev-close:not(.dev-tilt)").onclick = () => { panel.hidden = true; };
+      const tiltBtn = panel.querySelector(".dev-tilt"); // iPhone: brings back the tilt hint (see tiltAsk in app.js)
+      if (tiltBtn) tiltBtn.onclick = () => { panel.hidden = true; window.offerTilt && window.offerTilt(); };
       document.body.appendChild(panel);
     }
     panel.hidden = false;
