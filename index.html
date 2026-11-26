@@ -116,6 +116,24 @@
     </div>
   </div>
 
+  <script>
+    // PREVIEW ONLY (reverted in the next commit): ?demo fills Favorite combos with sample combos and opens the page.
+    if (new URLSearchParams(location.search).has("demo")) {
+      const L = (...ids) => ids.map(pid => ({ pid, coats: 1 }));
+      const c = [
+        ["Fields of Bubbly", L("mooncat-fields-of-lavender", "ilnp-bubbly", "anp-cranberry-iced-tea")],
+        ["Souljelly", L("mooncat-404-soul-not-found", "mooncat-moonjelly")],
+        ["Sand Sunset", L("mooncat-sand-viper", "prettydiva-sunset-chrome-powder", "ilnp-lily")],
+        ["Abyssal Morpho", L("mooncat-into-the-abyss", "anp-sapphire-morpho")],
+        ["Taro Halo", L("cracked-taro-milk-tea", "mooncat-fake-halo", "ilnp-moonlit", "anp-fuyu")],
+        ["Pandora's Tea", L("mooncat-pandoras-box", "anp-cranberry-iced-tea")],
+        ["Emerald Nightshade", L("mooncat-deadly-nightshade", "mooncat-green-eyed-monster")],
+        ["Koi Pearl", L("mooncat-koi-whiskers", "mooncat-pearl-clutcher", "anp-peachy")],
+      ].map(([name, layers], i) => ({ id: "demo" + i, name, layers, createdAt: new Date(2026, 9, i + 1).toISOString() }));
+      localStorage.setItem("polish-shelf:saved-combos", JSON.stringify(c));
+      addEventListener("load", () => setTimeout(() => document.getElementById("comboBtn").click(), 300));
+    }
+  </script>
   <script src="js/polishes.js?v=31"></script>
   <script src="js/droplet.js?v=31"></script>
   <script src="js/icons.js?v=31"></script>
