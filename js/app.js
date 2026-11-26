@@ -316,6 +316,7 @@ function magneticSwatch(cv, p, W, H) {
   let raf = 0, skip = false, hovering = false;
 
   function draw(fast = false) {
+    cv._v = (cv._v || 0) + 1; // counts redraws, so a stack built from this swatch knows when to recompose (see liveStack)
     const h = cur.h, k = 1 - h;
     // Glow shape: round and centered for the bead, a long thin stripe through the pointer for the cat eye.
     const cx = (.5 * k + cur.x * h) * cw, cy = (.5 * k + cur.y * h) * ch;
@@ -542,6 +543,7 @@ function holoSwatch(cv, p, W, H) {
   let raf = 0;
 
   function draw() {
+    cv._v = (cv._v || 0) + 1; // counts redraws, so a stack built from this swatch knows when to recompose (see liveStack)
     const lx = cur.x, ly = cur.y * H / W, rot = opt.angle + (cur.x - .5) * .4, cos = Math.cos(rot), sin = Math.sin(rot);
     const turn = cur.x * 2.3 + cur.y * 1.7; // moving the light turns every particle's facet a little
     blooms.length = 0;
@@ -665,6 +667,7 @@ function thermalSwatch(cv, p, W, H) {
   let raf = 0;
 
   function draw() {
+    cv._v = (cv._v || 0) + 1; // counts redraws, so a stack built from this swatch knows when to recompose (see liveStack)
     for (let y = 0, i = 0; y < gh; y++) {
       for (let x = 0; x < gw; x++, i++) {
         // Diagonal: coldest at the top-left tip corner, warmest toward the bottom-right.
@@ -768,6 +771,7 @@ function multichromeSwatch(cv, p, W, H) {
   let raf = 0;
 
   function draw() {
+    cv._v = (cv._v || 0) + 1; // counts redraws, so a stack built from this swatch knows when to recompose (see liveStack)
     const axis = .5 + (cur.x - .5) * (isShimmer ? 1.1 : .7); // where the facing band sits
     const shift = (cur.y - .5) * .5;               // slide the whole range of colors
     for (let cy = 0; cy < gy; cy++) {
@@ -862,6 +866,7 @@ function powderSwatch(cv, p, W, H) {
   let raf = 0;
   const sstep = (e0, e1, x) => { const t = Math.min(1, Math.max(0, (x - e0) / (e1 - e0))); return t * t * (3 - 2 * t); };
   function draw(fast = false) {
+    cv._v = (cv._v || 0) + 1; // counts redraws, so a stack built from this swatch knows when to recompose (see liveStack)
     const hi = .46 + (cur.x - .5) * .8, shift = (cur.y - .5) * .35, st = fast ? 2 : 1, band = opt.band;
     const tilt = -opt.tilt + (cur.x - .5) * .15; // the diagonal leans a little as the nail tilts
     for (let y = 0; y < ch; y += st) {
@@ -946,6 +951,7 @@ function glowSwatch(cv, p, W, H) {
   let raf = 0, last = 0;
 
   function draw() {
+    cv._v = (cv._v || 0) + 1; // counts redraws, so a stack built from this swatch knows when to recompose (see liveStack)
     const n = st.night;
     for (let y = 0; y < gy; y++) {
       const ny = (y + .5) / gy;
@@ -2050,6 +2056,10 @@ function flashCover(o) {
   const src = o.cv, w = src.width, h = src.height;
   if (!w || !h) return src;
   const c = o._cover || (o._cover = document.createElement("canvas"));
+  // The flash hasn't been redrawn since the last time: the cover made then is still right. (Reading the
+  // pixels back every frame was the most expensive part of hovering a stack.)
+  if (o._covered && o._coverV === src._v && c.width === w && c.height === h) return c;
+  o._covered = true; o._coverV = src._v;
   if (c.width !== w || c.height !== h) { c.width = w; c.height = h; }
   const img = src.getContext("2d").getImageData(0, 0, w, h), d = img.data;
   for (let i = 0; i < d.length; i += 4) {
@@ -2069,6 +2079,10 @@ function composeOps(ctx, ops, ow, oh) {
   }
   ctx.globalCompositeOperation = "source-over"; ctx.globalAlpha = 1;
 }
+// A number that changes whenever any of a stack's live layer canvases has been redrawn (each swatch counts
+// its own redraws in cv._v). The stack is only recomposed when it changes: once every layer has settled,
+// recomposing again would paint exactly the same picture.
+function opsVersion(ops) { let v = 0; for (const o of ops) if (o.cv) v += o.cv._v || 0; return v; }
 function stackCanvas(W, H) {
   const out = document.createElement("canvas");
   return drawStack(out, bench.layers, W, H) ? out : null;
@@ -2096,8 +2110,12 @@ function liveStack(out, layers, W, H) {
   ops.forEach(o => o.cv && holder.appendChild(o.cv));
   box.append(holder);
   composeOps(ctx, ops, out.width, out.height);
-  let until = 0, raf = 0;
-  const loop = now => { if (!mine()) { raf = 0; return; } composeOps(ctx, ops, out.width, out.height); raf = now < until ? requestAnimationFrame(loop) : 0; };
+  let until = 0, raf = 0, drawn = opsVersion(ops);
+  const loop = now => {
+    if (!mine()) { raf = 0; return; }
+    const v = opsVersion(ops); if (v !== drawn) { drawn = v; composeOps(ctx, ops, out.width, out.height); }
+    raf = now < until ? requestAnimationFrame(loop) : 0;
+  };
   const kick = () => { until = performance.now() + 3500; if (!raf) raf = requestAnimationFrame(loop); };
   out.onpointermove = e => { ops.forEach(o => o.cv && o.cv.onpointermove && o.cv.onpointermove(e)); kick(); };
   out.onpointerleave = e => { ops.forEach(o => o.cv && o.cv.onpointerleave && o.cv.onpointerleave(e)); kick(); };
@@ -2123,8 +2141,11 @@ function renderStage() {
     box.append(holder, out);
     dropify(box, dropKeyFor(bench.layers), box.clientHeight / box.clientWidth || 360 / 348);
     composeOps(ctx, ops, out.width, out.height);
-    let until = 0, raf = 0;
-    const loop = now => { composeOps(ctx, ops, out.width, out.height); raf = now < until ? requestAnimationFrame(loop) : 0; };
+    let until = 0, raf = 0, drawn = opsVersion(ops);
+    const loop = now => {
+      const v = opsVersion(ops); if (v !== drawn) { drawn = v; composeOps(ctx, ops, out.width, out.height); }
+      raf = now < until ? requestAnimationFrame(loop) : 0;
+    };
     const kick = () => { until = performance.now() + 3500; if (!raf) raf = requestAnimationFrame(loop); }; // long enough for glow fades
     out.onpointermove = e => { ops.forEach(o => o.cv && o.cv.onpointermove && o.cv.onpointermove(e)); kick(); };
     out.onpointerleave = e => { ops.forEach(o => o.cv && o.cv.onpointerleave && o.cv.onpointerleave(e)); kick(); };
@@ -2294,11 +2315,19 @@ function queueDraw(cv) {
   }, { rootMargin: "50% 0px" });
   drawIO.observe(cv);
 }
+// Background drawing waits while the page is being scrolled or a swatch is being hovered: one draw can
+// take longer than a frame on a slower computer, and landing in the middle of a scroll or a hover
+// animation made it stutter. (Swatches coming into view are still drawn right away, by the queue above.)
+let activeAt = 0;
+const markActive = () => { activeAt = performance.now(); };
+addEventListener("scroll", markActive, { passive: true });
+addEventListener("wheel", markActive, { passive: true });
+document.addEventListener("pointermove", e => { if (e.target.classList && e.target.classList.contains("swatch")) markActive(); }, { passive: true });
 function fillIdle() {
   idle(deadline => {
     const next = [...document.querySelectorAll("#grid .swatch")].find(cv => !cv._w && cv.parentElement.clientWidth); // hidden cards wait until shown
     if (!next) return;
-    if (deadline.timeRemaining() > 4 && !zoomBusy()) { drawIO && drawIO.unobserve(next); drawCard(next); shapeForScroll(true); }
+    if (deadline.timeRemaining() > 4 && !zoomBusy() && performance.now() - activeAt > 300) { drawIO && drawIO.unobserve(next); drawCard(next); shapeForScroll(true); }
     fillIdle();
   });
 }
