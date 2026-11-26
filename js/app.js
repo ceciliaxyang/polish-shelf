@@ -1127,10 +1127,19 @@ function renderComboThumbs() {
 // The count after the label ("Combos 5"). When it changes it rolls like an odometer: the old number slides up
 // and out while the new one rolls up from below (down, when one is deleted). Timed to land at the top of the pill's pop when a combo is saved.
 function rollCount(n) {
-  const box = $("#comboCount"), cur = box.querySelector(".cc-num"), was = cur ? +cur.textContent : null;
+  // With no combos there's no number at all, so the first save doesn't roll a 0 into a 1: the 1 just appears
+  // (fading and growing in). Every later change rolls.
+  const box = $("#comboCount"), cur = box.querySelector(".cc-num"), was = cur ? +cur.textContent : 0;
+  const first = !box.dataset.ready; box.dataset.ready = "1";
   if (was === n) return;
+  if (!n) { box.replaceChildren(); return; }
   const next = Object.assign(document.createElement("span"), { className: "cc-num", textContent: n });
-  if (was === null || reduceMotion || box.closest("[hidden]")) { box.replaceChildren(next); return; }
+  if (first || reduceMotion || box.closest("[hidden]")) { box.replaceChildren(next); return; }
+  if (!cur) {
+    box.replaceChildren(next);
+    next.animate([{ transform: "scale(.5)", opacity: 0 }, { transform: "none", opacity: 1 }], { duration: 380, delay: 90, easing: "cubic-bezier(.3, 1.4, .5, 1)", fill: "backwards" });
+    return;
+  }
   box.querySelectorAll(".cc-num.out").forEach(el => el.remove());
   cur.classList.add("out"); box.appendChild(next);
   const dir = n > was ? 1 : -1, opts = { duration: 480, delay: 90, easing: "cubic-bezier(.3, 1.3, .4, 1)", fill: "backwards" };
