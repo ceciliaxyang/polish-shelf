@@ -274,9 +274,11 @@ body.detail-open .mini-nav { opacity: 0; visibility: hidden; pointer-events: non
 .combo-fab[hidden] { display: none; }
 .combo-fab:hover { background: rgba(255, 255, 255, .5); }
 .combo-fab[aria-pressed="true"] { background: #222; color: #fff; }
-/* The number of saved combos after the label, in the regular weight (the label is medium) and even-width
-   digits so it doesn't shift as it changes. It stays the label's color so it reads over any swatch under the glass. */
-.combo-count { position: relative; display: inline-grid; overflow: hidden; margin-left: -1px; font-weight: 400; font-variant-numeric: tabular-nums; }
+/* The number of saved combos after the label, in Foggy (Figma's grey 700, #6a6a6a, the --muted token), the regular
+   weight (the label is medium) and even-width digits so it doesn't shift as it changes. On the dark pressed pill it
+   becomes a soft white so it stays readable. */
+.combo-count { position: relative; display: inline-grid; overflow: hidden; margin-left: -1px; font-weight: 400; font-variant-numeric: tabular-nums; color: var(--muted); }
+.combo-fab[aria-pressed="true"] .combo-count { color: rgba(255, 255, 255, .6); }
 /* Its numbers share one grid cell, so the old one can roll out while the new one rolls in (see rollCount). */
 .cc-num { grid-area: 1 / 1; justify-self: end; }
 /* On phones the zoom bar and the pill are centered together as one group so the pill stays inside the screen. */
@@ -718,3 +720,16 @@ body.detail-open .page::after { opacity: 1; }
 /* A swatch's old picture, fading out over its redraw at a new size (see drawCard in js/app.js). */
 .swatch-ghost { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
 .drops .drop > canvas.swatch-ghost { position: absolute; }
+
+/* Favorite combos is a full-screen takeover: tapping the pill slides the page up over a frozen, dimmed copy of
+   the shelf, and the close button (top right) drops it back down (app.js, openCombos / closeCombos). */
+.combos-close { position: fixed; z-index: 4; top: calc(32px + env(safe-area-inset-top)); right: calc(48px + env(safe-area-inset-right)); }
+html:not(.view-combos) .combos-close { display: none; }
+@media (max-width: 600px) { .combos-close { top: calc(16px + env(safe-area-inset-top)); right: 16px; } }
+html.combos-dark.view-combos .combos-close { background: rgba(255, 255, 255, .16); box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .2); }
+html.combos-dark.view-combos .combos-close svg { stroke: #f7f7f7; }
+/* The frozen copy is clipped to the screen; contain makes it the box its pinned close button sits in. */
+.page-ghost { position: fixed; inset: 0; overflow: hidden; contain: paint; pointer-events: none; will-change: transform; }
+.page-ghost > .page { margin-top: var(--gy, 0); }
+.sheet-dim { position: fixed; inset: 0; background: rgba(0, 0, 0, .22); pointer-events: none; }
+body.sheet-moving > .page { z-index: 3; will-change: transform; border-radius: 20px 20px 0 0; box-shadow: 0 -12px 40px rgba(0, 0, 0, .14); }

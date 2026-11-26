@@ -22,7 +22,7 @@
        fonts/ (see the @font-face rules at the top of css/style.css). -->
   <link rel="preload" href="fonts/instrument-serif-latin.woff2" as="font" type="font/woff2" crossorigin>
   <!-- ?v= changes with each release so browsers never pair new HTML with an old cached stylesheet or script. -->
-  <link rel="stylesheet" href="css/style.css?v=42">
+  <link rel="stylesheet" href="css/style.css?v=43">
   <!-- Is SF Pro (installed, or the Apple system font) available? If not, the page falls back to Inter and
        html gets "no-sf", which tightens Inter's letter spacing (see css/style.css). Checked by comparing
        text widths against a font that doesn't exist. -->
@@ -69,6 +69,8 @@
       </main>
 
     </div>
+    <!-- Closes Favorite combos (pinned top right, like the polish page's close); only shown on that page. -->
+    <button type="button" class="mh-btn combos-close" id="combosClose" aria-label="Close favorite combos" title="Close"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#222" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></svg></button>
   </div>
   <!-- Mini nav: one row of the filter pills that slides in at the top once the filters scroll away (app.js). -->
   <nav class="mini-nav" id="miniNav" aria-label="Filters" inert><div class="mini-row fx-row" id="miniRow"></div></nav>
@@ -116,10 +118,10 @@
     </div>
   </div>
 
-  <script src="js/polishes.js?v=42"></script>
-  <script src="js/droplet.js?v=42"></script>
-  <script src="js/icons.js?v=42"></script>
-  <script src="js/brand-icons.js?v=42"></script>
-  <script src="js/app.js?v=42"></script>
+  <script src="js/polishes.js?v=43"></script>
+  <script src="js/droplet.js?v=43"></script>
+  <script src="js/icons.js?v=43"></script>
+  <script src="js/brand-icons.js?v=43"></script>
+  <script src="js/app.js?v=43"></script>
 </body>
 </html>

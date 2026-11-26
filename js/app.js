@@ -1084,10 +1084,65 @@ function fitIcon(svg) {
 // Favorite combos switches the page between the shelf and your saved combos (Figma node 2201:98964).
 $("#comboBtn").onclick = () => {
   if (document.body.classList.contains("detail-open")) closeDetail(); // tapped over the polish page (phones)
-  setView(state.view === "combos" ? "shelf" : "combos");
-  scrollTo({ top: 0 });
-  renderShelf();
+  if (state.view === "combos") closeCombos(); else openCombos();
 };
+$("#combosClose").onclick = () => closeCombos();
+// Favorite combos opens as a full-screen takeover. The shelf can't stay behind the combos (they share the
+// page), so a frozen copy of it (with the on-screen swatches redrawn, since canvases clone blank) sits under
+// a dim while the real page, now showing the combos, slides up from the bottom. Closing does the reverse:
+// a copy of the combos drops away over the shelf, which comes back where you left it.
+const SHEET = { up: 520, down: 420, shelfY: 0 };
+function freezePage() {
+  const page = $(".page"), copy = page.cloneNode(true), wrap = document.createElement("div");
+  copy.querySelectorAll("[id]").forEach(e => e.removeAttribute("id")); // the real elements keep theirs
+  const from = page.querySelectorAll("canvas"), to = copy.querySelectorAll("canvas");
+  from.forEach((c, i) => {
+    const r = c.getBoundingClientRect();
+    if (r.bottom < 0 || r.top > innerHeight || !c.width) return;
+    try { to[i].getContext("2d").drawImage(c, 0, 0); } catch (e) {}
+  });
+  wrap.className = "page-ghost"; wrap.inert = true; wrap.setAttribute("aria-hidden", "true");
+  wrap.style.setProperty("--gy", -scrollY + "px");
+  wrap.style.background = getComputedStyle(document.body).backgroundColor;
+  wrap.append(copy);
+  return wrap;
+}
+function sheetDim() { const d = document.createElement("div"); d.className = "sheet-dim"; d.style.zIndex = 2; return d; }
+// The shelf's cards (swatches already drawn) are set aside while the combos are up and put back on close, so
+// returning is instant instead of redrawing every swatch. Nothing on the shelf can change meanwhile.
+function showView(v, y) {
+  const grid = $("#grid");
+  if (v === "combos") SHEET.cards = [...grid.childNodes];
+  setView(v);
+  if (v === "shelf" && SHEET.cards) { grid.replaceChildren(...SHEET.cards); syncSwatchButtons(); } else renderShelf();
+  SHEET.cards = v === "combos" ? SHEET.cards : null;
+  scrollTo({ top: y, behavior: "instant" });
+}
+function openCombos() {
+  SHEET.shelfY = scrollY;
+  if (reduceMotion) return showView("combos", 0);
+  const ghost = freezePage(), dim = sheetDim(), page = $(".page"), body = document.body;
+  ghost.style.zIndex = 1;
+  body.append(ghost, dim); body.classList.add("sheet-moving");
+  showView("combos", 0);
+  page.style.background = document.documentElement.classList.contains("combos-dark") ? "#000" : "var(--bg)";
+  dim.animate([{ opacity: 0 }, { opacity: 1 }], { duration: SHEET.up, easing: "ease-out", fill: "forwards" });
+  page.animate([{ transform: "translateY(100vh)" }, { transform: "none" }], { duration: SHEET.up, easing: "cubic-bezier(.2, .8, .2, 1)" }).finished.then(() => {
+    ghost.remove(); dim.remove(); body.classList.remove("sheet-moving"); page.style.background = "";
+  });
+}
+async function closeCombos() {
+  if (state.view !== "combos") return;
+  if (reduceMotion) return showView("shelf", SHEET.shelfY);
+  const ghost = freezePage(), dim = sheetDim();
+  Object.assign(ghost.style, { zIndex: 3, borderRadius: "20px 20px 0 0", boxShadow: "0 -12px 40px rgba(0, 0, 0, .14)" });
+  document.body.append(dim, ghost);
+  showView("shelf", SHEET.shelfY);
+  await new Promise(r => requestAnimationFrame(r)); // the shelf paints under the copy before it drops
+  dim.animate([{ opacity: 1 }, { opacity: 0 }], { duration: SHEET.down, easing: "ease-in", fill: "forwards" });
+  ghost.animate([{ transform: "none" }, { transform: "translateY(100vh)" }], { duration: SHEET.down, easing: "cubic-bezier(.4, 0, .7, .2)", fill: "forwards" })
+    .finished.then(() => { ghost.remove(); dim.remove(); });
+}
 // The button's two thumbnails: the two newest saved combos, or the first polishes on the shelf until
 // there are any.
 // Favorite combos only appears once a combo is saved, rising in the first time.
