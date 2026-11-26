@@ -572,7 +572,8 @@ body { transition: background-color .3s ease; }
   .bench.no-layers .layers .hint { display: none; } /* the peek bar already says it */
   .peek-mini.pulse { animation: peek-pulse .5s cubic-bezier(.2, .8, .2, 1); }
   @keyframes peek-pulse { 40% { transform: scale(1.12); } }
-  .bench-title { font-size: 17px; line-height: 22px; letter-spacing: -.2px; padding: 0; }
+  /* Layers title in the headline serif (Instrument Serif 22 on 22, #222), like the shelf title and polish names. */
+  .bench-title { font-family: "Instrument Serif", Georgia, serif; font-size: 22px; line-height: 22px; font-weight: 400; letter-spacing: -.4px; color: #222; padding: 0; }
   .peek-sub { display: block; margin: 2px 0 0; font-size: 13px; line-height: 18px; color: #6c6c6c; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .peek-thumbs { display: flex; flex-shrink: 0; padding-left: 8px; }
   .peek-thumbs canvas { width: 24px; height: 24px; margin-left: -8px; border-radius: 7px; box-shadow: 0 0 0 2px var(--bg); }
