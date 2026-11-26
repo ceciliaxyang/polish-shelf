@@ -2142,14 +2142,34 @@ function sheerOps(q, W, H, under) {
 function stackOps(W, H, layers = bench.layers) {
   const live = liveLayers(layers);
   if (!live.length || !W || !H) return null;
+  // Start from the topmost polish that fully covers what's below: a creme, or the base. Opaque effect finishes
+  // above it let the layer below peek through a little (see PEEK and peekCover).
   let start = 0;
-  live.forEach((L, i) => { if (!isOverlay(L.polish)) start = i; });
+  live.forEach((L, i) => { if (!isOverlay(L.polish) && !peeks(L.polish)) start = i; });
   const ops = [];
   live.slice(start).forEach((L, i, top) => {
-    if (!i) { const cv = document.createElement("canvas"); renderSwatch(cv, L.polish, W, H); ops.push({ cv, op: "source-over", alpha: 1 }); }
+    if (!i || !isOverlay(L.polish)) { const cv = document.createElement("canvas"); renderSwatch(cv, L.polish, W, H); ops.push({ cv, op: "source-over", alpha: 1, peek: i > 0 }); }
     else ops.push(...sheerOps(L.polish, W, H, top.slice(i + 1).some(M => isPowder(M.polish))));
   });
   return ops;
+}
+// Opaque effect finishes (magnetic, multichrome, shimmer, holo, thermal, glow) layered over another polish let it
+// peek through a little: cover is how much they hide overall, and dark gathers the see-through part into their
+// darker areas, so the bright flash or shimmer stays solid (values from the layering tuner).
+const PEEK = { cover: .85, dark: .7 };
+const peeks = p => !isOverlay(p) && layerRank(p) === 2;
+function peekCover(o) {
+  const src = o.cv, w = src.width, h = src.height;
+  if (!w || !h) return src;
+  const c = o._peek || (o._peek = document.createElement("canvas"));
+  if (c.width !== w || c.height !== h) { c.width = w; c.height = h; }
+  const img = src.getContext("2d").getImageData(0, 0, w, h), d = img.data, see = 1 - PEEK.cover;
+  for (let i = 0; i < d.length; i += 4) {
+    const lum = Math.max(d[i], d[i + 1], d[i + 2]) / 255;
+    d[i + 3] *= 1 - see * (1 - PEEK.dark * lum);
+  }
+  c.getContext("2d").putImageData(img, 0, 0);
+  return c;
 }
 // A flash drawn on black, turned into a see-through layer: each pixel keeps its hue at full brightness and
 // its brightness becomes how much it covers (eased, so the dim edges stay sheer and the core stays solid).
@@ -2176,7 +2196,7 @@ function composeOps(ctx, ops, ow, oh) {
   ctx.globalCompositeOperation = "source-over"; ctx.globalAlpha = 1; ctx.clearRect(0, 0, ow, oh);
   for (const o of ops) {
     ctx.globalCompositeOperation = o.op; ctx.globalAlpha = o.alpha;
-    if (o.fill) { ctx.fillStyle = o.fill; ctx.fillRect(0, 0, ow, oh); } else ctx.drawImage(o.cover ? flashCover(o) : o.cv, 0, 0, ow, oh);
+    if (o.fill) { ctx.fillStyle = o.fill; ctx.fillRect(0, 0, ow, oh); } else ctx.drawImage(o.cover ? flashCover(o) : o.peek ? peekCover(o) : o.cv, 0, 0, ow, oh);
   }
   ctx.globalCompositeOperation = "source-over"; ctx.globalAlpha = 1;
 }
