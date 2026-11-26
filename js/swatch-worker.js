@@ -27,12 +27,18 @@ function finishH() { return restH; }
 
 const live = new Map(); // id -> { cv, v: the picture version last sent }
 // Send each swatch whose picture changed since it was last sent. (Each swatch counts its redraws in cv._v.)
-let shipping = false;
+// In Safari, pictures handed over as ImageBitmaps could arrive as another swatch's picture, and the page
+// sometimes crashed, so there the plain pixels are copied across instead.
+let shipping = false, pixels = false;
 function ship() {
   shipping = false;
   live.forEach((s, id) => {
     if (s.cv._v === s.v) return;
     const v = s.v = s.cv._v;
+    if (pixels) { // Safari: the picture's pixels themselves are sent (see "pixels" below)
+      const img = s.cv.getContext("2d").getImageData(0, 0, s.cv.width, s.cv.height);
+      self.postMessage({ id, img, v }, [img.data.buffer]); return;
+    }
     createImageBitmap(s.cv).then(b => { if (live.get(id) === s) self.postMessage({ id, bmp: b, v }, [b]); else b.close(); });
   });
 }
@@ -44,7 +50,7 @@ self.requestAnimationFrame = fn => rafHere(t => { fn(t); shipSoon(); });
 self.onmessage = e => {
   const m = e.data;
   if (m.type === "draw") {
-    self.devicePixelRatio = m.dpr; restH = m.restH; state.finish = m.finish;
+    pixels = !!m.pixels; self.devicePixelRatio = m.dpr; restH = m.restH; state.finish = m.finish;
     const cv = canvasOf();
     cv.getBoundingClientRect = () => cv._rect || { left: 0, top: 0, width: m.W, height: m.H };
     renderSwatch(cv, m.p, m.W, m.H);

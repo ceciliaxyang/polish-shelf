@@ -1554,6 +1554,8 @@ function fadeGhost(ghost) { ghost.animate([{ opacity: 1 }, { opacity: 0 }], { du
 // Phones and tablets keep drawing on the page (their swatches drift and change shape as the page scrolls,
 // which talks to the swatch directly), as does any browser without workers that can draw offscreen.
 let swWorker, swNext = 0;
+// Safari gets each picture as plain pixels (see "pixels" in js/swatch-worker.js).
+const isSafari = /AppleWebKit/.test(navigator.userAgent) && !/Chrome|Chromium|CriOS|Edg\//.test(navigator.userAgent);
 const swCanvas = new Map(); // request id -> the swatch canvas waiting for (or showing) its pictures
 function swatchWorker() {
   if (swWorker !== undefined) return swWorker;
@@ -1580,7 +1582,7 @@ function askWorker(cv, w, soft) {
   const id = ++swNext, H = Math.round(w * 260 / 240);
   cv._swId = id; cv._swV = -1; cv._pending = { soft };
   swCanvas.set(id, cv);
-  swWorker.postMessage({ type: "draw", id, p: cv._p, W: w, H, dpr: window.devicePixelRatio || 1, restH: finishH(), finish: state.finish });
+  swWorker.postMessage({ type: "draw", id, pixels: isSafari, p: cv._p, W: w, H, dpr: window.devicePixelRatio || 1, restH: finishH(), finish: state.finish });
   cv.onpointermove = e => pointerToWorker(cv, e, false);
   cv.onpointerleave = e => pointerToWorker(cv, e, true);
   cv.classList.add("interactive");
@@ -1591,18 +1593,22 @@ function pointerToWorker(cv, e, leave) {
   swWorker.postMessage({ type: "pointer", id: cv._swId, x: e.clientX, y: e.clientY, pointerType: e.pointerType, leave, finish: state.finish,
     rect: { left: r.left, top: r.top, width: r.width, height: r.height, right: r.right, bottom: r.bottom } });
 }
-function landPicture({ id, bmp, v }) {
+function landPicture({ id, bmp, img, v }) {
   const cv = swCanvas.get(id);
-  if (!cv || cv._swId !== id || v <= cv._swV) { bmp.close(); return; }
+  if (!cv || cv._swId !== id || v <= cv._swV) { if (bmp) bmp.close(); return; }
   cv._swV = v;
   const first = cv._pending; cv._pending = null;
   const ghost = first && first.soft && cv.width ? ghostOf(cv) : null; // the old picture fades out over the new one
-  if (cv.width !== bmp.width || cv.height !== bmp.height) { cv.width = bmp.width; cv.height = bmp.height; }
+  const pic = bmp || img;
+  if (cv.width !== pic.width || cv.height !== pic.height) { cv.width = pic.width; cv.height = pic.height; }
   claim(cv); // an animation from when this canvas was drawn on the page stops painting into it
   const g = cv.getContext("2d");
-  g.setTransform(1, 0, 0, 1, 0, 0); g.globalAlpha = 1; g.filter = "none"; g.globalCompositeOperation = "copy";
-  g.drawImage(bmp, 0, 0);
-  g.globalCompositeOperation = "source-over"; bmp.close();
+  if (img) g.putImageData(img, 0, 0); // (replaces every pixel, whatever the canvas's drawing settings)
+  else {
+    g.setTransform(1, 0, 0, 1, 0, 0); g.globalAlpha = 1; g.filter = "none"; g.globalCompositeOperation = "copy";
+    g.drawImage(bmp, 0, 0);
+    g.globalCompositeOperation = "source-over"; bmp.close();
+  }
   if (first) { if (cv._p) pourDrawn(cv); if (ghost) fadeGhost(ghost); }
 }
 // A still copy of a swatch's current picture, laid over it.
