@@ -1868,10 +1868,14 @@ function shelfBackdrop() {
     }
   };
   for (let p = 0; p < 3; p++) { pass(h, w, w * 4, 4); pass(w, h, 4, w * 4); }
-  cv.width = w - 2 * m; cv.height = h - 2 * m;
-  cv.getContext("2d").putImageData(img, -m, -m);
+  // Above and below the screen, the margin is kept too (as far as the page reaches): Safari on iOS 26 shows
+  // the page just above the screen under the status bar, and just below it under the toolbar, so the blur
+  // has to run on under them, not stop at the screen's edge. Sideways it's cut off, so the page doesn't grow wider.
   const pr = page.getBoundingClientRect();
-  Object.assign(cv.style, { left: -pr.left + "px", top: -pr.top + "px", width: vw + "px", height: vh + "px" }); // (the picture is a few pixels larger: drawn just squeezed)
+  const mt = Math.min(m, Math.floor(Math.max(0, -pr.top) * S)), mb = Math.min(m, Math.floor(Math.max(0, pr.bottom - vh) * S));
+  cv.width = w - 2 * m; cv.height = h - 2 * m + mt + mb;
+  cv.getContext("2d").putImageData(img, -m, mt - m);
+  Object.assign(cv.style, { left: -pr.left + "px", top: -pr.top - mt / S + "px", width: vw + "px", height: vh + (mt + mb) / S + "px" }); // (the picture is a few pixels larger: drawn just squeezed)
 }
 addEventListener("resize", () => { if (document.body.classList.contains("detail-open")) shelfBackdrop(); });
 
