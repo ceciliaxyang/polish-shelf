@@ -354,13 +354,13 @@ body.detail-open .mini-nav { opacity: 0; visibility: hidden; pointer-events: non
 .swatch-wrap { position: relative; width: var(--card); aspect-ratio: 240 / 260; border-radius: calc(var(--card) * .2); overflow: hidden; background: var(--swatch); }
 .swatch { display: block; width: 100%; height: 100%; }
 .swatch.interactive { cursor: crosshair; }
-/* Frosted round button on the swatch (Figma "Icon Button", Material style) */
+/* Round + button on the swatch: a solid dark fill (it was frosted glass, which had to re-blur the live
+   swatch under it on every frame the swatch moved). */
 .swatch-btn {
   position: absolute; top: 20px; right: 20px;
   width: 48px; height: 48px; padding: 14px; border: 0; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  color: #fff; background: rgba(17, 17, 17, .5);
-  -webkit-backdrop-filter: blur(48px); backdrop-filter: blur(48px);
+  color: #fff; background: #333;
   cursor: pointer;
 }
 @media (max-width: 600px) {
@@ -370,7 +370,7 @@ body.detail-open .mini-nav { opacity: 0; visibility: hidden; pointer-events: non
   .swatch-btn { top: 12px; right: 12px; width: 40px; height: 40px; padding: 10px; }
   .name { font-size: 17px; }
 }
-.swatch-btn:hover { background: rgba(17, 17, 17, .62); }
+.swatch-btn:hover { background: #1f1f1f; }
 .swatch-btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 .swatch-btn svg { display: block; overflow: visible; }
 /* The + that turns into a check (swatch buttons and the dialog's add button) */
@@ -600,12 +600,15 @@ body { transition: background-color .3s ease; }
 /* The material (blur and white wash) comes in with the swatch's flight, quickly (.25s), so the page reads
    as covered right away; on close it goes at once, so the swatch lands on a sharp shelf. */
 .page { position: relative; }
-body.detail-open .page { filter: blur(60px); transition: filter .25s ease; }
+/* The blur is a picture of the shelf drawn once and blurred (.shelf-blur, made by shelfBackdrop in app.js),
+   faded in over the shelf; it goes at once on close. */
+.shelf-blur { position: absolute; z-index: 10; pointer-events: none; opacity: 0; visibility: hidden; }
+body.detail-open .shelf-blur { opacity: 1; visibility: visible; transition: opacity .25s ease; }
 /* The white wash lives on the shelf itself, not on a fixed layer. Safari on iOS 26 shows the page (not
    fixed layers) under the status bar, and paints the bar solid in the color of any fixed layer at the
    top. With the wash part of the page, the area under the clock is blurred and washed exactly like the
    rest of the dialog, so the dialog reads as running all the way to the top of the screen. */
-.page::after { content: ""; position: absolute; inset: 0; background-image: linear-gradient(rgba(255, 255, 255, .72), rgba(255, 255, 255, .72)); opacity: 0; pointer-events: none; transition: opacity .25s ease; }
+.page::after { content: ""; position: absolute; inset: 0; z-index: 11; background-image: linear-gradient(rgba(255, 255, 255, .72), rgba(255, 255, 255, .72)); opacity: 0; pointer-events: none; transition: opacity .25s ease; }
 body.detail-open .page::after { opacity: 1; }
 .modal-blur { position: fixed; inset: 0; }
 .modal-head { opacity: 0; transition: opacity .3s ease; }

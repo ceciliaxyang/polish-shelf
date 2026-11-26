@@ -214,10 +214,13 @@ function clumpField(R, cw, ch, cell) {
   const octave = (size, amp) => {
     const gx = Math.ceil(cw / size) + 2, gy = Math.ceil(ch / size) + 2, lat = new Float32Array(gx * gy);
     for (let i = 0; i < lat.length; i++) lat[i] = R();
+    // Each column's lattice cell and blend are the same on every row: worked out once (same numbers).
+    const IX = new Int32Array(cw), SX = new Float64Array(cw);
+    for (let x = 0; x < cw; x++) { const fx = x / size, ix = fx | 0, tx = fx - ix; IX[x] = ix; SX[x] = tx * tx * (3 - 2 * tx); }
     for (let y = 0; y < ch; y++) {
-      const fy = y / size, iy = fy | 0, ty = fy - iy, sy = ty * ty * (3 - 2 * ty);
+      const fy = y / size, iy = fy | 0, ty = fy - iy, sy = ty * ty * (3 - 2 * ty), row = iy * gx;
       for (let x = 0; x < cw; x++) {
-        const fx = x / size, ix = fx | 0, tx = fx - ix, sx = tx * tx * (3 - 2 * tx), o = iy * gx + ix;
+        const sx = SX[x], o = row + IX[x];
         const top = lat[o] + (lat[o + 1] - lat[o]) * sx, bot = lat[o + gx] + (lat[o + gx + 1] - lat[o + gx]) * sx;
         out[y * cw + x] += (top + (bot - top) * sy) * amp;
       }
@@ -1754,6 +1757,7 @@ function openDetail(p, card) {
   stage.style.transform = `translate(${from.left - to.left}px, ${from.top - to.top}px) scale(${from.width / to.width}, ${from.height / to.height})`;
   m.classList.remove("open"); void m.offsetWidth;
   card.style.visibility = "hidden";
+  shelfBackdrop(); // drawn now, with the rest of the setup, so it doesn't hold up the flight's first frame
   const token = detail.token = {};
   requestAnimationFrame(() => requestAnimationFrame(() => {
     if (detail.token !== token || m.hidden) return; // closed (or another polish opened) meanwhile
@@ -1770,6 +1774,75 @@ function openDetail(p, card) {
   document.title = `${p.name} · ${p.brand} · ${SITE_TITLE}`;
 }
 
+
+/* The polish page's backdrop: the shelf, heavily blurred (60px) under a white wash. Blurring the live page
+   with a CSS filter redid a full-screen 60px blur on every frame of the fade (slow on older computers), so
+   instead the part of the shelf on screen is drawn once into a small picture (1/8 size: the swatches as
+   they are right now, the pills and text as soft blocks of their color), blurred once, and faded in. At that
+   blur nothing finer than the colors survives, so it looks the same. The wash is still .page::after. */
+const BACKDROP = { blur: 60, scale: 1 / 8 };
+function shelfBackdrop() {
+  const page = $(".page");
+  let cv = page.querySelector(":scope > .shelf-blur");
+  if (!cv) { cv = document.createElement("canvas"); cv.className = "shelf-blur"; cv.setAttribute("aria-hidden", "true"); page.appendChild(cv); }
+  // The picture covers the screen plus a margin (the blur reaches in this far from offscreen); only the
+  // screen's part is kept, so the page doesn't grow wider.
+  const S = BACKDROP.scale, vw = innerWidth, vh = innerHeight, m = Math.ceil(BACKDROP.blur * 3 * S), M = m / S;
+  const w = Math.ceil(vw * S) + 2 * m, h = Math.ceil(vh * S) + 2 * m;
+  const work = document.createElement("canvas"); work.width = w; work.height = h;
+  const g = work.getContext("2d", { willReadFrequently: true });
+  g.setTransform(S, 0, 0, S, M * S, M * S); // draw in screen coordinates
+  g.fillStyle = getComputedStyle(document.body).backgroundColor || "#fff"; g.fillRect(-M, -M, vw + 2 * M, vh + 2 * M);
+  const onScreen = r => r.width > 0 && r.height > 0 && r.right > -M && r.left < vw + M && r.bottom > -M && r.top < vh + M;
+  // Pills: their fill. Text: a soft block of its color, about as dark as its ink averages out to.
+  page.querySelectorAll(".scope, .pill").forEach(el => {
+    const r = el.getBoundingClientRect(), cs = getComputedStyle(el); if (!onScreen(r) || cs.visibility === "hidden") return;
+    g.fillStyle = cs.backgroundColor; g.beginPath(); g.roundRect(r.left, r.top, r.width, r.height, r.height / 2); g.fill();
+  });
+  page.querySelectorAll(".shelf-title, .filter-label, .scope, .card-text .name, .card-text .brand, .card-fx").forEach(el => {
+    const r = el.getBoundingClientRect(), cs = getComputedStyle(el); if (!onScreen(r) || cs.visibility === "hidden" || !el.textContent.trim()) return;
+    const big = parseFloat(cs.fontSize) > 30;
+    g.globalAlpha = big ? .3 : .18; g.fillStyle = cs.color;
+    if (el.classList.contains("scope") || el.classList.contains("card-fx")) { const pad = Math.min(16, r.width * .2); g.fillRect(r.left + pad, r.top + r.height * .35, r.width - pad * 2, r.height * .3); }
+    else g.fillRect(r.left, r.top + r.height * .2, r.width, r.height * .6);
+    g.globalAlpha = 1;
+  });
+  // Swatches: the picture each one is showing right now, in its drop shape. (The one being opened is hidden.)
+  page.querySelectorAll(".swatch-wrap, .combo-sat").forEach(wrap => {
+    const r = wrap.getBoundingClientRect(); if (!onScreen(r)) return;
+    const card = wrap.closest(".card"); if (card && (card.hidden || card.style.visibility === "hidden")) return;
+    if (getComputedStyle(wrap).visibility === "hidden") return;
+    const sw = wrap.querySelector(":scope > canvas.swatch");
+    g.save(); g.translate(r.left, r.top);
+    if (wrap._drop) g.clip(new Path2D(wrap._drop.clip(r.width, r.height).slice(6, -2)));
+    else { g.beginPath(); g.roundRect(0, 0, r.width, r.height, parseFloat(getComputedStyle(wrap).borderTopLeftRadius) || 0); g.clip(); }
+    g.fillStyle = getComputedStyle(wrap).backgroundColor; g.fillRect(0, 0, r.width, r.height);
+    if (sw && sw.width) try { g.drawImage(sw, 0, 0, r.width, r.height); } catch (e) {}
+    g.restore();
+  });
+  // A gaussian blur, as three box blurs (radius 7 at 1/8 size is a 60px gaussian at full size).
+  const img = g.getImageData(0, 0, w, h), d = img.data, rad = Math.round((Math.sqrt(4 * (BACKDROP.blur * S) ** 2 + 1) - 1) / 2);
+  const tmp = new Float32Array(Math.max(w, h) * 3);
+  const pass = (n, len, stride, step) => { // blur `n` lines of `len` pixels each
+    for (let k = 0; k < n; k++) {
+      const o0 = k * stride;
+      for (let i = 0; i < len; i++) { const o = o0 + i * step; tmp[i * 3] = d[o]; tmp[i * 3 + 1] = d[o + 1]; tmp[i * 3 + 2] = d[o + 2]; }
+      let r = 0, gg = 0, b = 0; const at = i => (i < 0 ? 0 : i >= len ? len - 1 : i) * 3;
+      for (let i = -rad; i <= rad; i++) { const q = at(i); r += tmp[q]; gg += tmp[q + 1]; b += tmp[q + 2]; }
+      const n2 = 2 * rad + 1;
+      for (let i = 0; i < len; i++) {
+        const o = o0 + i * step; d[o] = r / n2; d[o + 1] = gg / n2; d[o + 2] = b / n2;
+        const add = at(i + rad + 1), sub = at(i - rad); r += tmp[add] - tmp[sub]; gg += tmp[add + 1] - tmp[sub + 1]; b += tmp[add + 2] - tmp[sub + 2];
+      }
+    }
+  };
+  for (let p = 0; p < 3; p++) { pass(h, w, w * 4, 4); pass(w, h, 4, w * 4); }
+  cv.width = w - 2 * m; cv.height = h - 2 * m;
+  cv.getContext("2d").putImageData(img, -m, -m);
+  const pr = page.getBoundingClientRect();
+  Object.assign(cv.style, { left: -pr.left + "px", top: -pr.top + "px", width: vw + "px", height: vh + "px" }); // (the picture is a few pixels larger: drawn just squeezed)
+}
+addEventListener("resize", () => { if (document.body.classList.contains("detail-open")) shelfBackdrop(); });
 
 function closeDetail() {
   const m = $("#modal"); if (m.hidden || detail.closing) return;
@@ -2322,7 +2395,11 @@ function pump() {
   if (zoomBusy()) { pumping = requestAnimationFrame(pump); return; } // wait for the zoom animation to finish first
   const t = performance.now(); let drew = false;
   while (drawQueue.length && (!drew || performance.now() - t < 12)) {
-    const cv = drawQueue.shift();
+    // A swatch that's only being sharpened at its new size (after a zoom or the Layers pane opening) waits
+    // while the page is being scrolled or a swatch hovered: its old picture is already showing, scaled.
+    let i = 0;
+    if (t - activeAt < 300) { i = drawQueue.findIndex(c => !c._soft); if (i < 0) break; }
+    const cv = drawQueue.splice(i, 1)[0];
     if (!cv._w && cv.isConnected) { drawCard(cv); drew = true; }
   }
   if (drew) shapeForScroll(true);
