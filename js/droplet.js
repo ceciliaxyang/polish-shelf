@@ -53,23 +53,33 @@ function dropShape(key, vh) {
   const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
   const k = Math.min(99 / (x1 - x0), (vh - 1) / (y1 - y0)), mx = (x0 + x1) / 2, my = (y0 + y1) / 2;
   pts.forEach(p => { p[0] = 50 + (p[0] - mx) * k; p[1] = vh / 2 + (p[1] - my) * k; });
-  // Catmull-Rom through the points, as cubic Béziers
-  // segs: each curve's two control points and end point, in the 100 x vh box.
-  const segs = [];
-  for (let i = 0; i < N; i++) {
-    const p0 = pts[(i - 1 + N) % N], p1 = pts[i], p2 = pts[(i + 1) % N], p3 = pts[(i + 2) % N];
-    segs.push([p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6, p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6, p2[0], p2[1]]);
-  }
-  const path = (sx, sy) => {
-    const f = (v, i) => (v * (i % 2 ? sy : sx)).toFixed(2);
-    return `M${f(pts[0][0], 0)} ${f(pts[0][1], 1)}` + segs.map(c => "C" + c.map(f).join(" ")).join("") + "Z";
-  };
-  const shape = { d: path(1, 1), cx: 50 - mx * k, cy: vh / 2 - my * k, vh, R,
+  const path = (sx, sy) => dropPath(pts, sx, sy);
+  const shape = { d: path(1, 1), cx: 50 - mx * k, cy: vh / 2 - my * k, vh, R, pts,
     // The outline in CSS pixels for an element w x h, as a clip-path. A clip-path (unlike a mask image)
     // applies on the very first paint and is cheap for the browser to keep applying while the swatch animates.
     clip: (w, h) => `path("${path(w / 100, h / vh)}")` };
   dropCache.set(id, shape);
   return shape;
+}
+
+// A closed outline through points (in the 100 x vh box), smoothed with Catmull-Rom into cubic Béziers,
+// scaled by sx, sy.
+function dropPath(pts, sx = 1, sy = 1) {
+  const N = pts.length, f = (v, i) => (v * (i % 2 ? sy : sx)).toFixed(2);
+  let d = `M${f(pts[0][0], 0)} ${f(pts[0][1], 1)}`;
+  for (let i = 0; i < N; i++) {
+    const p0 = pts[(i - 1 + N) % N], p1 = pts[i], p2 = pts[(i + 1) % N], p3 = pts[(i + 2) % N];
+    d += "C" + [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6, p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6, p2[0], p2[1]].map(f).join(" ");
+  }
+  return d + "Z";
+}
+
+// The drop's outline pushed in or out along each point's direction from its center: push(angle) gives the
+// change in radius as a fraction of it (angle in radians, 0 = right, y down). For the liquid pooling while a
+// swatch is carried (app.js). Returns the outline for the 100 x vh box (`d`) and as a clip-path for w x h.
+function dropMorph(s, push, w, h) {
+  const pts = s.pts.map(([x, y]) => { const dx = x - s.cx, dy = y - s.cy, k = 1 + push(Math.atan2(dy, dx)); return [s.cx + dx * k, s.cy + dy * k]; });
+  return { d: dropPath(pts), clip: `path("${dropPath(pts, w / 100, h / s.vh)}")` };
 }
 
 // Keep each drop's clip-path in step with its box's size (cards resize with the zoom and the screen).
