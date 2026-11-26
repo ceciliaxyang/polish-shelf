@@ -322,6 +322,37 @@ const POLISHES = [
     photos: ["images/beesknees-soon-you-will-not-have-to-drown/1.jpg", "images/beesknees-soon-you-will-not-have-to-drown/2.jpg", "images/beesknees-soon-you-will-not-have-to-drown/3.jpg", "images/beesknees-soon-you-will-not-have-to-drown/4.jpg"], // saved from the product page
   },
   {
+    id: "beesknees-the-horror-of-the-truth",
+    name: "The Horror of the Truth",
+    desc: "Violet-blue base with magnetic shimmer shifting lichen green to blue.",
+    brand: "Bee's Knees",
+    effect: "magnetic",
+    effects: ["magnetic", "shimmer"],
+    tone: "bold",
+    // Dark violet-plum base (reads wine in the photos); lichen green magnetic shimmer at the heart, cooling to blue at the edges
+    colors: ["#2e1426", "#dcdc96", "#b8b866", "#8aa47e", "#5e88b4", "#4a64ac"],
+    shadow: "#16080f",
+    sparkle: { density: 2, floor: .2, colors: ["#d6e48c", "#a8cc80", "#7ab0d0"], mix: .7 }, // fine green-blue shimmer
+    url: "https://www.beeskneeslacquer.com/products/the-horror-of-the-truth",
+    photos: ["images/beesknees-the-horror-of-the-truth/1.jpg", "images/beesknees-the-horror-of-the-truth/2.jpg", "images/beesknees-the-horror-of-the-truth/3.jpg", "images/beesknees-the-horror-of-the-truth/4.jpg"], // saved from the product page
+  },
+  {
+    id: "beesknees-godstouched",
+    name: "Godstouched",
+    desc: "Deep wildberry base with a green mosaic magnetic flashing silver and blue.",
+    brand: "Bee's Knees",
+    effect: "magnetic",
+    effects: ["magnetic", "multichrome"],
+    tone: "bold",
+    // Deep wildberry base; mosaic magnetic going green to silver to blue (from the product page), with violet and gold glints in the photos
+    colors: ["#300a22", "#c4d88e", "#94b876", "#dcdce8", "#a2ace0", "#7464d8"],
+    shadow: "#15050f",
+    grad: [.6, .4],            // green on one side, silver then blue toward the other
+    sparkle: { density: 2.2, size: 1.2, floor: .22, mix: 1, colors: ["#9ae07a", "#ffffff", "#d8dcf0", "#6a8aff", "#b070ff", "#e8c060"] },
+    url: "https://www.beeskneeslacquer.com/products/godstouched",
+    photos: ["images/beesknees-godstouched/1.jpg", "images/beesknees-godstouched/2.jpg", "images/beesknees-godstouched/3.jpg", "images/beesknees-godstouched/4.jpg"], // saved from the product page
+  },
+  {
     id: "mooncat-jewel-beetle",
     name: "Jewel Beetle",
     desc: "Chrome-like multichrome shifting pink, gold and green.",
