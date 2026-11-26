@@ -1097,6 +1097,9 @@ function setView(v) {
   $("#shelfTitle").textContent = v === "combos" ? "Favorite combos" : "My polish shelf";
   $("#filters").inert = v === "combos";
   $("#grid").classList.toggle("combos-grid", v === "combos");
+  // The combos page always shows at the most zoomed in level (zoom bar hidden); the shelf keeps its own zoom.
+  document.documentElement.classList.toggle("view-combos", v === "combos");
+  $("#grid").dataset.zoom = zoomLevel();
   fitGrid();
 }
 function syncComboBtn() {
@@ -1949,6 +1952,8 @@ const ZOOMS = [2, 3, 4], ZOOM_SCALE = { 2: 1, 3: 2 / 3, 4: 1 / 2 };
 // The shelf opens at the middle zoom (3 per row) on larger screens and the most zoomed out (4 per row) on
 // phones (600px and narrower, where the grid switches to its phone layout). A zoom picked during a visit isn't remembered.
 const zoom = { level: matchMedia("(max-width: 600px)").matches ? 4 : 3 };
+// The zoom actually showing: Favorite combos is always at the most zoomed in level.
+function zoomLevel() { return state.view === "combos" ? ZOOMS[0] : zoom.level; }
 // Card swatches are drawn at the size they're actually shown (cards grow on bigger screens), so they
 // stay sharp instead of being stretched.
 // Cards rise into view as they're scrolled to. Cards arriving together (a new row, or the first screen)
@@ -2043,7 +2048,7 @@ function fitGrid() {
   const grid = $("#grid");
   if (innerWidth <= 600) { grid.style.removeProperty("--card"); redrawCards(); return; }
   // Zooming out (3 or 4 per row on a phone) makes desktop cards 2/3 or 1/2 their usual size.
-  const cs = getComputedStyle(grid), scale = ZOOM_SCALE[zoom.level] || 1;
+  const cs = getComputedStyle(grid), scale = ZOOM_SCALE[zoomLevel()] || 1;
   const base = (parseFloat(cs.getPropertyValue("--card-base")) || 240) * scale, gap = parseFloat(cs.columnGap) || GAP, avail = grid.clientWidth;
   // Favorite combos: cards are 600px across at 2 per row (Figma node 2406:3621, room for the polishes
   // scattered around each swatch), 2/3 and 1/2 of that zoomed out, spread across the row.
@@ -2151,7 +2156,7 @@ function setZoom(n, quiet) {
   const changed = n !== zoom.level;
   const settle = changed && !quiet ? zoomFlip() : null; // note where every card is before the grid changes
   zoom.level = n;
-  $("#grid").dataset.zoom = n;
+  $("#grid").dataset.zoom = zoomLevel();
   const box = $("#zoom"); box.style.setProperty("--i", ZOOMS.indexOf(n));
   box.querySelectorAll(".z-opt").forEach(b => { const on = +b.dataset.n === n; b.setAttribute("aria-checked", on); b.tabIndex = on ? 0 : -1; });
   if (changed && !quiet) { fitGrid(); settle(); }
