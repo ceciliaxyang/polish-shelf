@@ -1401,43 +1401,84 @@ function saveCombo() {
   // The Combos button keeps showing the old combos until the pane is gone (see below).
   renderComboThumbs.hold = true;
   combos.push(c); saveCombos();
-  saveSequence(() => { if (state.view === "combos") renderShelf(); });
+  saveSequence(c.layers, () => { if (state.view === "combos") renderShelf(); });
 }
-// Saving, in three beats, each moving only transform and opacity (nothing is laid out again until the end):
-// 1. the button reads "Saving…" for a moment;
-// 2. the Layers pane slides out to the right and disappears (on phones too, from wherever the sheet is);
+// Saving, in four beats, each moving only transform and opacity (nothing is laid out again until the end):
+// 1. the button reads "Saving…" for a moment (on phones the sheet tucks down to its peek bar meanwhile);
+// 2. like dropping something into a shopping cart, a copy of the combo's swatch arcs from the Layers
+//    preview (or the peek bar) into the Combos button;
 // 3. the Combos button grows a little and settles as the new combo appears in its thumbnails and the count
-//    ticks up.
+//    ticks up;
+// 4. the Layers pane slides out to the right and disappears (on phones the sheet slides off to the right).
 // Only then does the shelf take back the pane's room and the dock recenter, and the layers clear (as with Clear).
-function saveSequence(after) {
+const wait = ms => new Promise(r => setTimeout(r, ms));
+async function saveSequence(layers, after) {
   const b = $("#bench"), save = $("#saveCombo"), btn = $("#comboBtn");
-  const T = reduceMotion ? [0, 0, 0] : [550, 450, 460];
+  const T = reduceMotion ? { saving: 0, pop: 0, exit: 0 } : { saving: 550, pop: 460, exit: 450 };
   b.inert = true; // nothing in the pane can be pressed while it saves
   save.textContent = "Saving…"; save.classList.add("saving");
-  setTimeout(() => {
-    // On desktop this is the pane's usual slide out to the right; on phones the sheet slides off to the
-    // right from wherever it is.
-    if (!sheetMQ.matches) b.classList.remove("open");
-    else if (!reduceMotion) {
-      const cur = getComputedStyle(b).transform;
-      b.style.transition = `transform ${T[1]}ms cubic-bezier(.5, 0, .75, 0), opacity ${T[1]}ms ease-in`;
-      b.style.transform = "translateX(105%) " + (cur === "none" ? "" : cur);
-      b.style.opacity = "0";
-    }
-    setTimeout(() => {
-      b.hidden = true;
-      renderComboThumbs.hold = false; renderComboThumbs();
-      if (!reduceMotion) btn.animate([{ transform: "scale(1)" }, { transform: "scale(1.14)", offset: .4 }, { transform: "scale(.97)", offset: .75 }, { transform: "scale(1)" }], { duration: T[2], easing: "cubic-bezier(.2, .8, .2, 1)" });
-      setTimeout(() => {
-        // Hand the pane back to its normal closed state (hidden, no inline styles) and clear the layers.
-        b.style.transition = "none"; b.style.transform = ""; b.style.opacity = ""; b.classList.remove("open", "expanded");
-        void b.offsetWidth; b.style.transition = "";
-        b.inert = false; save.classList.remove("saving");
-        clearBench();
-        after();
-      }, T[2]);
-    }, T[1]);
-  }, T[0]);
+  if (sheetMQ.matches) setSheet(false);
+  await wait(T.saving);
+  // The first save is what makes the button appear: show it right away (no rise, which would move the
+  // landing spot) so it's there to catch the swatch.
+  syncComboBtn(); btn.classList.remove("rise-in");
+  if (!reduceMotion) await flySwatch(layers);
+  renderComboThumbs.hold = false; renderComboThumbs();
+  if (!reduceMotion) btn.animate([{ transform: "scale(1)" }, { transform: "scale(1.14)", offset: .4 }, { transform: "scale(.97)", offset: .75 }, { transform: "scale(1)" }], { duration: T.pop, easing: "cubic-bezier(.2, .8, .2, 1)" });
+  await wait(T.pop);
+  // On desktop this is the pane's usual slide out to the right; on phones the sheet slides off to the right.
+  if (!sheetMQ.matches) b.classList.remove("open");
+  else if (!reduceMotion) {
+    const cur = getComputedStyle(b).transform;
+    b.style.transition = `transform ${T.exit}ms cubic-bezier(.5, 0, .75, 0), opacity ${T.exit}ms ease-in`;
+    b.style.transform = "translateX(105%) " + (cur === "none" ? "" : cur);
+    b.style.opacity = "0";
+  }
+  await wait(T.exit);
+  // Hand the pane back to its normal closed state (hidden, no inline styles) and clear the layers.
+  b.hidden = true;
+  b.style.transition = "none"; b.style.transform = ""; b.style.opacity = ""; b.classList.remove("open", "expanded");
+  void b.offsetWidth; b.style.transition = "";
+  b.inert = false; save.classList.remove("saving");
+  clearBench();
+  after();
+}
+// The cart flight. The flying copy is a flat picture (its outline, edge and shadow drawn into one canvas up
+// front) animated only by transform and opacity, so the browser can run it on the graphics card without
+// redrawing anything, and nothing else on the page moves while it flies. Resolves once it has landed.
+function flySwatch(layers) {
+  const tr = $("#comboThumbs").getBoundingClientRect();
+  const src = [$("#stage"), $("#peekMini")].find(el => { const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0 && r.top < innerHeight && r.bottom > 0; });
+  if (!src || !tr.width) return Promise.resolve();
+  const from = src.getBoundingClientRect(), W = from.width, H = from.height;
+  // The picture: reuse what's already on screen when there is one, otherwise draw the stack once.
+  let pic = src.querySelector("canvas");
+  if (!pic || !pic.width) { pic = document.createElement("canvas"); if (!drawStack(pic, layers, Math.round(W), Math.round(H))) return Promise.resolve(); }
+  const PAD = 28, dpr = Math.min(2, devicePixelRatio || 1), cv = document.createElement("canvas");
+  cv.width = Math.round((W + PAD * 2) * dpr); cv.height = Math.round((H + PAD * 2) * dpr);
+  const g = cv.getContext("2d");
+  g.scale(dpr, dpr); g.translate(PAD, PAD);
+  const shape = new Path2D();
+  if (DROPS) { const d = dropShape(dropKeyFor(layers), 100 * H / W); shape.addPath(new Path2D(d.d), new DOMMatrix().scale(W / 100, H / d.vh)); }
+  else shape.roundRect(0, 0, W, H, parseFloat(getComputedStyle(src).borderTopLeftRadius) || 12);
+  g.save(); g.shadowColor = "rgba(0, 0, 0, .2)"; g.shadowBlur = 24; g.shadowOffsetY = 10; g.fillStyle = "#fff"; g.fill(shape); g.restore();
+  g.save(); g.clip(shape); g.drawImage(pic, 0, 0, W, H); g.restore();
+  cv.className = "fly-swatch";
+  Object.assign(cv.style, { left: from.left - PAD + "px", top: from.top - PAD + "px", width: W + PAD * 2 + "px", height: H + PAD * 2 + "px" });
+  document.body.appendChild(cv);
+  const s = tr.width / W;
+  const dx = tr.left + tr.width / 2 - (from.left + W / 2), dy = tr.top + tr.height / 2 - (from.top + H / 2);
+  // One continuous arc that heads for the button from the first frame: it drops toward the button's height
+  // first and then sweeps across into it, shrinking at an even visual rate (geometrically), easing in and
+  // out over the whole flight, and fading a little at the very end so it melts into the thumbnails.
+  const cx = dx * .3, cy = dy, N = 30, frames = [];
+  for (let i = 0; i <= N; i++) {
+    const t = i / N, u = 1 - t;
+    const x = 2 * u * t * cx + t * t * dx, y = 2 * u * t * cy + t * t * dy;
+    frames.push({ transform: `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0) scale(${Math.pow(s, t).toFixed(4)})`, opacity: t < .8 ? 1 : 1 - (t - .8) * 2 });
+  }
+  const fly = cv.animate(frames, { duration: 620, easing: "cubic-bezier(.45, 0, .2, 1)", fill: "forwards" });
+  return new Promise(res => { const done = () => { cv.remove(); res(); }; fly.onfinish = done; fly.oncancel = done; });
 }
 $("#saveCombo").onclick = () => { const saved = benchCombo(); saved ? deleteCombo(saved) : saveCombo(); };
 /* ---------- detail view ---------- */

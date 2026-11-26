@@ -532,6 +532,10 @@ body.detail-open .page::after { opacity: 1; }
 .swatch[role="button"] { cursor: pointer; }
 
 
+/* The combo swatch that flies into the Combos button when a combo is saved (see flySwatch). Its outline, edge
+   and shadow are drawn into the canvas itself, so only transform and opacity animate. */
+.fly-swatch { position: fixed; z-index: 200; pointer-events: none; transform-origin: 50% 50%; will-change: transform, opacity; }
+
 /* ---------- droplet swatches (see js/droplet.js) ---------- */
 /* As droplets, a swatch box loses its card (fill, rounded corners, clipping): its canvas and the gloss
    are clipped to the drop's outline (--drop-clip, set from js/droplet.js), with the contact shadow underneath. */
