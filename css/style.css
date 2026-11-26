@@ -140,7 +140,96 @@ body.show-mini .mini-nav { opacity: 1; transform: none; visibility: visible; tra
 .fx-row .scope { display: inline-flex; align-items: center; gap: 8px; padding: 11px 16px; font-size: 14px; line-height: 18px; font-weight: 400; }
 /* In SF Pro Display the pill text is tracked -0.4px (the Inter fallback keeps its own tracking). */
 html:not(.no-sf) .fx-row .scope { letter-spacing: -.4px; }
-.scope-icon { flex-shrink: 0; display: block; width: 24px; height: 24px; }
+.scope-icon { flex-shrink: 0; display: block; width: 24px; height: 24px; overflow: visible; }
+/* ---------- Pill icon animations ----------
+   Each filter pill's icon plays a short animation (0.4 to 1s, once) when the pointer comes onto the pill or
+   it's tapped: js/app.js adds "ia-play" to the pill. (Glow-in-the-dark's moon is animated in js/app.js instead,
+   since its shape changes.) Icons and their moving parts are in js/icons.js and
+   js/brand-icons.js. Off with Reduce Motion. */
+.ia .an { transform-box: fill-box; transform-origin: 50% 50%; }
+.ia .merc { transform-origin: 50% 100%; transform: scaleY(0); }   /* Thermal: extra mercury, hidden at rest */
+.ia .orbit { transform-origin: 50% 44.4%; }                        /* Multichrome: turns about the three circles' middle */
+.ia .ray { stroke-dasharray: 1; }
+.ia-jelly .gum, .ia-ilnp .bottle, .ia-creme .drop { transform-origin: 50% 100%; }
+.ia-holo .r1, .ia-holo .r2, .ia-holo .r3 { transform-origin: 0 50%; }
+@media (prefers-reduced-motion: no-preference) {
+  /* Magnetic: buzzes, sparks fly off the poles */
+  .ia-play .ia-magnetic .body { animation: ia-buzz .6s linear; }
+  .ia-play .ia-magnetic .spk { animation: ia-spark .8s ease-out both; }
+  .ia-play .ia-magnetic .spk2 { animation-delay: .08s; }
+  /* Flakies: the flakes tumble */
+  .ia-play .ia-flakies .sh1 { animation: ia-tumbleL .9s ease-in-out; }
+  .ia-play .ia-flakies .sh2 { animation: ia-tumbleR .9s ease-in-out .06s; }
+  .ia-play .ia-flakies .sh3 { animation: ia-tumbleL .9s ease-in-out .12s; }
+  /* Thermal: the mercury climbs and the bulb fills */
+  .ia-play .ia-thermal .merc { animation: ia-merc 1s cubic-bezier(.4, 0, .2, 1); }
+  .ia-play .ia-thermal .bulb { animation: ia-bulb 1s ease; }
+  /* Mooncat: the pupil dilates */
+  .ia-play .ia-mooncat .pupil { animation: ia-dilate .8s ease-in-out; }
+  /* Solar: the rays pulse outward one after another */
+  .ia-play .ia-solar .r { animation: ia-push .5s ease-in-out var(--dl); }
+  /* Jelly: squash and stretch, side marks and all */
+  .ia-play .ia-jelly .gum { animation: ia-wobble .8s ease-out; }
+  /* Magnetic topper: the magnet lifts and settles onto the line */
+  .ia-play .ia-magtopper .mg { animation: ia-settle .8s cubic-bezier(.3, 0, .3, 1); }
+  .ia-play .ia-magtopper .ln { animation: ia-bump .8s ease-out; }
+  /* Holographic: the beam goes in, then the rays shoot out */
+  .ia-play .ia-holo .ray { animation: ia-redraw .45s ease-out both; }
+  .ia-play .ia-holo .beam { animation-duration: .35s; }
+  .ia-play .ia-holo .r1 { animation-delay: .25s; }
+  .ia-play .ia-holo .r2 { animation-delay: .32s; }
+  .ia-play .ia-holo .r3 { animation-delay: .39s; }
+  /* Shimmer: the small sparkles twinkle, the big one turns a little */
+  .ia-play .ia-shimmer .big { animation: ia-nudge .8s ease-in-out; }
+  .ia-play .ia-shimmer .s1 { animation: ia-twinkle .6s ease-in-out .05s; }
+  .ia-play .ia-shimmer .s2 { animation: ia-twinkle .6s ease-in-out .2s; }
+  .ia-play .ia-shimmer .dot { animation: ia-twinkle .6s ease-in-out .32s; }
+  /* Multichrome: the circles turn a third of a turn */
+  .ia-play .ia-multichrome .orbit { animation: ia-rot120 .9s cubic-bezier(.6, 0, .3, 1); }
+  /* Chrome powder: the specks flicker in a ripple */
+  .ia-play .ia-powder .d { animation: ia-dim .45s ease-in-out var(--dl); }
+  /* Creme: the drop dips and a ripple spreads */
+  .ia-play .ia-creme .drop { animation: ia-dip .7s ease-out; }
+  .ia-play .ia-creme .rip { animation: ia-ripple .8s ease-out; }
+  /* ILNP: the bottle tips and rights itself */
+  .ia-play .ia-ilnp .bottle { animation: ia-tip .8s ease-in-out; }
+  /* ANLAC: the hearts float up, one after the other */
+  .ia-play .ia-anlac .h1 { animation: ia-float .7s ease-in-out; }
+  .ia-play .ia-anlac .h2 { animation: ia-float .7s ease-in-out .15s; }
+  /* Bee's Knees: the hexagon turns a sixth of a turn */
+  .ia-play .ia-bees .hex { animation: ia-rot60 .7s cubic-bezier(.5, 0, .3, 1); }
+  /* Cracked: the rows jitter against each other */
+  .ia-play .ia-cracked .t1, .ia-play .ia-cracked .t3 { animation: ia-jit .5s linear; }
+  .ia-play .ia-cracked .t2 { animation: ia-jit .5s linear reverse; }
+  /* Pretty Diva: the gem spins and sparkles */
+  .ia-play .ia-diva .gem { animation: ia-gem .7s ease-in-out; }
+  .ia-play .ia-diva .sp { animation: ia-fade .7s ease-out .1s; }
+}
+@keyframes ia-buzz { 0%, 70%, 100% { transform: translate(0, 0); } 10% { transform: translate(-.6px, 0) rotate(-2deg); } 20% { transform: translate(.6px, 0) rotate(2deg); } 30% { transform: translate(-.5px, 0) rotate(-1.5deg); } 40% { transform: translate(.5px, 0) rotate(1.5deg); } 50% { transform: translate(-.3px, 0); } 60% { transform: translate(.3px, 0); } }
+@keyframes ia-spark { 0%, 25% { opacity: 0; transform: scale(.4); } 45% { opacity: 1; transform: scale(1); } 75% { opacity: 1; } 100% { opacity: 0; transform: scale(1.1); } }
+@keyframes ia-tumbleL { 0%, 100% { transform: rotate(0); } 30% { transform: rotate(-32deg); } 60% { transform: rotate(14deg); } 82% { transform: rotate(-5deg); } }
+@keyframes ia-tumbleR { 0%, 100% { transform: rotate(0); } 30% { transform: rotate(32deg); } 60% { transform: rotate(-14deg); } 82% { transform: rotate(5deg); } }
+@keyframes ia-merc { 0% { transform: scaleY(0); } 45%, 70% { transform: scaleY(1); } 100% { transform: scaleY(0); } }
+@keyframes ia-bulb { 0%, 100% { opacity: 0; } 20%, 70% { opacity: 1; } }
+@keyframes ia-dilate { 0%, 100% { transform: scaleX(1); } 35%, 65% { transform: scaleX(2); } }
+@keyframes ia-push { 0%, 100% { transform: translate(0, 0); } 45% { transform: translate(var(--dx), var(--dy)); } }
+@keyframes ia-wobble { 0%, 100% { transform: scale(1, 1); } 18% { transform: scale(1.12, .86); } 36% { transform: scale(.92, 1.08); } 54% { transform: scale(1.05, .96); } 72% { transform: scale(.98, 1.02); } }
+@keyframes ia-settle { 0%, 100% { transform: translateY(0); } 35% { transform: translateY(-3px); } 65% { transform: translateY(.4px); } 80% { transform: translateY(-.5px); } }
+@keyframes ia-bump { 0%, 58%, 85%, 100% { transform: scaleX(1); } 66% { transform: scaleX(1.12); } }
+@keyframes ia-redraw { 0% { opacity: 1; stroke-dashoffset: 0; } 12% { opacity: 0; stroke-dashoffset: 0; } 13% { opacity: 1; stroke-dashoffset: 1; } 100% { opacity: 1; stroke-dashoffset: 0; } }
+@keyframes ia-nudge { 0%, 100% { transform: rotate(0) scale(1); } 50% { transform: rotate(12deg) scale(1.06); } }
+@keyframes ia-twinkle { 0%, 100% { transform: scale(1); } 30% { transform: scale(.3); } 60% { transform: scale(1.3); } }
+@keyframes ia-rot120 { from { transform: rotate(0); } to { transform: rotate(120deg); } }
+@keyframes ia-dim { 0%, 100% { opacity: 1; } 50% { opacity: .15; } }
+@keyframes ia-dip { 0%, 100% { transform: translateY(0); } 30% { transform: translateY(1.2px) scale(1.05, .95); } }
+@keyframes ia-ripple { 0%, 20% { transform: scale(.4); opacity: 0; } 35% { opacity: 1; } 100% { transform: scale(1.5); opacity: 0; } }
+@keyframes ia-tip { 0%, 100% { transform: rotate(0); } 30% { transform: rotate(-12deg); } 65% { transform: rotate(5deg); } }
+@keyframes ia-float { 0%, 100% { transform: translateY(0); } 45% { transform: translateY(-2px); } }
+@keyframes ia-rot60 { from { transform: rotate(0); } to { transform: rotate(60deg); } }
+@keyframes ia-jit { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(1px); } 40% { transform: translateX(-1px); } 60% { transform: translateX(.6px); } 80% { transform: translateX(-.4px); } }
+@keyframes ia-gem { 0%, 100% { transform: scale(1) rotate(0); } 45% { transform: scale(1.5) rotate(90deg); } }
+@keyframes ia-fade { 0%, 100% { opacity: 0; } 30%, 70% { opacity: 1; } }
+
 /* Zoom control: a see-through frosted floating bar low at the bottom center with three icons, 2, 3 and 4 per row (big to
    dense, left to right). The selected one sits on a dark circle that slides between them. It moves up above
    the Layers peek bar on phones, centers on the shelf beside the Layers pane on wider screens, and hides

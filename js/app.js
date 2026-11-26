@@ -1062,9 +1062,12 @@ function buildPills() {
 const ICON_SIZE = 15.7, ICON_MAX = 19, ICON_LINE = 1.5, ICON_EASE = .6;
 function fitIcon(svg) {
   const g = svg.firstElementChild; if (!g) return;
-  let bb; try { bb = g.getBBox(); } catch { return; }
+  // Parts that only show while the icon animates (sparks, a ripple) don't count toward its size.
+  const extras = [...g.querySelectorAll(".ia-x")]; extras.forEach(el => el.style.display = "none");
+  let bb; try { bb = g.getBBox(); } catch { return; } finally { extras.forEach(el => el.style.display = ""); }
   if (!bb.width || !bb.height) return;
-  const stroked = !!g.querySelector("[stroke]:not([stroke=none])"), pad = stroked ? ICON_LINE : 0;
+  // Solar is redrawn in lines with square ends, so its lines don't reach past its outline: no padding.
+  const stroked = !!g.querySelector("[stroke]:not([stroke=none])") && !g.querySelector("[data-fit-nopad]"), pad = stroked ? ICON_LINE : 0;
   const w = bb.width + pad, h = bb.height + pad;
   // Shrinking all the way to the same area made open, airy drawings (Flakies, the two ANLAC hearts) look
   // smaller than the solid Magnetic one, so big icons come only most of the way down.
@@ -2284,6 +2287,30 @@ function zoomFlip() {
 /* ---------- boot ---------- */
 buildPills();
 document.querySelectorAll("#filters .scope-icon").forEach(fitIcon);
+// Pill icons play a short animation when the pointer comes onto the pill, or on a tap (the animations are in
+// css/style.css, under "Pill icon animations", and are off with Reduce Motion). It plays once to the end even if
+// the pointer leaves, and restarts on the next hover. Delegated, so the mini nav's copies of the pills play too.
+function playIcon(btn) {
+  btn.classList.remove("ia-play"); void btn.offsetWidth; btn.classList.add("ia-play");
+  clearTimeout(btn._ia); btn._ia = setTimeout(() => btn.classList.remove("ia-play"), 1300);
+  // Glow-in-the-dark: the moon's shadow slides off (waxing to full) and back (waning), over 1s.
+  const moon = btn.querySelector(".ia-glow .moon");
+  if (moon && !reduceMotion) {
+    const t0 = performance.now(), far = 2 * MOON_R + 1;
+    cancelAnimationFrame(btn._moon);
+    const step = now => {
+      const t = Math.min(1, (now - t0) / 1000), e = (1 - Math.cos(t * 2 * Math.PI)) / 2;
+      moon.setAttribute("d", moonPath(MOON_REST + (far - MOON_REST) * e));
+      if (t < 1) btn._moon = requestAnimationFrame(step);
+    };
+    btn._moon = requestAnimationFrame(step);
+  }
+}
+const iconPill = e => { const b = e.target.closest && e.target.closest(".scope"); return b && b.querySelector(".ia") ? b : null; };
+document.addEventListener("pointerover", e => {
+  const b = iconPill(e); if (b && e.pointerType === "mouse" && !b.contains(e.relatedTarget)) playIcon(b);
+});
+document.addEventListener("pointerdown", e => { const b = iconPill(e); if (b && e.pointerType !== "mouse") playIcon(b); });
 // A filter row with more pills than fit fades out at the edge that has more to scroll to.
 function fadeScopes() {
   document.querySelectorAll(".filter-row .scopes").forEach(el => {
