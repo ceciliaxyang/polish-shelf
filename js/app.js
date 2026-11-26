@@ -1522,8 +1522,8 @@ function openDetail(p, card) {
     stage.style.transition = `transform .5s ${EASE}`;
     stage.style.transform = "";
     m.classList.add("open");
-    // Once it has landed: the shelf's blur, then the photos.
-    setTimeout(() => { if (detail.token !== token) return; document.body.classList.add("detail-blur"); photoImgs.forEach(im => { im.src = im.dataset.src; }); }, 520);
+    // The photos load once it has landed, so decoding them doesn't stall the flight.
+    setTimeout(() => { if (detail.token === token) photoImgs.forEach(im => { im.src = im.dataset.src; }); }, 520);
   }));
   m.focus({ preventScroll: true }); // keyboard focus moves into the dialog (Tab reaches the buttons)
   history.replaceState(null, "", SITE_ROOT + "p/" + encodeURIComponent(p.id) + "/");
@@ -1547,7 +1547,7 @@ function closeDetail() {
     if (card) card.style.visibility = "";
   };
   detail.closing = done;
-  m.classList.remove("open"); document.body.classList.remove("detail-open", "detail-blur");
+  m.classList.remove("open"); document.body.classList.remove("detail-open");
   m.style.pointerEvents = "none"; document.body.style.overflow = "";
   history.replaceState(null, "", SITE_ROOT); document.title = SITE_TITLE;
   if (card && card.isConnected) {

@@ -442,15 +442,15 @@ body.detail-open .mini-nav { opacity: 0; visibility: hidden; pointer-events: non
 .modal { position: fixed; inset: 0; z-index: 50; outline: none; overflow-y: auto; overscroll-behavior: contain; } /* scrolls when the photos run past the screen */
 /* A thick material: the shelf itself is blurred (reliable in every browser), with a mostly opaque white
    wash on top (72%; it was 40%, too see-through). */
-/* The blur is the heaviest thing on screen, so it comes in once the swatch has landed (body.detail-blur, see
-   openDetail), fading in; while the swatch flies only the white wash fades in. On close it goes at once. */
+/* The material (blur and white wash) comes in with the swatch's flight, quickly (.25s), so the page reads
+   as covered right away; on close it goes at once, so the swatch lands on a sharp shelf. */
 .page { position: relative; }
-body.detail-blur .page { filter: blur(60px); transition: filter .35s ease; }
+body.detail-open .page { filter: blur(60px); transition: filter .25s ease; }
 /* The white wash lives on the shelf itself, not on a fixed layer. Safari on iOS 26 shows the page (not
    fixed layers) under the status bar, and paints the bar solid in the color of any fixed layer at the
    top. With the wash part of the page, the area under the clock is blurred and washed exactly like the
    rest of the dialog, so the dialog reads as running all the way to the top of the screen. */
-.page::after { content: ""; position: absolute; inset: 0; background-image: linear-gradient(rgba(255, 255, 255, .72), rgba(255, 255, 255, .72)); opacity: 0; pointer-events: none; transition: opacity .35s ease; }
+.page::after { content: ""; position: absolute; inset: 0; background-image: linear-gradient(rgba(255, 255, 255, .72), rgba(255, 255, 255, .72)); opacity: 0; pointer-events: none; transition: opacity .25s ease; }
 body.detail-open .page::after { opacity: 1; }
 .modal-blur { position: fixed; inset: 0; }
 .modal-head { opacity: 0; transition: opacity .3s ease; }
