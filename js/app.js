@@ -1098,7 +1098,7 @@ function setView(v) {
   state.view = v;
   $("#comboBtn").setAttribute("aria-pressed", v === "combos");
   $(".shelf-head").classList.toggle("combos-view", v === "combos");
-  $("#shelfTitle").textContent = v === "combos" ? "Favorite combos" : "My polish shelf";
+  $("#shelfTitle").textContent = v === "combos" ? "Favorite combos" : "Polish shelf";
   $("#filters").inert = v === "combos";
   $("#grid").classList.toggle("combos-grid", v === "combos");
   // The combos page always shows at the most zoomed in level (zoom bar hidden); the shelf keeps its own zoom.
