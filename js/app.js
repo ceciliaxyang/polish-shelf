@@ -1550,6 +1550,66 @@ $("#saveCombo").onclick = () => { const saved = benchCombo(); saved ? deleteComb
 const detail = { p: null, card: null, cv: null };
 const EASE = "cubic-bezier(.2, .8, .2, 1)";
 
+// The swatch's flight out of its card, as a liquid rather than a rigid card. While it moves the polish
+// stretches a little along the direction of travel (most at the start, when it's fastest) and eases back
+// as it slows, with no bounce or wobble on landing. The stretch keeps the area the same (1 + a one way,
+// 1 / (1 + a) the other). Its outline flows at the same time (liquidPool, below). Returns keyframes for
+// element.animate, sampled finely and played linearly so every frame follows these curves exactly.
+const LIQUID = { total: 850, flight: 520, stretch: .07 };
+function liquidFlight(from, to) {
+  const w = to.width, h = to.height;
+  const dx = (from.left + from.width / 2) - (to.left + w / 2), dy = (from.top + from.height / 2) - (to.top + h / 2);
+  const kx0 = from.width / w, ky0 = from.height / h;
+  const ang = Math.atan2(-dy, -dx) * 180 / Math.PI; // the direction of travel
+  const still = reduceMotion, N = 60, frames = [];
+  for (let i = 0; i <= N; i++) {
+    const t = i / N * LIQUID.total, u = Math.min(1, t / LIQUID.flight);
+    const e = 1 - Math.pow(1 - u, 3.5);                 // position: a strong ease-out, like the old flight
+    const v = u < 1 ? Math.pow(1 - u, 2.5) : 0;         // its speed, 1 at the start and 0 on landing
+    const a = still ? 0 : LIQUID.stretch * v;
+    const kx = kx0 + (1 - kx0) * e, ky = ky0 + (1 - ky0) * e;
+    frames.push({ transformOrigin: "0 0", transform:
+      `translate(${(w / 2 + dx * (1 - e)).toFixed(2)}px, ${(h / 2 + dy * (1 - e)).toFixed(2)}px) rotate(${ang.toFixed(2)}deg) ` +
+      `scale(${(1 + a).toFixed(4)}, ${(1 / (1 + a)).toFixed(4)}) rotate(${(-ang).toFixed(2)}deg) ` +
+      `scale(${kx.toFixed(4)}, ${ky.toFixed(4)}) translate(${(-w / 2).toFixed(2)}px, ${(-h / 2).toFixed(2)}px)` });
+  }
+  return frames;
+}
+
+// The polish pooling as it's carried: its outline lags behind the motion, gathering into a soft lobe on the
+// trailing side and thinning at the front, while slow ripples run round the rim; all of it melts back into the
+// polish's own resting outline as it lands. Drives the drop's clip and sheen outlines frame by frame and
+// returns a function that stops it (and puts the resting outline back).
+function liquidPool(stage, from, to) {
+  const s = stage._drop; if (!DROPS || !s || reduceMotion) return () => {};
+  const w = to.width, h = to.height;
+  const dx = (from.left + from.width / 2) - (to.left + w / 2), dy = (from.top + from.height / 2) - (to.top + h / 2);
+  const back = Math.atan2(dy, dx); // toward where it came from: the side that trails
+  const paths = [...stage.querySelectorAll(":scope > svg path")].filter(el => el.getAttribute("d") === s.d);
+  const lobe = (x, n) => Math.pow(Math.max(0, Math.cos(x)), n);
+  const t0 = performance.now(); let raf = 0;
+  const set = (clip, d) => { stage.style.setProperty("--drop-clip", clip); paths.forEach(el => el.setAttribute("d", d)); };
+  const stop = () => { cancelAnimationFrame(raf); set(s.clip(stage.clientWidth || w, stage.clientHeight || h), s.d); };
+  const frame = now => {
+    const t = Math.max(0, now - t0) / LIQUID.total; // a frame's time can be a touch before t0
+    if (t >= 1) return stop();
+    const env = Math.pow(t, .45) * Math.pow(1 - t, 2.2) / .29; // swells as it sets off, then slowly lets go
+    const sec = t * LIQUID.total / 1000;
+    const push = th => {
+      const r = th - back;
+      return .075 * lobe(r, 2) - .04 * lobe(r - Math.PI, 3) + .02 * Math.cos(2 * r)
+        + .022 * Math.sin(3 * th + 5.5 * sec + 1.3) + .012 * Math.sin(5 * th - 4 * sec + .4);
+    };
+    // Kept inside the drop's box (the canvas ends there), so the whole outline draws in by its largest push.
+    let top = 0; for (let i = 0; i < 24; i++) top = Math.max(top, push(i / 24 * 2 * Math.PI));
+    const m = dropMorph(s, th => env * (push(th) - top), stage.clientWidth || w, stage.clientHeight || h);
+    set(m.clip, m.d);
+    raf = requestAnimationFrame(frame);
+  };
+  raf = requestAnimationFrame(frame);
+  return stop;
+}
+
 function openDetail(p, card) {
   if (detail.closing) detail.closing(); // a close still flying: land it first
   detail.p = p; detail.card = card;
@@ -1617,8 +1677,9 @@ function openDetail(p, card) {
   requestAnimationFrame(() => requestAnimationFrame(() => {
     if (detail.token !== token || m.hidden) return; // closed (or another polish opened) meanwhile
     document.body.classList.add("detail-open");
-    stage.style.transition = `transform .5s ${EASE}`;
     stage.style.transform = "";
+    detail.anim = stage.animate(liquidFlight(from, to), { duration: LIQUID.total, easing: "linear" });
+    detail.pool = liquidPool(stage, from, to);
     m.classList.add("open");
     // The photos load once it has landed, so decoding them doesn't stall the flight.
     setTimeout(() => { if (detail.token === token) photoImgs.forEach(im => { im.src = im.dataset.src; }); }, 520);
@@ -1632,6 +1693,8 @@ function openDetail(p, card) {
 function closeDetail() {
   const m = $("#modal"); if (m.hidden || detail.closing) return;
   detail.token = null; // cancels an opening flight or photo load still waiting to start
+  if (detail.anim) { detail.anim.finish(); detail.anim = null; } // closing mid-flight: from where it lands
+  if (detail.pool) { detail.pool(); detail.pool = null; }
   const stage = $("#mStage"), card = detail.card;
   // The swatch flies back into its card from wherever it has scrolled to (a shared element, both ways).
   // The dialog stops catching the pointer and the shelf can scroll again right away. If the shelf does
