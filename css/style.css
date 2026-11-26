@@ -553,7 +553,7 @@ body { transition: background-color .3s ease; }
    thumbnails); tap or drag it up to expand, drag down to tuck it away. */
 @media (max-width: 760px) {
   .bench { --peek: calc(84px + env(safe-area-inset-bottom)); position: fixed; z-index: 60; left: 0; right: 0; top: auto; bottom: 0; width: auto; border-left: 0;
-    max-height: 78vh; margin: 0; gap: 16px; padding: 0 16px calc(24px + env(safe-area-inset-bottom)); background: var(--bg);
+    max-height: 90vh; max-height: 90dvh; margin: 0; gap: 16px; padding: 0 16px calc(24px + env(safe-area-inset-bottom)); background: var(--bg);
     border-radius: 24px 24px 0 0; box-shadow: 0 -4px 12px rgba(0, 0, 0, .12); overflow: hidden;
     transform: translateY(calc(100% - var(--peek))); transition: transform .38s cubic-bezier(.2, .8, .2, 1); }
   .bench.expanded { transform: none; overflow-y: auto; }
