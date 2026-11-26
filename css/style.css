@@ -172,9 +172,11 @@ body.detail-open .mini-nav { opacity: 0; visibility: hidden; pointer-events: non
 .combo-fab[hidden] { display: none; }
 .combo-fab:hover { background: rgba(255, 255, 255, .5); }
 .combo-fab[aria-pressed="true"] { background: #222; color: #fff; }
-/* The number of saved combos after the label, lighter, in even-width digits so it doesn't shift as it changes. */
-.combo-count { display: inline-block; margin-left: -1px; color: #8a8a8a; font-variant-numeric: tabular-nums; }
-.combo-fab[aria-pressed="true"] .combo-count { color: rgba(255, 255, 255, .6); }
+/* The number of saved combos after the label, in the regular weight (the label is medium) and even-width
+   digits so it doesn't shift as it changes. It stays the label's color so it reads over any swatch under the glass. */
+.combo-count { position: relative; display: inline-grid; overflow: hidden; margin-left: -1px; font-weight: 400; font-variant-numeric: tabular-nums; }
+/* Its numbers share one grid cell, so the old one can roll out while the new one rolls in (see rollCount). */
+.cc-num { grid-area: 1 / 1; justify-self: end; }
 /* On phones the zoom bar and the pill are centered together as one group so the pill stays inside the screen. */
 @media (max-width: 600px) {
   .dock { display: flex; gap: 8px; }

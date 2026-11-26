@@ -1106,12 +1106,7 @@ function syncComboBtn() {
 function renderComboThumbs() {
   if (renderComboThumbs.hold) return; // a combo is still being saved; the button updates when it's done
   syncComboBtn();
-  // The count after the label ("Combos 5"); it ticks up (a small pop) when it changes.
-  const count = $("#comboCount"), n = String(combos.length);
-  if (count.textContent !== n) {
-    const was = count.textContent; count.textContent = n;
-    if (was && !reduceMotion) count.animate([{ transform: "translateY(6px) scale(.8)", opacity: 0 }, { transform: "none", opacity: 1 }], { duration: 320, easing: "cubic-bezier(.2, .8, .2, 1)" });
-  }
+  rollCount(combos.length);
   const picks = combos.slice(-2).reverse().map(c => ({ layers: c.layers }));
   for (const p of state.polishes) { if (picks.length >= 2) break; picks.push({ p }); }
   [".tp-front", ".tp-back"].forEach((sel, i) => {
@@ -1122,6 +1117,20 @@ function renderComboThumbs() {
     box.appendChild(c);
     dropify(box, pick.p ? pick.p.id : dropKeyFor(pick.layers), 1, { small: true });
   });
+}
+
+// The count after the label ("Combos 5"). When it changes it rolls like an odometer: the old number slides up
+// and out while the new one rolls up from below (down, when one is deleted). Timed to land at the top of the pill's pop when a combo is saved.
+function rollCount(n) {
+  const box = $("#comboCount"), cur = box.querySelector(".cc-num"), was = cur ? +cur.textContent : null;
+  if (was === n) return;
+  const next = Object.assign(document.createElement("span"), { className: "cc-num", textContent: n });
+  if (was === null || reduceMotion || box.closest("[hidden]")) { box.replaceChildren(next); return; }
+  box.querySelectorAll(".cc-num.out").forEach(el => el.remove());
+  cur.classList.add("out"); box.appendChild(next);
+  const dir = n > was ? 1 : -1, opts = { duration: 480, delay: 90, easing: "cubic-bezier(.3, 1.3, .4, 1)", fill: "backwards" };
+  cur.animate([{ transform: "none", opacity: 1 }, { transform: `translateY(${-dir * 110}%)`, opacity: 0 }], { ...opts, easing: "cubic-bezier(.4, 0, .6, 1)", fill: "forwards" }).onfinish = () => cur.remove();
+  next.animate([{ transform: `translateY(${dir * 110}%)`, opacity: 0 }, { transform: "none", opacity: 1 }], opts);
 }
 
 function toggleFx(k) {
@@ -1409,7 +1418,7 @@ function saveCombo() {
 //    preview (or the peek bar) into the Combos button;
 // 3. the Combos button grows a little and settles as the new combo appears in its thumbnails and the count
 //    ticks up;
-// 4. the Layers pane slides out to the right and disappears (on phones the sheet slides off to the right).
+// 4. the Layers pane slides out to the right and disappears (on phones the sheet slides down off the screen).
 // Only then does the shelf take back the pane's room and the dock recenter, and the layers clear (as with Clear).
 const wait = ms => new Promise(r => setTimeout(r, ms));
 async function saveSequence(layers, after) {
@@ -1426,13 +1435,12 @@ async function saveSequence(layers, after) {
   renderComboThumbs.hold = false; renderComboThumbs();
   if (!reduceMotion) btn.animate([{ transform: "scale(1)" }, { transform: "scale(1.14)", offset: .4 }, { transform: "scale(.97)", offset: .75 }, { transform: "scale(1)" }], { duration: T.pop, easing: "cubic-bezier(.2, .8, .2, 1)" });
   await wait(T.pop);
-  // On desktop this is the pane's usual slide out to the right; on phones the sheet slides off to the right.
+  // On desktop this is the pane's usual slide out to the right; on phones the sheet slides straight down
+  // off the bottom of the screen.
   if (!sheetMQ.matches) b.classList.remove("open");
   else if (!reduceMotion) {
-    const cur = getComputedStyle(b).transform;
-    b.style.transition = `transform ${T.exit}ms cubic-bezier(.5, 0, .75, 0), opacity ${T.exit}ms ease-in`;
-    b.style.transform = "translateX(105%) " + (cur === "none" ? "" : cur);
-    b.style.opacity = "0";
+    b.style.transition = `transform ${T.exit}ms cubic-bezier(.4, 0, .6, 1)`;
+    b.style.transform = "translateY(calc(100% + 24px))";
   }
   await wait(T.exit);
   // Hand the pane back to its normal closed state (hidden, no inline styles) and clear the layers.
@@ -1597,15 +1605,24 @@ const benchIsOpen = () => $("#bench").classList.contains("open");
 function setBenchOpen(open) {
   const b = $("#bench");
   clearTimeout(b._hideT);
-  if (open) { b.hidden = false; void b.offsetWidth; b.classList.add("open"); }
-  else { b.classList.remove("open"); b._hideT = setTimeout(() => { if (!benchIsOpen()) b.hidden = true; }, sheetMQ.matches || reduceMotion ? 0 : 450); }
+  setSheet(false);
+  // On phones the sheet rises up from below the screen to its peek bar, and drops back down out of view.
+  const phone = sheetMQ.matches && !reduceMotion;
+  if (open) {
+    b.style.transform = ""; b.hidden = false;
+    if (phone) { b.style.transition = "none"; b.style.transform = "translateY(calc(100% + 24px))"; void b.offsetWidth; b.style.transition = ""; b.style.transform = ""; }
+    void b.offsetWidth; b.classList.add("open");
+  } else {
+    b.classList.remove("open");
+    if (phone && !b.hidden) b.style.transform = "translateY(calc(100% + 24px))";
+    b._hideT = setTimeout(() => { if (!benchIsOpen()) { b.hidden = true; b.style.transform = ""; } }, reduceMotion ? 0 : sheetMQ.matches ? 380 : 450);
+  }
   // On desktop the shelf makes or gives back room for the pane: note where the cards are, switch the
   // column, then glide them to their new places (the same animation as changing the zoom).
   const settle = sheetMQ.matches || $("#layout").classList.contains("closed") === !open ? null : zoomFlip();
   $("#layout").classList.toggle("closed", !open);
   if (settle) { fitGrid(); settle(); }
   document.body.classList.toggle("bench-open", open);
-  setSheet(false);
   if (open) renderBench();
 }
 // Layering is always available: every swatch has a + button, and adding a polish opens the Layers pane.
