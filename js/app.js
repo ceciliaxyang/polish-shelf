@@ -1246,7 +1246,7 @@ function renderComboThumbs() {
 // and out while the new one rolls up from below (down, when one is deleted). Timed to land at the top of the pill's pop when a combo is saved.
 function rollCount(n) {
   // With no combos there's no number at all, so the first save doesn't roll a 0 into a 1: the 1 just appears
-  // (fading and growing in). Every later change rolls.
+  // (its badge fading and growing in). Every later change rolls inside the badge.
   const box = $("#comboCount"), cur = box.querySelector(".cc-num"), was = cur ? +cur.textContent : 0;
   const first = !box.dataset.ready; box.dataset.ready = "1";
   if (was === n) return;
@@ -1254,8 +1254,8 @@ function rollCount(n) {
   const next = Object.assign(document.createElement("span"), { className: "cc-num", textContent: n });
   if (first || reduceMotion || box.closest("[hidden]")) { box.replaceChildren(next); return; }
   if (!cur) {
-    box.replaceChildren(next);
-    next.animate([{ transform: "scale(.5)", opacity: 0 }, { transform: "none", opacity: 1 }], { duration: 380, delay: 90, easing: "cubic-bezier(.3, 1.4, .5, 1)", fill: "backwards" });
+    box.replaceChildren(next); // the badge itself grows in, circle and number together
+    box.animate([{ transform: "scale(.5)", opacity: 0 }, { transform: "none", opacity: 1 }], { duration: 380, delay: 90, easing: "cubic-bezier(.3, 1.4, .5, 1)", fill: "backwards" });
     return;
   }
   box.querySelectorAll(".cc-num.out").forEach(el => el.remove());

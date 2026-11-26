@@ -267,20 +267,27 @@ body.detail-open .mini-nav { opacity: 0; visibility: hidden; pointer-events: non
    showing the two newest combos as a thumbnail pair and the label "Combos". It turns dark while the combos
    page is open. */
 .combo-fab { position: absolute; top: 0; left: calc(100% + 8px); height: 48px; padding: 0 18px 0 10px; border: 0; border-radius: 100px;
-  display: flex; align-items: center; gap: 6px; white-space: nowrap; cursor: pointer; color: #222; font-size: 14px; line-height: 18px; font-weight: 500;
+  display: flex; align-items: center; gap: 6px; white-space: nowrap; cursor: pointer; color: #222; font-size: 14px; line-height: 18px; font-weight: 400;
   background: rgba(255, 255, 255, .32); -webkit-backdrop-filter: blur(16px) saturate(1.8); backdrop-filter: blur(16px) saturate(1.8);
   box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .6), 0 0 0 .5px rgba(0, 0, 0, .08), 0 6px 20px rgba(0, 0, 0, .12);
   -webkit-tap-highlight-color: transparent; transition: background .15s ease; }
 .combo-fab[hidden] { display: none; }
 .combo-fab:hover { background: rgba(255, 255, 255, .5); }
 .combo-fab[aria-pressed="true"] { background: #222; color: #fff; }
-/* The number of saved combos after the label, in Foggy (Figma's grey 700, #6a6a6a, the --muted token), the regular
-   weight (the label is medium) and even-width digits so it doesn't shift as it changes. On the dark pressed pill it
-   becomes a soft white so it stays readable. */
-.combo-count { position: relative; display: inline-grid; overflow: hidden; margin-left: -1px; font-weight: 400; font-variant-numeric: tabular-nums; color: var(--muted); }
-.combo-fab[aria-pressed="true"] .combo-count { color: rgba(255, 255, 255, .6); }
-/* Its numbers share one grid cell, so the old one can roll out while the new one rolls in (see rollCount). */
-.cc-num { grid-area: 1 / 1; justify-self: end; }
+/* The number of saved combos sits in a round badge at the pill's right end: 22px across, centered in the 48px pill
+   (13px from its end on every side, so the circle is concentric with the pill's rounded end), a frosted white disc
+   (opaque enough that the number stays readable when a dark swatch sits behind the glass) with the number in Foggy (Figma's grey 700, #6a6a6a, the --muted token), 12px semibold, even-width
+   digits. Two or more digits stretch it into a pill of the same height. With no combos there's no badge at all.
+   On the dark pressed pill the tint and number turn a soft white. */
+.combo-fab:has(.combo-count:not(:empty)) { padding-right: 13px; }
+.combo-count { position: relative; display: inline-grid; place-items: center; overflow: hidden; box-sizing: border-box;
+  min-width: 22px; height: 22px; padding: 0 6px; margin-left: 2px; border-radius: 100px; background: rgba(255, 255, 255, .72);
+  box-shadow: 0 0 0 .5px rgba(0, 0, 0, .06);
+  font-size: 12px; line-height: 22px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--muted); }
+.combo-count:empty { display: none; }
+.combo-fab[aria-pressed="true"] .combo-count { background: rgba(255, 255, 255, .16); color: rgba(255, 255, 255, .75); }
+/* Its numbers share one grid cell inside the circle, so the old one can roll out while the new one rolls in (see rollCount). */
+.cc-num { grid-area: 1 / 1; }
 /* On phones the zoom bar and the pill are centered together as one group so the pill stays inside the screen. */
 @media (max-width: 600px) {
   .dock { display: flex; gap: 8px; }
