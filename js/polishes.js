@@ -257,7 +257,7 @@ const POLISHES = [
   {
     id: "beesknees-im-nobody",
     name: "I'm Nobody",
-    desc: "Olive-bronze base with a pink-to-gold multichrome magnetic glow.",
+    desc: "Sepia brown mosaic magnetic with bright pink and gold pigments.",
     brand: "Bee's Knees",
     effect: "magnetic",
     effects: ["magnetic", "multichrome"],
@@ -274,7 +274,7 @@ const POLISHES = [
   {
     id: "beesknees-knight-knave-optimist",
     name: "Knight, Knave, Optimist",
-    desc: "Dark gray-purple magnetic with a pinkish glow and a blue-violet streak.",
+    desc: "Blackened base with limestone magnetic shimmer and blue-purple holo flakes.",
     brand: "Bee's Knees",
     effect: "magnetic",
     effects: ["magnetic", "shimmer"],
@@ -291,7 +291,7 @@ const POLISHES = [
   {
     id: "beesknees-sprites",
     name: "Sprites",
-    desc: "Dark olive mosaic magnetic flashing pink, violet, blue and teal.",
+    desc: "Grayed green mosaic magnetic with purple and deep blue pigments.",
     brand: "Bee's Knees",
     effect: "magnetic",
     effects: ["magnetic", "multichrome"],

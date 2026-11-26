@@ -1490,6 +1490,7 @@ const detail = { p: null, card: null, cv: null };
 const EASE = "cubic-bezier(.2, .8, .2, 1)";
 
 function openDetail(p, card) {
+  if (detail.closing) detail.closing(); // a close still flying: land it first
   detail.p = p; detail.card = card;
   // One line: the brand's short name (as on its filter pill), an em dash, then the polish's name.
   const brand = BRAND_LABELS[p.brand] || p.brand || "";
@@ -1558,8 +1559,8 @@ function openDetail(p, card) {
     stage.style.transition = `transform .5s ${EASE}`;
     stage.style.transform = "";
     m.classList.add("open");
-    // Once it has landed: the shelf's blur, then the photos.
-    setTimeout(() => { if (detail.token !== token) return; document.body.classList.add("detail-blur"); photoImgs.forEach(im => { im.src = im.dataset.src; }); }, 520);
+    // The photos load once it has landed, so decoding them doesn't stall the flight.
+    setTimeout(() => { if (detail.token === token) photoImgs.forEach(im => { im.src = im.dataset.src; }); }, 520);
   }));
   m.focus({ preventScroll: true }); // keyboard focus moves into the dialog (Tab reaches the buttons)
   history.replaceState(null, "", SITE_ROOT + "p/" + encodeURIComponent(p.id) + "/");
@@ -1568,19 +1569,30 @@ function openDetail(p, card) {
 
 
 function closeDetail() {
-  const m = $("#modal"); if (m.hidden) return;
+  const m = $("#modal"); if (m.hidden || detail.closing) return;
   detail.token = null; // cancels an opening flight or photo load still waiting to start
   const stage = $("#mStage"), card = detail.card;
   // The swatch flies back into its card from wherever it has scrolled to (a shared element, both ways).
-  const fly = stage;
-  const done = () => { m.hidden = true; m.classList.remove("open"); stage.style.transform = ""; document.body.style.overflow = ""; if (card) card.style.visibility = ""; };
-  m.classList.remove("open"); document.body.classList.remove("detail-open", "detail-blur");
+  // The dialog stops catching the pointer and the shelf can scroll again right away. If the shelf does
+  // scroll mid-flight, the card moves out from under the swatch's landing spot, so the flight finishes at
+  // once (the swatch hands straight back to its card) instead of being left behind where the card was.
+  const done = () => {
+    if (detail.closing !== done) return;
+    detail.closing = null; clearTimeout(done.t); removeEventListener("scroll", done);
+    m.hidden = true; m.classList.remove("open"); m.style.pointerEvents = "";
+    stage.style.transition = "none"; stage.style.transform = "";
+    if (card) card.style.visibility = "";
+  };
+  detail.closing = done;
+  m.classList.remove("open"); document.body.classList.remove("detail-open");
+  m.style.pointerEvents = "none"; document.body.style.overflow = "";
   history.replaceState(null, "", SITE_ROOT); document.title = SITE_TITLE;
   if (card && card.isConnected) {
-    const from = fly.getBoundingClientRect(), to = card.getBoundingClientRect();
-    fly.style.transition = `transform .45s ${EASE}`; fly.style.transformOrigin = "0 0";
-    fly.style.transform = `translate(${to.left - from.left}px, ${to.top - from.top}px) scale(${to.width / from.width}, ${to.height / from.height})`;
-    setTimeout(done, 450);
+    const from = stage.getBoundingClientRect(), to = card.getBoundingClientRect();
+    stage.style.transition = `transform .45s ${EASE}`; stage.style.transformOrigin = "0 0";
+    stage.style.transform = `translate(${to.left - from.left}px, ${to.top - from.top}px) scale(${to.width / from.width}, ${to.height / from.height})`;
+    done.t = setTimeout(done, 450);
+    addEventListener("scroll", done, { passive: true });
   } else done();
 }
 $("#mClose").onclick = closeDetail;

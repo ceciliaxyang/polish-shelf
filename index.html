@@ -22,7 +22,7 @@
        fonts/ (see the @font-face rules at the top of css/style.css). -->
   <link rel="preload" href="fonts/instrument-serif-latin.woff2" as="font" type="font/woff2" crossorigin>
   <!-- ?v= changes with each release so browsers never pair new HTML with an old cached stylesheet or script. -->
-  <link rel="stylesheet" href="css/style.css?v=31">
+  <link rel="stylesheet" href="css/style.css?v=32">
   <!-- Is SF Pro (installed, or the Apple system font) available? If not, the page falls back to Inter and
        html gets "no-sf", which tightens Inter's letter spacing (see css/style.css). Checked by comparing
        text widths against a font that doesn't exist. -->
@@ -76,7 +76,7 @@
        Favorite combos button floating just to its right once a combo is saved. -->
   <div class="dock" id="dock">
     <div class="zoom" id="zoom" role="radiogroup" aria-label="Swatch size"></div>
-    <button type="button" class="combo-fab" id="comboBtn" aria-pressed="false" aria-controls="grid" aria-label="Favorite combos" title="Favorite combos" hidden><span class="thumb-pair" id="comboThumbs" aria-hidden="true"><span class="tp tp-back"></span><span class="tp tp-front"></span></span></button>
+    <button type="button" class="combo-fab" id="comboBtn" aria-pressed="false" aria-controls="grid" title="Favorite combos" hidden><span class="thumb-pair" id="comboThumbs" aria-hidden="true"><span class="tp tp-back"></span><span class="tp tp-front"></span></span><span class="combo-fab-label">Combos</span></button>
   </div>
   <!-- The Layers pane lives outside the page so it stays sharp and on top, even over the detail dialog. -->
   <aside class="bench" id="bench" aria-label="Layers" hidden>
@@ -116,10 +116,10 @@
     </div>
   </div>
 
-  <script src="js/polishes.js?v=31"></script>
-  <script src="js/droplet.js?v=31"></script>
-  <script src="js/icons.js?v=31"></script>
-  <script src="js/brand-icons.js?v=31"></script>
-  <script src="js/app.js?v=31"></script>
+  <script src="js/polishes.js?v=32"></script>
+  <script src="js/droplet.js?v=32"></script>
+  <script src="js/icons.js?v=32"></script>
+  <script src="js/brand-icons.js?v=32"></script>
+  <script src="js/app.js?v=32"></script>
 </body>
 </html>
