@@ -740,7 +740,10 @@ html.combos-dark.view-combos .combos-close svg { stroke: #f7f7f7; }
 .page-ghost { position: fixed; inset: 0; overflow: hidden; contain: paint; pointer-events: none; will-change: transform; }
 .page-ghost > .page { margin-top: var(--gy, 0); }
 .sheet-dim { position: fixed; inset: 0; background: rgba(0, 0, 0, .22); pointer-events: none; }
-body.sheet-moving > .page { z-index: 3; will-change: transform; border-radius: 20px 20px 0 0; box-shadow: 0 -12px 40px rgba(0, 0, 0, .14); }
+body.sheet-moving > .page { z-index: 3; will-change: transform; }
+/* The combos page always fills the screen, however few combos there are, so the sheet covers the shelf
+   completely (lvh: the full height with Safari's toolbars hidden, so no strip of shelf shows below). */
+html.view-combos body > .page { min-height: 100vh; min-height: 100lvh; }
 /* Press and hold a swatch to add it to the Layers (touch screens, app.js): no callout menu, text selection
    or tap flash while holding. */
 @media (hover: none) {

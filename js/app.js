@@ -1113,6 +1113,24 @@ function freezePage() {
   wrap.append(copy);
   return wrap;
 }
+// While the page slides up it starts below the screen, and Safari doesn't recheck what's on screen as a
+// transform animation moves it, so the combos would stay undrawn and unrisen until you scrolled. The
+// first screen of them is drawn and shown right away instead.
+function revealNow() {
+  const limit = innerHeight * 1.5;
+  $("#grid").querySelectorAll(".card").forEach((card, k) => {
+    if (card.offsetTop > limit) return;
+    if (card.classList.contains("rise") && !card.classList.contains("in")) {
+      if (riseIO) riseIO.unobserve(card);
+      card.style.setProperty("--d", (k * .07 + .12).toFixed(2) + "s"); card.classList.add("in");
+    }
+    card.querySelectorAll("canvas").forEach(cv => {
+      if (!cv._p || cv._w) return;
+      if (drawIO) drawIO.unobserve(cv);
+      drawCard(cv);
+    });
+  });
+}
 function sheetDim() { const d = document.createElement("div"); d.className = "sheet-dim"; d.style.zIndex = 2; return d; }
 // The shelf's cards (swatches already drawn) are set aside while the combos are up and put back on close, so
 // returning is instant instead of redrawing every swatch. Nothing on the shelf can change meanwhile.
@@ -1133,21 +1151,23 @@ function openCombos() {
   showView("combos", 0);
   page.style.background = document.documentElement.classList.contains("combos-dark") ? "#000" : "var(--bg)";
   dim.animate([{ opacity: 0 }, { opacity: 1 }], { duration: SHEET.up, easing: "ease-out", fill: "forwards" });
-  page.animate([{ transform: "translateY(100vh)" }, { transform: "none" }], { duration: SHEET.up, easing: "cubic-bezier(.2, .8, .2, 1)" }).finished.then(() => {
-    ghost.remove(); dim.remove(); body.classList.remove("sheet-moving"); page.style.background = "";
-  });
+  revealNow();
+  const done = () => { ghost.remove(); dim.remove(); body.classList.remove("sheet-moving"); page.style.background = ""; };
+  page.animate([{ transform: "translateY(100vh)" }, { transform: "none" }], { duration: SHEET.up, easing: "cubic-bezier(.2, .8, .2, 1)" }).finished.then(done, done);
+  setTimeout(done, SHEET.up + 200); // in case the animation is interrupted
 }
 async function closeCombos() {
   if (state.view !== "combos") return;
   if (reduceMotion) return showView("shelf", SHEET.shelfY);
   const ghost = freezePage(), dim = sheetDim();
-  Object.assign(ghost.style, { zIndex: 3, borderRadius: "20px 20px 0 0", boxShadow: "0 -12px 40px rgba(0, 0, 0, .14)" });
+  ghost.style.zIndex = 3;
   document.body.append(dim, ghost);
   showView("shelf", SHEET.shelfY);
   await new Promise(r => requestAnimationFrame(r)); // the shelf paints under the copy before it drops
   dim.animate([{ opacity: 1 }, { opacity: 0 }], { duration: SHEET.down, easing: "ease-in", fill: "forwards" });
   ghost.animate([{ transform: "none" }, { transform: "translateY(100vh)" }], { duration: SHEET.down, easing: "cubic-bezier(.4, 0, .7, .2)", fill: "forwards" })
-    .finished.then(() => { ghost.remove(); dim.remove(); });
+    .finished.then(() => { ghost.remove(); dim.remove(); }, () => { ghost.remove(); dim.remove(); });
+  setTimeout(() => { ghost.remove(); dim.remove(); }, SHEET.down + 200);
 }
 // The button's two thumbnails: the two newest saved combos, or the first polishes on the shelf until
 // there are any.
