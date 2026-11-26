@@ -329,9 +329,9 @@ const POLISHES = [
     effect: "magnetic",
     effects: ["magnetic", "shimmer"],
     tone: "bold",
-    // Dark violet-plum base (reads wine in the photos); lichen green magnetic shimmer at the heart, cooling to blue at the edges
-    colors: ["#2e1426", "#dcdc96", "#b8b866", "#8aa47e", "#5e88b4", "#4a64ac"],
-    shadow: "#16080f",
+    // Wine-red base (the photos read much redder than the "violet-blue" on the product page); lichen green magnetic shimmer at the heart, cooling to blue at the edges
+    colors: ["#3e1220", "#dcdc96", "#bcb866", "#8ea47c", "#6086b0", "#4c62a6"],
+    shadow: "#1e070e",
     sparkle: { density: 2, floor: .2, colors: ["#d6e48c", "#a8cc80", "#7ab0d0"], mix: .7 }, // fine green-blue shimmer
     url: "https://www.beeskneeslacquer.com/products/the-horror-of-the-truth",
     photos: ["images/beesknees-the-horror-of-the-truth/1.jpg", "images/beesknees-the-horror-of-the-truth/2.jpg", "images/beesknees-the-horror-of-the-truth/3.jpg", "images/beesknees-the-horror-of-the-truth/4.jpg"], // saved from the product page
