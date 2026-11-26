@@ -1472,6 +1472,7 @@ async function saveSequence(layers, after) {
   const T = reduceMotion ? { saving: 0, pop: 0, exit: 0 } : { saving: 550, pop: 460, exit: 450 };
   b.inert = true; // nothing in the pane can be pressed while it saves
   save.textContent = "Saving…"; save.classList.add("saving");
+  document.body.classList.add("saving-combo"); // shows the Combos pill over the polish page, if that's open
   if (sheetMQ.matches) setSheet(false);
   await wait(T.saving);
   // The first save is what makes the button appear: show it right away (no rise, which would move the
@@ -1494,6 +1495,7 @@ async function saveSequence(layers, after) {
   b.style.transition = "none"; b.style.transform = ""; b.style.opacity = ""; b.classList.remove("open", "expanded");
   void b.offsetWidth; b.style.transition = "";
   b.inert = false; save.classList.remove("saving");
+  document.body.classList.remove("saving-combo");
   clearBench();
   after();
 }
