@@ -1782,6 +1782,7 @@ function openDetail(p, card) {
   // Grow the swatch out of its card (a shared element). First paint it sitting exactly over its card, with
   // the rest of the dialog still invisible, so nothing seems to change; the flight, the shelf's blur and the
   // text fade start on the frame after that, once the setup above has been painted, so the whole flight is seen.
+  roomAroundPage(true);
   const from = card.getBoundingClientRect(), to = stage.getBoundingClientRect();
   stage.style.transition = "none";
   stage.style.transformOrigin = "0 0";
@@ -1805,6 +1806,29 @@ function openDetail(p, card) {
   document.title = `${p.name} · ${p.brand} · ${SITE_TITLE}`;
 }
 
+
+/* Safari on iOS 26 shows the page just above the screen under the status bar (and just below it under the
+   toolbar). With the shelf at its top there is no page up there, only the plain background, so while the
+   polish page is up the shelf gets extra empty room above and below it (as much as the backdrop's blur
+   reaches past the screen), scrolled so nothing on screen moves. The blurred, washed backdrop then runs on
+   under the status bar, continuous with the rest of the page. It's taken away again (same trick) on close. */
+const ROOM = 184; // = the blur's margin past the screen in shelfBackdrop (BACKDROP.blur * 3, rounded to whole 1/8 px)
+function roomAroundPage(on) {
+  const page = $(".page"), st = page.style;
+  if (on) {
+    if (page._room != null) return;
+    const y = scrollY, top = Math.max(0, ROOM - y), pad = parseFloat(getComputedStyle(page).paddingTop) || 0;
+    st.paddingBottom = `calc(${getComputedStyle(page).paddingBottom} + ${ROOM}px)`;
+    st.paddingTop = pad + top + "px"; scrollTo(0, y + top);
+    const got = scrollY - y; // a short page can't always scroll the whole way: only keep what was scrolled
+    if (got !== top) st.paddingTop = pad + got + "px";
+    page._room = got;
+  } else {
+    if (page._room == null) return;
+    const y = scrollY, got = page._room; page._room = null;
+    st.paddingTop = ""; st.paddingBottom = ""; scrollTo(0, Math.max(0, y - got));
+  }
+}
 
 /* The polish page's backdrop: the shelf, heavily blurred (60px) under a white wash. Blurring the live page
    with a CSS filter redid a full-screen 60px blur on every frame of the fade (slow on older computers), so
@@ -1875,13 +1899,6 @@ function shelfBackdrop() {
   const mt = Math.min(m, Math.floor(Math.max(0, -pr.top) * S)), mb = Math.min(m, Math.floor(Math.max(0, pr.bottom - vh) * S));
   cv.width = w - 2 * m; cv.height = h - 2 * m + mt + mb;
   cv.getContext("2d").putImageData(img, -m, mt - m);
-  // Above the top of the page (a polish opened with the shelf at the top, or Safari's bounce) there's no page
-  // to blur, so Safari shows the page's background color under the status bar. While the polish page is up
-  // that color is the backdrop's top edge as it looks under the wash, so the status bar area matches it.
-  let r = 0, gg = 0, b = 0; const row = (m - mt) * w * 4;
-  for (let x = m; x < w - m; x++) { const o = row + x * 4; r += d[o]; gg += d[o + 1]; b += d[o + 2]; }
-  const n = w - 2 * m, washed = c => Math.round(255 * .72 + (c / n) * .28);
-  document.documentElement.style.setProperty("--detail-top", `rgb(${washed(r)}, ${washed(gg)}, ${washed(b)})`);
   Object.assign(cv.style, { left: -pr.left + "px", top: -pr.top - mt / S + "px", width: vw + "px", height: vh + (mt + mb) / S + "px" }); // (the picture is a few pixels larger: drawn just squeezed)
 }
 addEventListener("resize", () => { if (document.body.classList.contains("detail-open")) shelfBackdrop(); });
@@ -1898,7 +1915,7 @@ function closeDetail() {
   // once (the swatch hands straight back to its card) instead of being left behind where the card was.
   const done = () => {
     if (detail.closing !== done) return;
-    detail.closing = null; clearTimeout(done.t); removeEventListener("scroll", done);
+    detail.closing = null; clearTimeout(done.t); removeEventListener("scroll", done.scroll);
     m.hidden = true; m.classList.remove("open"); m.style.pointerEvents = "";
     stage.style.transition = "none"; stage.style.transform = "";
     if (card) card.style.visibility = "";
@@ -1907,12 +1924,15 @@ function closeDetail() {
   m.classList.remove("open"); document.body.classList.remove("detail-open");
   m.style.pointerEvents = "none"; document.body.style.overflow = "";
   history.replaceState(null, "", SITE_ROOT); document.title = SITE_TITLE;
+  roomAroundPage(false); // before measuring the card, which this scrolls back to where it was
   if (card && card.isConnected) {
     const from = stage.getBoundingClientRect(), to = card.getBoundingClientRect();
     stage.style.transition = `transform .45s ${EASE}`; stage.style.transformOrigin = "0 0";
     stage.style.transform = `translate(${to.left - from.left}px, ${to.top - from.top}px) scale(${to.width / from.width}, ${to.height / from.height})`;
     done.t = setTimeout(done, 450);
-    addEventListener("scroll", done, { passive: true });
+    // (The scroll roomAroundPage just made fires an event too, a little later: that one is skipped.)
+    const y = scrollY; done.scroll = () => { if (scrollY !== y) done(); };
+    addEventListener("scroll", done.scroll, { passive: true });
   } else done();
 }
 $("#mClose").onclick = closeDetail;
