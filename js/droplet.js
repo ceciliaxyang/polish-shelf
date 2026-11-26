@@ -20,6 +20,17 @@ const SHAPE = (() => {
 const DROPS = SHAPE === "drop";
 document.documentElement.classList.toggle("drops", DROPS);
 
+// The Favorite combos page can be shown dark (black page, light text): another developer setting, kept in this
+// browser, or ?combos=dark / ?combos=light in the address.
+const COMBOS_THEME_KEY = "polish-shelf:combos-theme";
+let COMBOS_THEME = (() => {
+  const q = new URLSearchParams(location.search).get("combos");
+  if (q === "dark" || q === "light") { try { localStorage.setItem(COMBOS_THEME_KEY, JSON.stringify(q)); } catch (e) {} return q; }
+  try { if (JSON.parse(localStorage.getItem(COMBOS_THEME_KEY)) === "dark") return "dark"; } catch (e) {}
+  return "light";
+})();
+document.documentElement.classList.toggle("combos-dark", COMBOS_THEME === "dark");
+
 const DROP_NS = "http://www.w3.org/2000/svg";
 function dropHash(s) { let h = 2166136261; for (const c of String(s)) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
 function dropRand(seed) { let a = seed || 1; return () => { a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
@@ -333,6 +344,11 @@ function pourDone(card) {
             <button type="button" role="radio" data-shape="drop">Droplet</button>
             <button type="button" role="radio" data-shape="rect">Rectangle</button>
           </div></div>
+        <div class="dev-row"><span id="devCombosLabel">Combos page</span>
+          <div class="dev-seg" role="radiogroup" aria-labelledby="devCombosLabel">
+            <button type="button" role="radio" data-combos="light">Light</button>
+            <button type="button" role="radio" data-combos="dark">Dark</button>
+          </div></div>
         <button type="button" class="dev-close">Done</button>`;
       panel.querySelectorAll("[data-shape]").forEach(b => {
         b.setAttribute("aria-checked", b.dataset.shape === SHAPE);
@@ -343,6 +359,15 @@ function pourDone(card) {
           const u = new URL(location.href); u.searchParams.delete("swatch"); location.replace(u);
         };
       });
+      // Switches straight away (no reload): only the Favorite combos page changes.
+      const combosSeg = panel.querySelectorAll("[data-combos]");
+      const syncCombos = () => combosSeg.forEach(b => b.setAttribute("aria-checked", b.dataset.combos === COMBOS_THEME));
+      combosSeg.forEach(b => b.onclick = () => {
+        COMBOS_THEME = b.dataset.combos; syncCombos();
+        try { localStorage.setItem(COMBOS_THEME_KEY, JSON.stringify(COMBOS_THEME)); } catch (e) {}
+        document.documentElement.classList.toggle("combos-dark", COMBOS_THEME === "dark");
+      });
+      syncCombos();
       panel.querySelector(".dev-close").onclick = () => { panel.hidden = true; };
       document.body.appendChild(panel);
     }

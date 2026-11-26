@@ -1088,7 +1088,7 @@ $("#comboBtn").onclick = () => {
 // there are any.
 // Favorite combos only appears once a combo is saved, rising in the first time.
 // Deleting the last combo while on the combos page goes back to the shelf.
-// The filters belong to the shelf: on the combos page they fade out and can't be used (and don't
+// The filters belong to the shelf: on the combos page they're hidden (and don't
 // filter the combos); the picks come back when you return to the shelf.
 function setView(v) {
   state.view = v;
@@ -1096,6 +1096,11 @@ function setView(v) {
   $(".shelf-head").classList.toggle("combos-view", v === "combos");
   $("#shelfTitle").textContent = v === "combos" ? "Favorite combos" : "My polish shelf";
   $("#filters").inert = v === "combos";
+  $("#grid").classList.toggle("combos-grid", v === "combos");
+  // The combos page always shows at the most zoomed in level (zoom bar hidden); the shelf keeps its own zoom.
+  document.documentElement.classList.toggle("view-combos", v === "combos");
+  $("#grid").dataset.zoom = zoomLevel();
+  fitGrid();
 }
 function syncComboBtn() {
   const btn = $("#comboBtn"), none = !combos.length;
@@ -1248,11 +1253,30 @@ function renderShelf() {
 }
 
 /* ---------- saved combos ---------- */
-// Combos page (Figma node 2201:98964): one card per saved combo, newest first, with the layered swatch
-// (no button on it), the name and the month it was made, and its polishes as overlapping thumbnails. A
-// combo is deleted from the Layers pane once it's loaded there.
-// Tapping a combo's swatch loads it into the Layers pane.
-const MONTH = new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric" });
+// Combos page (Figma node 2406:3621): one card per saved combo, newest first. The layered swatch sits in
+// the middle with the combo's polishes scattered around it as smaller droplets, then the name and the
+// polishes it's made of (base first). Every combo scatters its polishes a little differently: which side
+// each one lands on, how far out, how high and how big are picked from the combo's id, so a combo always
+// looks the same from one visit to the next.
+// Tapping a combo's swatch loads it into the Layers pane, where it can be deleted.
+// The scattered polishes, in units of the middle swatch's width, measured from its center: x, y (down) and
+// size s. They sit off the swatch's left and right edges (above would run into the row above, below into
+// the name), the big ones 27% of the swatch's width and the small ones 21% (Figma: 84px and 64px drops
+// beside a 310px one), never on top of each other.
+function comboScatter(c, n) {
+  const R = dropRand(dropHash("scatter:" + (c.id || layerKey(c.layers)))), out = [];
+  for (let i = 0; i < n; i++) {
+    let pick;
+    for (let t = 0; t < 60; t++) {
+      const right = R() < .5, deg = right ? -40 + R() * 85 : 135 + R() * 90, a = deg * Math.PI / 180;
+      const s = R() < .5 ? .27 : .21, r = .64 + R() * .14;
+      pick = { x: Math.cos(a) * r, y: Math.sin(a) * r * .95, s };
+      if (out.every(o => Math.hypot(o.x - pick.x, o.y - pick.y) > (o.s + pick.s) * .6 + .03)) break;
+    }
+    out.push(pick);
+  }
+  return out;
+}
 function renderCombos() {
   const grid = $("#grid"); grid.innerHTML = "";
   // Empty state (Figma node 2212:1478): three cards (the outer two tilted) over a line of copy, each showing
@@ -1269,29 +1293,42 @@ function renderCombos() {
     });
     return;
   }
-  const list = [...combos].reverse();
+  const list = [...combos].reverse(), H = 260 / 240;
   for (const c of list) {
     const card = document.createElement("article"); card.className = "card rise combo-card"; riseIn(card);
+    const art = document.createElement("div"); art.className = "combo-art";
     const wrap = document.createElement("div"); wrap.className = "swatch-wrap";
     const sw = document.createElement("canvas"); sw.className = "swatch";
     wrap.append(sw);
-    dropify(wrap, dropKeyFor(c.layers), 260 / 240);
+    dropify(wrap, dropKeyFor(c.layers), H);
     sw.tabIndex = 0; sw.setAttribute("role", "button"); sw.setAttribute("aria-label", `Open ${c.name} in Layers`);
     sw.onclick = () => loadCombo(c);
     sw.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); loadCombo(c); } };
+    art.append(wrap);
+    // Each polish once, base first (a polish used in two layers shows once).
+    const polishes = [...new Map(liveLayers(c.layers).map(L => [L.polish.id, L.polish])).values()];
+    comboScatter(c, polishes.length).forEach((at, i) => {
+      const p = polishes[i], sat = document.createElement("span"); sat.className = "combo-sat";
+      sat.style.left = (50 + (at.x - at.s / 2) * 100).toFixed(2) + "%";
+      sat.style.top = (50 + (at.y - at.s * H / 2) / H * 100).toFixed(2) + "%";
+      sat.style.width = (at.s * 100).toFixed(2) + "%";
+      // Drawn like a shelf swatch (lazily, at its real size), so it shimmers on hover and drifts on touch screens.
+      const t = document.createElement("canvas"); t.className = "swatch";
+      sat.append(t); dropify(sat, p.id, H);
+      art.append(sat);
+      t._p = p; queueDraw(t);
+      if (autoIO) autoIO.observe(t);
+    });
     const text = document.createElement("div"); text.className = "card-text";
     const title = document.createElement("div"); title.className = "card-title";
     const nm = document.createElement("p"); nm.className = "name"; nm.textContent = c.name; nm.title = c.name;
-    const when = document.createElement("p"); when.className = "combo-date"; when.textContent = c.createdAt ? `Created ${MONTH.format(new Date(c.createdAt))}` : "";
-    title.append(nm, when);
-    const stack = document.createElement("div"); stack.className = "combo-stack";
-    liveLayers(c.layers).reverse().forEach(L => {
-      const t = document.createElement("canvas"); t.title = L.polish.name || ""; renderSwatch(t, L.polish, 40, 40);
-      stack.appendChild(dropThumb(t, L.polish.id, { ring: 15 })); // a 3px ring, like the rectangles' border
-    });
-    text.append(title, stack);
-    card.append(wrap, text); grid.appendChild(card);
+    const made = document.createElement("p"); made.className = "combo-polishes";
+    made.textContent = polishes.map(p => p.name).join(", "); made.title = made.textContent;
+    title.append(nm, made);
+    text.append(title);
+    card.append(art, text); grid.appendChild(card);
     sw._combo = c; queueDraw(sw);
+    if (autoIO) autoIO.observe(sw);
   }
   fillIdle();
 }
@@ -1757,6 +1794,31 @@ function drawStack(out, layers, W, H) {
   composeOps(out.getContext("2d"), ops, out.width, out.height);
   return true;
 }
+// A saved combo's swatch on the combos page moves like the shelf's: each layer is its own live swatch (hidden
+// under the card's canvas at the same size, so their pointer maths work), the pointer or the touch-screen
+// drift is passed to all of them, and the stack is recomposed every frame while any of them is moving.
+function liveStack(out, layers, W, H) {
+  const ops = stackOps(W, H, layers), box = out.parentElement;
+  box.querySelectorAll(":scope > .stage-layers").forEach(el => el.remove());
+  if (!ops) return false;
+  const dpr = swatchDpr(W);
+  out.width = Math.round(W * dpr); out.height = Math.round(H * dpr);
+  const ctx = out.getContext("2d"), mine = claim(out);
+  const holder = document.createElement("div"); holder.className = "stage-layers"; holder.setAttribute("aria-hidden", "true");
+  ops.forEach(o => o.cv && holder.appendChild(o.cv));
+  box.append(holder);
+  composeOps(ctx, ops, out.width, out.height);
+  let until = 0, raf = 0;
+  const loop = now => { if (!mine()) { raf = 0; return; } composeOps(ctx, ops, out.width, out.height); raf = now < until ? requestAnimationFrame(loop) : 0; };
+  const kick = () => { until = performance.now() + 3500; if (!raf) raf = requestAnimationFrame(loop); };
+  out.onpointermove = e => { ops.forEach(o => o.cv && o.cv.onpointermove && o.cv.onpointermove(e)); kick(); };
+  out.onpointerleave = e => { ops.forEach(o => o.cv && o.cv.onpointerleave && o.cv.onpointerleave(e)); kick(); };
+  // Magnetic layers turn from cat eye to glass bead with their place on screen while scrolling (touch screens).
+  const resting = ops.filter(o => o.cv && o.cv.setRest);
+  out.setRest = resting.length ? (h, instant) => { resting.forEach(o => o.cv.setRest(h, instant)); kick(); } : null;
+  out.classList.add("interactive");
+  return true;
+}
 // The big preview is interactive: the pointer (or the touch-screen drift) is passed to every layer's own
 // swatch, each animates the way it does on the shelf (magnetic glow following, thermal shifting, glints
 // flashing), and the stack is recomposed every frame while any of them is moving.
@@ -1896,12 +1958,14 @@ function renderBench() {
 /* ---------- grid fit ---------- */
 // Fill the full width: use the column count whose cards come closest to the breakpoint size, then
 // size the cards to exactly fill the row (never above 1.4x the design, 336px). Phones use CSS.
-const GAP = 40, MAX_CARD = 336;
+const GAP = 40, MAX_CARD = 336, COMBO_CARD = 600;
 // Zoom levels (see "zoom" below): swatches per row on a phone, and how much smaller desktop cards get.
 const ZOOMS = [2, 3, 4], ZOOM_SCALE = { 2: 1, 3: 2 / 3, 4: 1 / 2 };
 // The shelf opens at the middle zoom (3 per row) on larger screens and the most zoomed out (4 per row) on
 // phones (600px and narrower, where the grid switches to its phone layout). A zoom picked during a visit isn't remembered.
 const zoom = { level: matchMedia("(max-width: 600px)").matches ? 4 : 3 };
+// The zoom actually showing: Favorite combos is always at the most zoomed in level.
+function zoomLevel() { return state.view === "combos" ? ZOOMS[0] : zoom.level; }
 // Card swatches are drawn at the size they're actually shown (cards grow on bigger screens), so they
 // stay sharp instead of being stretched.
 // Cards rise into view as they're scrolled to. Cards arriving together (a new row, or the first screen)
@@ -1956,7 +2020,7 @@ function drawCard(cv) {
   // Redrawn at a new size (after a zoom or resize): the old picture fades out over the new one, so the
   // swatch sharpens up instead of popping (glitter and sparkles land in new places at each size).
   const ghost = cv._soft && cv.width && !reduceMotion ? ghostOf(cv) : null; cv._soft = false;
-  if (cv._combo) drawStack(cv, cv._combo.layers, w, Math.round(w * 260 / 240));
+  if (cv._combo) liveStack(cv, cv._combo.layers, w, Math.round(w * 260 / 240));
   else renderSwatch(cv, cv._p, w, Math.round(w * 260 / 240));
   if (cv._p) pourDrawn(cv); // its drop may be waiting to fade the swatch in (see pourIn)
   if (ghost) ghost.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 280, easing: "ease-out", fill: "forwards" }).onfinish = () => ghost.remove();
@@ -1996,11 +2060,15 @@ function fitGrid() {
   const grid = $("#grid");
   if (innerWidth <= 600) { grid.style.removeProperty("--card"); redrawCards(); return; }
   // Zooming out (3 or 4 per row on a phone) makes desktop cards 2/3 or 1/2 their usual size.
-  const cs = getComputedStyle(grid), scale = ZOOM_SCALE[zoom.level] || 1;
+  const cs = getComputedStyle(grid), scale = ZOOM_SCALE[zoomLevel()] || 1;
   const base = (parseFloat(cs.getPropertyValue("--card-base")) || 240) * scale, gap = parseFloat(cs.columnGap) || GAP, avail = grid.clientWidth;
-  const n = Math.max(1, Math.round((avail + gap) / (base + gap)));
-  const card = Math.min(MAX_CARD * scale, (avail - (n - 1) * gap) / n);
+  // Favorite combos: cards are 600px across at 2 per row (Figma node 2406:3621, room for the polishes
+  // scattered around each swatch), 2/3 and 1/2 of that zoomed out, spread across the row.
+  const combos = grid.classList.contains("combos-grid"), size = combos ? COMBO_CARD * scale : base;
+  const n = Math.max(1, Math.round((avail + gap) / (size + gap)));
+  const card = Math.min(combos ? size : MAX_CARD * scale, (avail - (n - 1) * gap) / n);
   grid.style.setProperty("--card", Math.floor(card) + "px");
+  grid.style.setProperty("--cols", n);
   redrawCards();
 }
 new ResizeObserver(fitGrid).observe($("#grid"));
@@ -2100,7 +2168,7 @@ function setZoom(n, quiet) {
   const changed = n !== zoom.level;
   const settle = changed && !quiet ? zoomFlip() : null; // note where every card is before the grid changes
   zoom.level = n;
-  $("#grid").dataset.zoom = n;
+  $("#grid").dataset.zoom = zoomLevel();
   const box = $("#zoom"); box.style.setProperty("--i", ZOOMS.indexOf(n));
   box.querySelectorAll(".z-opt").forEach(b => { const on = +b.dataset.n === n; b.setAttribute("aria-checked", on); b.tabIndex = on ? 0 : -1; });
   if (changed && !quiet) { fitGrid(); settle(); }
