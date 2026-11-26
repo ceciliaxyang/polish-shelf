@@ -1109,8 +1109,9 @@ function syncComboBtn() {
   if (none && state.view === "combos") { setView("shelf"); renderShelf(); }
 }
 function renderComboThumbs() {
+  if (renderComboThumbs.hold) return; // a combo is still being saved; the button updates when it's done
   syncComboBtn();
-  if (renderComboThumbs.hold) return; // a saved swatch is still flying in; it updates when it lands
+  rollCount(combos.length);
   const picks = combos.slice(-2).reverse().map(c => ({ layers: c.layers }));
   for (const p of state.polishes) { if (picks.length >= 2) break; picks.push({ p }); }
   [".tp-front", ".tp-back"].forEach((sel, i) => {
@@ -1121,6 +1122,20 @@ function renderComboThumbs() {
     box.appendChild(c);
     dropify(box, pick.p ? pick.p.id : dropKeyFor(pick.layers), 1, { small: true });
   });
+}
+
+// The count after the label ("Combos 5"). When it changes it rolls like an odometer: the old number slides up
+// and out while the new one rolls up from below (down, when one is deleted). Timed to land at the top of the pill's pop when a combo is saved.
+function rollCount(n) {
+  const box = $("#comboCount"), cur = box.querySelector(".cc-num"), was = cur ? +cur.textContent : null;
+  if (was === n) return;
+  const next = Object.assign(document.createElement("span"), { className: "cc-num", textContent: n });
+  if (was === null || reduceMotion || box.closest("[hidden]")) { box.replaceChildren(next); return; }
+  box.querySelectorAll(".cc-num.out").forEach(el => el.remove());
+  cur.classList.add("out"); box.appendChild(next);
+  const dir = n > was ? 1 : -1, opts = { duration: 480, delay: 90, easing: "cubic-bezier(.3, 1.3, .4, 1)", fill: "backwards" };
+  cur.animate([{ transform: "none", opacity: 1 }, { transform: `translateY(${-dir * 110}%)`, opacity: 0 }], { ...opts, easing: "cubic-bezier(.4, 0, .6, 1)", fill: "forwards" }).onfinish = () => cur.remove();
+  next.animate([{ transform: `translateY(${dir * 110}%)`, opacity: 0 }, { transform: "none", opacity: 1 }], opts);
 }
 
 function toggleFx(k) {
@@ -1427,59 +1442,90 @@ function comboName(layers) {
   return out;
 }
 function saveCombo() {
-  if (liveLayers(bench.layers).length < 2 || benchCombo()) return;
+  if (liveLayers(bench.layers).length < 2 || benchCombo() || renderComboThumbs.hold) return;
   const c = { id: newId(), name: comboName(bench.layers), layers: bench.layers.map(l => ({ pid: l.pid, coats: l.coats })), createdAt: new Date().toISOString() };
+  // The Combos button keeps showing the old combos until the pane is gone (see below).
+  renderComboThumbs.hold = true;
   combos.push(c); saveCombos();
-  flyToCombos(c.layers);
-  renderBench();
-  if (state.view === "combos") renderShelf();
+  saveSequence(c.layers, () => { if (state.view === "combos") renderShelf(); });
 }
-$("#saveCombo").onclick = () => { const saved = benchCombo(); saved ? deleteCombo(saved) : saveCombo(); };
-// Like dropping something into a shopping cart: a copy of the layered swatch leaves the Layers preview
-// (or the phone's peek bar) and, in one smooth arc, shrinks into the Favorite combos button, which gives a little
-// bump as it lands and then shows the new combo in its thumbnails.
-function flyToCombos(layers) {
+// Saving, in four beats, each moving only transform and opacity (nothing is laid out again until the end):
+// 1. the button reads "Saving…" for a moment (on phones the sheet tucks down to its peek bar meanwhile);
+// 2. like dropping something into a shopping cart, a copy of the combo's swatch arcs from the Layers
+//    preview (or the peek bar) into the Combos button;
+// 3. the Combos button grows a little and settles as the new combo appears in its thumbnails and the count
+//    ticks up;
+// 4. the Layers pane slides out to the right and disappears (on phones the sheet slides down off the screen).
+// Only then does the shelf take back the pane's room and the dock recenter, and the layers clear (as with Clear).
+const wait = ms => new Promise(r => setTimeout(r, ms));
+async function saveSequence(layers, after) {
+  const b = $("#bench"), save = $("#saveCombo"), btn = $("#comboBtn");
+  const T = reduceMotion ? { saving: 0, pop: 0, exit: 0 } : { saving: 550, pop: 460, exit: 450 };
+  b.inert = true; // nothing in the pane can be pressed while it saves
+  save.textContent = "Saving…"; save.classList.add("saving");
+  if (sheetMQ.matches) setSheet(false);
+  await wait(T.saving);
   // The first save is what makes the button appear: show it right away (no rise, which would move the
   // landing spot) so it's there to catch the swatch.
-  syncComboBtn(); $("#comboBtn").classList.remove("rise-in");
-  const btn = $("#comboBtn"), tr = $("#comboThumbs").getBoundingClientRect();
-  const src = [$("#stage"), $("#peekMini")].find(el => { const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0; });
-  if (reduceMotion || !src || !tr.width) return;
-  const from = src.getBoundingClientRect();
-  // The button floats beside the zoom bar, so it's always in sight; on phones let the expanded sheet
-  // drop back to its peek bar first.
-  const target = tr;
-  if (sheetMQ.matches) setSheet(false);
-  const cv = document.createElement("canvas");
-  if (!drawStack(cv, layers, Math.round(from.width), Math.round(from.height))) return;
-  const radius = DROPS ? 0 : parseFloat(getComputedStyle(src).borderTopLeftRadius) || 12;
+  syncComboBtn(); btn.classList.remove("rise-in");
+  if (!reduceMotion) await flySwatch(layers);
+  renderComboThumbs.hold = false; renderComboThumbs();
+  if (!reduceMotion) btn.animate([{ transform: "scale(1)" }, { transform: "scale(1.14)", offset: .4 }, { transform: "scale(.97)", offset: .75 }, { transform: "scale(1)" }], { duration: T.pop, easing: "cubic-bezier(.2, .8, .2, 1)" });
+  await wait(T.pop);
+  // On desktop this is the pane's usual slide out to the right; on phones the sheet slides straight down
+  // off the bottom of the screen.
+  if (!sheetMQ.matches) b.classList.remove("open");
+  else if (!reduceMotion) {
+    b.style.transition = `transform ${T.exit}ms cubic-bezier(.4, 0, .6, 1)`;
+    b.style.transform = "translateY(calc(100% + 24px))";
+  }
+  await wait(T.exit);
+  // Hand the pane back to its normal closed state (hidden, no inline styles) and clear the layers.
+  b.hidden = true;
+  b.style.transition = "none"; b.style.transform = ""; b.style.opacity = ""; b.classList.remove("open", "expanded");
+  void b.offsetWidth; b.style.transition = "";
+  b.inert = false; save.classList.remove("saving");
+  clearBench();
+  after();
+}
+// The cart flight. The flying copy is a flat picture (its outline, edge and shadow drawn into one canvas up
+// front) animated only by transform and opacity, so the browser can run it on the graphics card without
+// redrawing anything, and nothing else on the page moves while it flies. Resolves once it has landed.
+function flySwatch(layers) {
+  const tr = $("#comboThumbs").getBoundingClientRect();
+  const src = [$("#stage"), $("#peekMini")].find(el => { const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0 && r.top < innerHeight && r.bottom > 0; });
+  if (!src || !tr.width) return Promise.resolve();
+  const from = src.getBoundingClientRect(), W = from.width, H = from.height;
+  // The picture: reuse what's already on screen when there is one, otherwise draw the stack once.
+  let pic = src.querySelector("canvas");
+  if (!pic || !pic.width) { pic = document.createElement("canvas"); if (!drawStack(pic, layers, Math.round(W), Math.round(H))) return Promise.resolve(); }
+  const PAD = 28, dpr = Math.min(2, devicePixelRatio || 1), cv = document.createElement("canvas");
+  cv.width = Math.round((W + PAD * 2) * dpr); cv.height = Math.round((H + PAD * 2) * dpr);
+  const g = cv.getContext("2d");
+  g.scale(dpr, dpr); g.translate(PAD, PAD);
+  const shape = new Path2D();
+  if (DROPS) { const d = dropShape(dropKeyFor(layers), 100 * H / W); shape.addPath(new Path2D(d.d), new DOMMatrix().scale(W / 100, H / d.vh)); }
+  else shape.roundRect(0, 0, W, H, parseFloat(getComputedStyle(src).borderTopLeftRadius) || 12);
+  g.save(); g.shadowColor = "rgba(0, 0, 0, .2)"; g.shadowBlur = 24; g.shadowOffsetY = 10; g.fillStyle = "#fff"; g.fill(shape); g.restore();
+  g.save(); g.clip(shape); g.drawImage(pic, 0, 0, W, H); g.restore();
   cv.className = "fly-swatch";
-  if (DROPS) cv.style.clipPath = dropShape(dropKeyFor(layers), 100 * from.height / from.width).clip(from.width, from.height);
-  Object.assign(cv.style, { left: from.left + "px", top: from.top + "px", width: from.width + "px", height: from.height + "px", borderRadius: radius + "px" });
+  Object.assign(cv.style, { left: from.left - PAD + "px", top: from.top - PAD + "px", width: W + PAD * 2 + "px", height: H + PAD * 2 + "px" });
   document.body.appendChild(cv);
-  renderComboThumbs.hold = true;
-  const s = target.width / from.width;
-  const dx = target.left + target.width / 2 - (from.left + from.width / 2), dy = target.top + target.height / 2 - (from.top + from.height / 2);
-  const end = DROPS ? 0 : 4 / s; // the thumbnails' 4px corners, measured before scaling
-  // One continuous motion that heads for the button from the first frame: a curve that rises toward the
-  // button's height first and then sweeps across into it (never above it and back), sampled into keyframes,
-  // with a single ease over the whole flight. It shrinks at an even visual rate (geometrically) while its
-  // corners round down to the thumbnail's.
-  const cx = dx * .3, cy = dy, N = 24, frames = [];
+  const s = tr.width / W;
+  const dx = tr.left + tr.width / 2 - (from.left + W / 2), dy = tr.top + tr.height / 2 - (from.top + H / 2);
+  // One continuous arc that heads for the button from the first frame: it drops toward the button's height
+  // first and then sweeps across into it, shrinking at an even visual rate (geometrically), easing in and
+  // out over the whole flight, and fading a little at the very end so it melts into the thumbnails.
+  const cx = dx * .3, cy = dy, N = 30, frames = [];
   for (let i = 0; i <= N; i++) {
     const t = i / N, u = 1 - t;
     const x = 2 * u * t * cx + t * t * dx, y = 2 * u * t * cy + t * t * dy;
-    frames.push({ transform: `translate(${x}px, ${y}px) scale(${Math.pow(s, t)})`, borderRadius: radius + (end - radius) * t + "px", opacity: 1 - .1 * t });
+    frames.push({ transform: `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0) scale(${Math.pow(s, t).toFixed(4)})`, opacity: t < .8 ? 1 : 1 - (t - .8) * 2 });
   }
-  const fly = cv.animate(frames, { duration: 650, easing: "cubic-bezier(.35, 0, .25, 1)", fill: "forwards" });
-  const land = () => {
-    cv.remove();
-    renderComboThumbs.hold = false; renderComboThumbs();
-    btn.animate([{ transform: "scale(1)" }, { transform: "scale(1.1)" }, { transform: "scale(.97)" }, { transform: "scale(1)" }], { duration: 420, easing: "cubic-bezier(.2, .8, .2, 1)" });
-  };
-  fly.onfinish = land; fly.oncancel = land;
+  const fly = cv.animate(frames, { duration: 620, easing: "cubic-bezier(.45, 0, .2, 1)", fill: "forwards" });
+  return new Promise(res => { const done = () => { cv.remove(); res(); }; fly.onfinish = done; fly.oncancel = done; });
 }
-
+$("#saveCombo").onclick = () => { const saved = benchCombo(); saved ? deleteCombo(saved) : saveCombo(); };
 /* ---------- detail view ---------- */
 // Tapping a swatch opens the detail view over a blurred shelf (Figma "Polish detail / Desktop (1440)",
 // node 2398:3167): the live swatch grows out of its card into a centered hero, with "Brand — Name" in
@@ -1608,16 +1654,30 @@ const benchIsOpen = () => $("#bench").classList.contains("open");
 function setBenchOpen(open) {
   const b = $("#bench");
   clearTimeout(b._hideT);
-  if (open) { b.hidden = false; void b.offsetWidth; b.classList.add("open"); }
-  else { b.classList.remove("open"); b._hideT = setTimeout(() => { if (!benchIsOpen()) b.hidden = true; }, sheetMQ.matches || reduceMotion ? 0 : 450); }
-  $("#layout").classList.toggle("closed", !open);
-  document.body.classList.toggle("bench-open", open);
   setSheet(false);
+  // On phones the sheet rises up from below the screen to its peek bar, and drops back down out of view.
+  const phone = sheetMQ.matches && !reduceMotion;
+  if (open) {
+    b.style.transform = ""; b.hidden = false;
+    if (phone) { b.style.transition = "none"; b.style.transform = "translateY(calc(100% + 24px))"; void b.offsetWidth; b.style.transition = ""; b.style.transform = ""; }
+    void b.offsetWidth; b.classList.add("open");
+  } else {
+    b.classList.remove("open");
+    if (phone && !b.hidden) b.style.transform = "translateY(calc(100% + 24px))";
+    b._hideT = setTimeout(() => { if (!benchIsOpen()) { b.hidden = true; b.style.transform = ""; } }, reduceMotion ? 0 : sheetMQ.matches ? 380 : 450);
+  }
+  // On desktop the shelf makes or gives back room for the pane: note where the cards are, switch the
+  // column, then glide them to their new places (the same animation as changing the zoom).
+  const settle = sheetMQ.matches || $("#layout").classList.contains("closed") === !open ? null : zoomFlip();
+  $("#layout").classList.toggle("closed", !open);
+  if (settle) { fitGrid(); settle(); }
+  document.body.classList.toggle("bench-open", open);
   if (open) renderBench();
 }
 // Layering is always available: every swatch has a + button, and adding a polish opens the Layers pane.
 // Closing the pane clears the layers, so every swatch goes back to its + button.
-$("#closeBench").onclick = () => { bench.layers = []; saveBench(); setBenchOpen(false); syncSwatchButtons(); };
+function clearBench() { bench.layers = []; saveBench(); setBenchOpen(false); syncSwatchButtons(); }
+$("#closeBench").onclick = clearBench;
 
 function addLayer(p) {
   // Toppers look right with one coat; everything else defaults to two.
