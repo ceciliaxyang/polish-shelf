@@ -741,3 +741,9 @@ html.combos-dark.view-combos .combos-close svg { stroke: #f7f7f7; }
 .page-ghost > .page { margin-top: var(--gy, 0); }
 .sheet-dim { position: fixed; inset: 0; background: rgba(0, 0, 0, .22); pointer-events: none; }
 body.sheet-moving > .page { z-index: 3; will-change: transform; border-radius: 20px 20px 0 0; box-shadow: 0 -12px 40px rgba(0, 0, 0, .14); }
+/* Press and hold a swatch to add it to the Layers (touch screens, app.js): no callout menu, text selection
+   or tap flash while holding. */
+@media (hover: none) {
+  .grid .card { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+  .grid .swatch { -webkit-tap-highlight-color: transparent; }
+}

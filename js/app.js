@@ -1833,6 +1833,101 @@ function removePolish(p) {
   saveBench(); renderBench();
 }
 
+/* ---------- quick add: press and hold ---------- */
+// On touch screens, pressing and holding a shelf swatch adds it to the Layers without opening its page
+// (the touch version of the + that shows on hover at 4 per row on desktop). While the finger stays down the
+// swatch squishes in a little; at the end of the hold it springs back and a copy flies into the Layers peek
+// bar (or the pane on wider screens), which pulses as it lands. Holding a polish that's already in the
+// Layers takes it back out, like its + / check button. A plain tap still opens the polish page, and moving
+// the finger (scrolling) cancels the hold.
+const HOLD = { ms: 420, squish: .92, slop: 10 };
+// Flies a picture of the shelf swatch into the Layers. The target is read every frame, so the flight follows
+// the peek bar while the sheet is still rising. Resolves once it has landed.
+function flyToLayers(wrap, sw) {
+  const target = () => [$("#peekMini"), $("#stage")].find(el => { const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0; })
+    || $("#bench");
+  const from = wrap.getBoundingClientRect(), W = from.width, H = from.height;
+  if (!W || !sw.width) return Promise.resolve();
+  const PAD = 28, dpr = Math.min(2, devicePixelRatio || 1), cv = document.createElement("canvas");
+  cv.width = Math.round((W + PAD * 2) * dpr); cv.height = Math.round((H + PAD * 2) * dpr);
+  const g = cv.getContext("2d"); g.scale(dpr, dpr); g.translate(PAD, PAD);
+  const shape = new Path2D();
+  if (wrap._drop) shape.addPath(new Path2D(wrap._drop.d), new DOMMatrix().scale(W / 100, H / wrap._drop.vh));
+  else shape.roundRect(0, 0, W, H, parseFloat(getComputedStyle(wrap).borderTopLeftRadius) || 12);
+  g.save(); g.shadowColor = "rgba(0, 0, 0, .22)"; g.shadowBlur = 24; g.shadowOffsetY = 10; g.fillStyle = "#fff"; g.fill(shape); g.restore();
+  g.save(); g.clip(shape); g.drawImage(sw, 0, 0, W, H); g.restore();
+  cv.className = "fly-swatch";
+  Object.assign(cv.style, { left: from.left - PAD + "px", top: from.top - PAD + "px", width: W + PAD * 2 + "px", height: H + PAD * 2 + "px" });
+  document.body.appendChild(cv);
+  const ox = from.left + W / 2, oy = from.top + H / 2, DUR = 560, t0 = performance.now();
+  const ease = t => t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+  return new Promise(res => {
+    const step = now => {
+      const t = Math.min(1, (now - t0) / DUR), e = ease(t), u = 1 - e;
+      const r = target().getBoundingClientRect(), dx = r.left + r.width / 2 - ox, dy = r.top + r.height / 2 - oy;
+      // An arc: a little lift first, then down and across into the bar, shrinking evenly to the thumbnail's size.
+      const cx = dx * .25, cy = Math.min(0, dy) - 60;
+      const x = 2 * u * e * cx + e * e * dx, y = 2 * u * e * cy + e * e * dy, s = Math.pow(Math.max(.05, r.width / W), e);
+      cv.style.transform = `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0) scale(${(s * (e < .12 ? HOLD.squish + (1 - HOLD.squish) * e / .12 : 1)).toFixed(4)})`;
+      cv.style.opacity = e < .85 ? 1 : 1 - (e - .85) / .15 * .8;
+      if (t < 1) requestAnimationFrame(step); else { cv.remove(); res(); }
+    };
+    requestAnimationFrame(step);
+  });
+}
+function quickAdd(p, wrap, sw) {
+  if (bench.layers.some(l => l.pid === p.id)) { removePolish(p); pulsePeek(); return; }
+  if (reduceMotion) { addLayer(p); return; }
+  // With the Layers closed, they open right away (the sheet rises while the swatch flies down to it);
+  // already open, the polish joins them as it lands.
+  const open = benchIsOpen();
+  if (!open) addLayer(p);
+  flyToLayers(wrap, sw).then(() => { if (open) addLayer(p); else pulsePeek(); });
+}
+{
+  const grid = $("#grid");
+  let hold = null, swallowClick = 0, held = null; // held: the finger of a hold that went through, until it lifts
+  const release = (fired) => {
+    if (!hold) return;
+    const { wrap, timer, squish } = hold; hold = null; clearTimeout(timer);
+    if (squish) {
+      // Springs back: a little past its size when the hold went through, straight back when it was let go early.
+      const now = getComputedStyle(wrap).transform; squish.cancel();
+      if (!reduceMotion) wrap.animate(fired ? [{ transform: now }, { transform: "scale(1.04)", offset: .45 }, { transform: "none" }]
+        : [{ transform: now }, { transform: "none" }], { duration: fired ? 360 : 180, easing: "cubic-bezier(.2, .8, .2, 1)" });
+    }
+  };
+  grid.addEventListener("pointerdown", e => {
+    if (e.pointerType === "mouse" || !e.isPrimary || state.view === "combos") return;
+    const sw = e.target.closest(".card .swatch"), wrap = sw && sw.parentElement, card = sw && sw.closest(".card");
+    if (!sw || !card._p) return;
+    release(false);
+    hold = { wrap, x: e.clientX, y: e.clientY, id: e.pointerId };
+    // The squish waits a beat, so a quick tap doesn't flinch.
+    if (!reduceMotion) hold.squish = wrap.animate([{ transform: "none" }, { transform: "none", offset: .25 }, { transform: `scale(${HOLD.squish})` }],
+      { duration: HOLD.ms, easing: "cubic-bezier(.3, 0, .4, 1)", fill: "forwards" });
+    hold.timer = setTimeout(() => {
+      const h = hold; release(true);
+      held = h.id; // the tap that ends the hold isn't also a tap on the swatch (see click, below)
+      if (navigator.vibrate) try { navigator.vibrate(8); } catch (_) {}
+      quickAdd(card._p, h.wrap, sw);
+    }, HOLD.ms);
+  });
+  grid.addEventListener("pointermove", e => {
+    if (hold && e.pointerId === hold.id && Math.hypot(e.clientX - hold.x, e.clientY - hold.y) > HOLD.slop) release(false);
+  });
+  ["pointerup", "pointercancel"].forEach(t => addEventListener(t, e => {
+    if (hold && e.pointerId === hold.id) release(false);
+    if (held === e.pointerId) { held = null; swallowClick = performance.now() + 400; }
+  }, true));
+  addEventListener("scroll", () => release(false), { passive: true, capture: true });
+  // No callout menu, text selection or context menu on a held swatch.
+  grid.addEventListener("contextmenu", e => { if (e.target.closest(".card .swatch")) e.preventDefault(); });
+  grid.addEventListener("click", e => {
+    if ((held !== null || performance.now() < swallowClick) && e.target.closest(".card .swatch")) { e.stopPropagation(); e.preventDefault(); swallowClick = 0; }
+  }, true);
+}
+
 // Swatch buttons show a checkmark while that polish is on the bench.
 function syncSwatchButtons() {
   document.querySelectorAll(".swatch-btn, #mAdd").forEach(b => {
