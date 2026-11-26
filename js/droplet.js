@@ -336,7 +336,7 @@ function pourStart(card, delay, dur) {
 function pourDrawn(cv) { const card = cv.closest(".card"); if (card && card.classList.contains("pouring")) pourLight(card); }
 function pourLight(card) {
   const cv = card.querySelector("canvas.swatch");
-  if (!card._pourLanded || !cv._w || card.classList.contains("pour-lit")) return;
+  if (!card._pourLanded || !cv._w || cv._pending || card.classList.contains("pour-lit")) return; // _pending: its picture is still being drawn (app.js)
   card.classList.add("pour-lit");
   cv.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 650, easing: "cubic-bezier(.4, 0, .2, 1)" }).onfinish = () => { card._pourShown = true; pourDone(card); };
 }
