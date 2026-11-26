@@ -112,8 +112,9 @@ button, input, select { font: inherit; color: inherit; }
 .filter-row .scopes.more-end { -webkit-mask-image: linear-gradient(to left, transparent, #000 48px); mask-image: linear-gradient(to left, transparent, #000 48px); }
 .filter-row .scopes.more-start { -webkit-mask-image: linear-gradient(to right, transparent, #000 48px); mask-image: linear-gradient(to right, transparent, #000 48px); }
 .filter-row .scopes.more-start.more-end { -webkit-mask-image: linear-gradient(to right, transparent, #000 48px, #000 calc(100% - 48px), transparent); mask-image: linear-gradient(to right, transparent, #000 48px, #000 calc(100% - 48px), transparent); }
-/* On the combos page the filters fade out (they only apply to the shelf). */
-.shelf-head.combos-view + .filters { opacity: 0; pointer-events: none; }
+/* On the combos page the filters are hidden (they only apply to the shelf), leaving just the 64px under the
+   title (Figma node 2406:3624). */
+.shelf-head.combos-view + .filters { display: none; }
 /* Mini nav: once the filters have scrolled out of view, a copy of the effect and brand pills slides in at the
    top of the window as one row that scrolls sideways, with no labels and no bar behind it. Its pills are
    glass (below). Shown by app.js (body.show-mini), lined up with the shelf column. */
@@ -283,7 +284,7 @@ body.detail-open .mini-nav { opacity: 0; visibility: hidden; pointer-events: non
 /* Zoom: 3 per row shows the name and, under it, the effect types as one line of small grey text instead of
    pills (pills would stack and make rows uneven); 4 per row is swatches only, without the + button (add
    from the polish's page). Combo cards follow the same rules. */
-.grid[data-zoom="3"] .brand, .grid[data-zoom="3"] .card-fx, .grid[data-zoom="3"] .combo-date, .grid[data-zoom="3"] .combo-stack { display: none; }
+.grid[data-zoom="3"] .brand, .grid[data-zoom="3"] .card-fx { display: none; }
 .grid[data-zoom="3"] .card { gap: 12px; }
 .grid[data-zoom="3"] .name { font-size: 16px; }
 .card-type { display: none; }
@@ -292,7 +293,7 @@ body.detail-open .mini-nav { opacity: 0; visibility: hidden; pointer-events: non
 /* Card text follows the swatch's shape at every zoom: centered under droplets, left-aligned under rectangles. */
 .drops .grid .card { align-items: center; }
 .drops .grid .card-text { text-align: center; }
-.drops .grid .card-fx, .drops .grid .combo-stack { justify-content: center; }
+.drops .grid .card-fx { justify-content: center; }
 .grid[data-zoom="3"] .swatch-btn { top: 12px; right: 12px; width: 36px; height: 36px; padding: 8px; }
 .grid[data-zoom="4"] .card-text, .grid[data-zoom="4"] .swatch-btn { display: none; }
 /* On desktop the + still shows at 4 per row, but only while the pointer is over the swatch (or the button has
@@ -322,12 +323,42 @@ body.detail-open .mini-nav { opacity: 0; visibility: hidden; pointer-events: non
 .brand { font-size: 14px; }
 .name { font-size: 20px; font-weight: 500; }
 .card-fx { display: flex; flex-wrap: wrap; gap: 4px; }
-/* Combo cards (Figma node 2201:98964): created month under the name, then the polishes as overlapping
-   40px thumbnails with a white edge. */
-.card-title .combo-date { font-size: 14px; line-height: 18px; color: #6c6c6c; }
-.combo-stack { display: flex; }
-.combo-stack canvas { width: 40px; height: 40px; border: 3px solid #fff; border-radius: 8px; background: #d9d9d9; }
-.combo-stack canvas + canvas { margin-left: -11px; }
+/* Favorite combos (Figma node 2406:3621): each card centers its layered swatch (310 of the card's 600px)
+   with the combo's polishes scattered around it as smaller drops (placed from js/app.js, see comboScatter),
+   then the name and, in grey, the polishes it's made of. The page is always at the most zoomed in level
+   (2 per row on desktop, js/app.js sets the column count as --cols; 1 per row on phones), and the zoom bar
+   hides while it's open. */
+.grid.combos-grid { grid-template-columns: repeat(var(--cols, 2), var(--card)); row-gap: 56px; }
+.combo-card { align-items: center; }
+.combo-card .card-text { text-align: center; }
+.combo-art { position: relative; width: calc(var(--card) * 310 / 600); }
+.combo-art .swatch-wrap { width: 100%; }
+.combo-sat { position: absolute; aspect-ratio: 240 / 260; z-index: 2; border-radius: 22%; overflow: hidden; background: var(--swatch); }
+.combo-sat > canvas { display: block; width: 100%; height: 100%; }
+.combo-art .stage-layers { overflow: hidden; }
+.combo-art .stage-layers canvas { width: 100%; height: 100%; } /* same size as the card's canvas, for the layers' pointer maths */
+.combo-card .name { line-height: 24px; color: #000; }
+.combo-card .combo-polishes { font-size: 14px; line-height: 18px; color: #6c6c6c; }
+@media (max-width: 600px) {
+  .grid.combos-grid { grid-template-columns: minmax(0, 1fr); row-gap: 40px; }
+  .combo-art { width: 56%; }
+  .combo-art .swatch-wrap { border-radius: 22%; }
+}
+.zoom { transition: opacity .2s ease, visibility 0s; }
+/* With the zoom bar gone, the Favorite combos button glides to the middle of the dock (centered on screen). */
+.combo-fab { transition: background .15s ease, left .35s cubic-bezier(.2, .8, .2, 1), translate .35s cubic-bezier(.2, .8, .2, 1); }
+.view-combos .combo-fab { left: 50%; translate: -50% 0; }
+.view-combos .zoom { opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .2s ease, visibility 0s .2s; }
+@media (max-width: 600px) { .view-combos .zoom { display: none; } .view-combos .combo-fab { translate: none; } } /* phones center the dock's contents, so the pill centers once the bar is out */
+/* Dark combos page (a developer setting; Figma node 2406:3849): black page, #f7f7f7 title and names, #8c8c8c
+   polish lists, and the Favorite combos button as grey glass. Only the combos page changes. */
+html.combos-dark.view-combos, html.combos-dark.view-combos body { background: #000; --swatch: #1a1a1a; }
+html.combos-dark.view-combos .shelf-title, html.combos-dark.view-combos .combo-card .name { color: #f7f7f7; }
+html.combos-dark.view-combos .combo-card .combo-polishes { color: #8c8c8c; }
+html.combos-dark.view-combos .combo-fab[aria-pressed="true"] { background: rgba(255, 255, 255, .16); box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .2), 0 6px 20px rgba(0, 0, 0, .4); }
+html.combos-dark.view-combos .combo-fab:focus-visible { outline-color: #f7f7f7; }
+html.combos-dark.view-combos .combos-empty .ce-text { color: #f7f7f7; }
+body { transition: background-color .3s ease; }
 .pill.tiny { padding: 6px 12px; font-size: 12px; line-height: 18px; } /* card effect pills (Figma: smaller pill) */
 /* Card effect pills: no stroke, the same frosted fill as the filter pills; pressed fills dark like a filter. */
 .card-fx .pill { border: 0; padding: 7px 13px; background: rgba(242, 242, 242, .78); -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); transition: background .15s ease, color .15s ease; }
@@ -554,8 +585,6 @@ body.detail-open .page::after { opacity: 1; }
 .drops .peek-mini { position: relative; }
 .drop-thumb { position: relative; display: block; flex-shrink: 0; }
 .drops .drop-thumb > canvas { display: block; width: 100%; height: 100%; margin: 0; border: 0; border-radius: 0; box-shadow: none; }
-.drops .combo-stack .drop-thumb { width: 40px; height: 40px; }
-.drops .combo-stack .drop-thumb + .drop-thumb { margin-left: -8px; }
 .drops .peek-thumbs .drop-thumb { width: 24px; height: 24px; margin-left: -6px; }
 .drops .zi canvas { border-radius: 50% !important; }
 .drops .tp { box-shadow: none; }
