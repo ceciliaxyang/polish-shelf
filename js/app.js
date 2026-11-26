@@ -1101,7 +1101,7 @@ $("#combosClose").onclick = () => closeCombos();
 // of everything, the combos are built and drawn underneath, and a copy of them slides up over the dimmed
 // shelf; then the copies go, leaving the live combos page exactly where the sheet stopped. Closing does
 // the reverse: the shelf comes back underneath (where you left it) and a copy of the combos drops away.
-const SHEET = { up: 520, down: 420, shelfY: 0, Z: 45 }; // above the filter bar (40), below the Layers pane (60)
+const SHEET = { up: 580, down: 420, shelfY: 0, Z: 45 }; // above the filter bar (40), below the Layers pane (60)
 function freezePage() {
   const page = $(".page"), copy = page.cloneNode(true), wrap = document.createElement("div");
   // The real elements keep their ids. Ids inside the droplets' SVG stay: their gloss, rim and shadow point
@@ -1179,7 +1179,7 @@ async function openCombos() {
     await new Promise(r => requestAnimationFrame(r));
   } catch (e) { under.remove(); dim.remove(); if (sheet) sheet.remove(); throw e; }
   dim.animate([{ opacity: 0 }, { opacity: 1 }], { duration: SHEET.up, easing: "ease-out", fill: "forwards" });
-  const move = sheet.animate([{ transform: "translateY(100%)" }, { transform: "none" }], { duration: SHEET.up, easing: "cubic-bezier(.2, .8, .2, 1)", fill: "forwards" });
+  const move = sheet.animate([{ transform: "translateY(100%)" }, { transform: "none" }], { duration: SHEET.up, easing: "cubic-bezier(.32, .72, 0, 1)", fill: "forwards" }); // iOS's sheet curve: visibly rises from the bottom
   afterSheet(SHEET.up, move, under, dim);
   // Once it lands, the copy fades into the live page (whose swatches have started moving) instead of
   // swapping in one frame.
