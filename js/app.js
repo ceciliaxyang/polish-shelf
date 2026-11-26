@@ -1639,7 +1639,7 @@ function openDetail(p, card) {
   // The dialog's backdrop (body.detail-open) starts with the swatch's flight, below, not now: starting it in
   // the same frame as all this setup used to eat the flight before it was ever painted.
   const m = $("#modal"); m.hidden = false; document.body.style.overflow = "hidden";
-  m.scrollTop = 0;
+  m.scrollTop = 0; heroLag(m);
   $("#mPills").querySelectorAll(".scope-icon").forEach(fitIcon);
   const stage = $("#mStage"); stage.innerHTML = "";
   const cv = document.createElement("canvas"); cv.className = "swatch";
@@ -1689,6 +1689,14 @@ function openDetail(p, card) {
   document.title = `${p.name} · ${p.brand} · ${SITE_TITLE}`;
 }
 
+
+// Parallax on the polish page: the hero lags a third of the scroll behind, so the photos rise faster than it.
+const HERO_LAG = 1 / 3;
+function heroLag(m) {
+  const y = reduceMotion ? 0 : Math.max(0, m.scrollTop) * HERO_LAG;
+  m.querySelector(".modal-body").style.setProperty("--lag", y.toFixed(1) + "px");
+}
+$("#modal").addEventListener("scroll", e => heroLag(e.currentTarget), { passive: true });
 
 function closeDetail() {
   const m = $("#modal"); if (m.hidden || detail.closing) return;

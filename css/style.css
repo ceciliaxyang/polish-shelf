@@ -645,6 +645,10 @@ body.detail-open .page::after { opacity: 1; }
 .mh-pills { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
 .mh-pill { display: inline-flex; align-items: center; gap: 8px; padding: 11px 16px; border-radius: 32px; color: #222; font-size: 14px; line-height: 18px; white-space: nowrap;
   background: rgba(255, 255, 255, .4); -webkit-backdrop-filter: blur(16px) saturate(1.4); backdrop-filter: blur(16px) saturate(1.4); }
+/* Parallax: as the dialog scrolls, the hero (swatch and titles) trails behind at 2/3 speed (app.js sets
+   --lag) and the photos, which scroll at full speed, come up over it. */
+#mStage, .mh-content { translate: 0 var(--lag, 0px); }
+.m-photos { position: relative; z-index: 4; }
 .m-photos { align-self: stretch; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
 .m-photos img { display: block; width: 100%; aspect-ratio: 1; height: auto; object-fit: cover; border-radius: 48px; background: var(--swatch); }
 @media (max-width: 1000px) {
