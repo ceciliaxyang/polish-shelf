@@ -48,16 +48,16 @@ button, input, select { font: inherit; color: inherit; }
 .layout { display: grid; grid-template-columns: minmax(0, 1fr) 348px; column-gap: 56px; align-items: start; }
 .layout.closed { grid-template-columns: minmax(0, 1fr) 0px; column-gap: 0px; }
 @media (min-width: 761px) {
-  .bench { transform: translateX(100%); transition: transform .45s cubic-bezier(.2, .8, .2, 1), background-color .35s ease, border-color .35s ease; }
+  .bench { transform: translateX(100%); transition: transform .45s cubic-bezier(.2, .8, .2, 1), --bench-bg .35s ease, border-color .35s ease; }
   .bench.open { transform: none; }
   /* Over the detail dialog, the pane drops its white background and divider, so the dialog's blurred,
      washed backdrop runs continuously underneath it. */
-  body.detail-open .bench { background-color: transparent; border-left-color: transparent; }
+  body.detail-open .bench { --bench-bg: transparent; border-left-color: transparent; }
   /* Layers title in the polish page's title style (Instrument Serif 40 on 40, -1.5px, #222). */
   .bench .bench-title { font-family: "Instrument Serif", Georgia, serif; font-weight: 400; letter-spacing: -1.5px; color: #222; padding: 0 0 12px; }
   /* Over the detail page, the pane's top row moves up to the buttons' row (32px down, 40px tall), so the
      title and Clear line up with add / link / close. */
-  .bench { transition: transform .45s cubic-bezier(.2, .8, .2, 1), background-color .35s ease, border-color .35s ease, padding-top .35s cubic-bezier(.2, .8, .2, 1); }
+  .bench { transition: transform .45s cubic-bezier(.2, .8, .2, 1), --bench-bg .35s ease, border-color .35s ease, padding-top .35s cubic-bezier(.2, .8, .2, 1); }
   body.detail-open .bench { padding-top: calc(32px + env(safe-area-inset-top)); }
 }
 @media (prefers-reduced-motion: reduce) { .layout, .bench { transition: none !important; } }
@@ -486,9 +486,15 @@ body { transition: background-color .3s ease; }
 /* The pane is fixed to the right edge (outside the page, so it isn't blurred with it) and sits above
    everything, the detail dialog included. Its box covers the right half of the gap and the page's right
    padding; its left border is the divider between the panes. The layout keeps an empty column for it. */
+/* Phones: the area under the status bar always stays see-through. Safari on iOS 26 paints the status bar solid
+   in the background-color of any fixed layer at the top of the screen (the pane reaches the top in landscape),
+   so the pane's white is a gradient (an image, not a color). --bench-bg is registered so the fade to
+   transparent over the detail dialog still animates. */
+@property --bench-bg { syntax: "<color>"; inherits: false; initial-value: #ffffff; }
 .bench { position: fixed; z-index: 60; top: 0; bottom: 0; right: 0; width: calc(28px + 348px + 40px + env(safe-area-inset-right));
   overflow-y: auto; overscroll-behavior: contain; padding: calc(64px + env(safe-area-inset-top)) calc(40px + env(safe-area-inset-right)) 40px 28px;
-  display: flex; flex-direction: column; gap: 24px; background: var(--bg); border-left: 1px solid #ebebeb; scrollbar-width: none; }
+  display: flex; flex-direction: column; gap: 24px; border-left: 1px solid #ebebeb; scrollbar-width: none;
+  background: linear-gradient(var(--bench-bg), var(--bench-bg)); }
 /* With the pane open, the detail dialog uses the space to its left. */
 @media (min-width: 761px) {
   body.bench-open .modal { right: calc(28px + 348px + 40px + env(safe-area-inset-right)); }
