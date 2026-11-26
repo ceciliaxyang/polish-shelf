@@ -1914,13 +1914,11 @@ $("#closeBench").onclick = clearBench;
 function addLayer(p) {
   // Toppers look right with one coat; everything else defaults to two.
   const layer = { pid: p.id, coats: ["glitter", "flakies", "chrome"].includes(p.effect) ? 1 : 2 };
-  // Order from the top: chrome powders always on top, then sheers, then everything else. A powder goes on
-  // the very top; a sheer goes just under the powders; anything else just under the sheers and powders.
-  const kinds = bench.layers.map(l => polishById(l.pid));
-  let at = bench.layers.length;
-  if (isPowder(p)) at = bench.layers.length;
-  else if (isSheer(p)) { const k = kinds.findIndex(q => q && isPowder(q)); if (k >= 0) at = k; }
-  else { at = 0; kinds.forEach((q, i) => { if (q && !isOverlay(q)) at = i + 1; }); }
+  // Default order, base to top (see LAYER_RANK): a new layer goes just above the last layer that ranks the same
+  // or lower, so cremes and jellies stay at the base and chrome powder on top. Layers can still be dragged.
+  const rank = layerRank(p);
+  let at = 0;
+  bench.layers.forEach((l, i) => { const q = polishById(l.pid); if (!q || layerRank(q) <= rank) at = i + 1; });
   bench.layers.splice(at, 0, layer);
   saveBench();
   if (!benchIsOpen()) setBenchOpen(true); else renderBench();
@@ -2043,6 +2041,16 @@ const isSheer = p => p.sheer || p.effect === "sheer" || p.effect === "sheermag";
 // Chrome powders are rubbed onto the top of a manicure: always the topmost layer, over whatever is below.
 const isPowder = p => p.effect === "powder";
 const isOverlay = p => isSheer(p) || isPowder(p);
+// Default layer order, base to top: creme, jelly, opaque effect finishes (magnetic, multichrome, shimmer, holo,
+// thermal, glow), sheer shimmers and sheer glows, magnetic toppers (tinted, then clear), chrome powder.
+function layerRank(p) {
+  if (isPowder(p)) return 6;
+  if (p.effect === "sheermag") return p.clear ? 5 : 4;
+  if (p.effect === "creme") return 0;
+  if (p.effect === "sheer") return 1; // jelly
+  if (p.sheer) return p.effect === "shimmer" || p.effect === "glow" ? 3 : 1;
+  return 2;
+}
 
 // The big preview. Each polish paints over everything below it, so the preview starts from the topmost
 // polish that isn't sheer. Sheer layers above it combine with it: they tint it (multiply) and add their
