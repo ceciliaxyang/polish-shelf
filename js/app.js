@@ -1084,10 +1084,65 @@ function fitIcon(svg) {
 // Favorite combos switches the page between the shelf and your saved combos (Figma node 2201:98964).
 $("#comboBtn").onclick = () => {
   if (document.body.classList.contains("detail-open")) closeDetail(); // tapped over the polish page (phones)
-  setView(state.view === "combos" ? "shelf" : "combos");
-  scrollTo({ top: 0 });
-  renderShelf();
+  if (state.view === "combos") closeCombos(); else openCombos();
 };
+$("#combosClose").onclick = () => closeCombos();
+// Favorite combos opens as a full-screen takeover. The shelf can't stay behind the combos (they share the
+// page), so a frozen copy of it (with the on-screen swatches redrawn, since canvases clone blank) sits under
+// a dim while the real page, now showing the combos, slides up from the bottom. Closing does the reverse:
+// a copy of the combos drops away over the shelf, which comes back where you left it.
+const SHEET = { up: 520, down: 420, shelfY: 0 };
+function freezePage() {
+  const page = $(".page"), copy = page.cloneNode(true), wrap = document.createElement("div");
+  copy.querySelectorAll("[id]").forEach(e => e.removeAttribute("id")); // the real elements keep theirs
+  const from = page.querySelectorAll("canvas"), to = copy.querySelectorAll("canvas");
+  from.forEach((c, i) => {
+    const r = c.getBoundingClientRect();
+    if (r.bottom < 0 || r.top > innerHeight || !c.width) return;
+    try { to[i].getContext("2d").drawImage(c, 0, 0); } catch (e) {}
+  });
+  wrap.className = "page-ghost"; wrap.inert = true; wrap.setAttribute("aria-hidden", "true");
+  wrap.style.setProperty("--gy", -scrollY + "px");
+  wrap.style.background = getComputedStyle(document.body).backgroundColor;
+  wrap.append(copy);
+  return wrap;
+}
+function sheetDim() { const d = document.createElement("div"); d.className = "sheet-dim"; d.style.zIndex = 2; return d; }
+// The shelf's cards (swatches already drawn) are set aside while the combos are up and put back on close, so
+// returning is instant instead of redrawing every swatch. Nothing on the shelf can change meanwhile.
+function showView(v, y) {
+  const grid = $("#grid");
+  if (v === "combos") SHEET.cards = [...grid.childNodes];
+  setView(v);
+  if (v === "shelf" && SHEET.cards) { grid.replaceChildren(...SHEET.cards); syncSwatchButtons(); } else renderShelf();
+  SHEET.cards = v === "combos" ? SHEET.cards : null;
+  scrollTo({ top: y, behavior: "instant" });
+}
+function openCombos() {
+  SHEET.shelfY = scrollY;
+  if (reduceMotion) return showView("combos", 0);
+  const ghost = freezePage(), dim = sheetDim(), page = $(".page"), body = document.body;
+  ghost.style.zIndex = 1;
+  body.append(ghost, dim); body.classList.add("sheet-moving");
+  showView("combos", 0);
+  page.style.background = document.documentElement.classList.contains("combos-dark") ? "#000" : "var(--bg)";
+  dim.animate([{ opacity: 0 }, { opacity: 1 }], { duration: SHEET.up, easing: "ease-out", fill: "forwards" });
+  page.animate([{ transform: "translateY(100vh)" }, { transform: "none" }], { duration: SHEET.up, easing: "cubic-bezier(.2, .8, .2, 1)" }).finished.then(() => {
+    ghost.remove(); dim.remove(); body.classList.remove("sheet-moving"); page.style.background = "";
+  });
+}
+async function closeCombos() {
+  if (state.view !== "combos") return;
+  if (reduceMotion) return showView("shelf", SHEET.shelfY);
+  const ghost = freezePage(), dim = sheetDim();
+  Object.assign(ghost.style, { zIndex: 3, borderRadius: "20px 20px 0 0", boxShadow: "0 -12px 40px rgba(0, 0, 0, .14)" });
+  document.body.append(dim, ghost);
+  showView("shelf", SHEET.shelfY);
+  await new Promise(r => requestAnimationFrame(r)); // the shelf paints under the copy before it drops
+  dim.animate([{ opacity: 1 }, { opacity: 0 }], { duration: SHEET.down, easing: "ease-in", fill: "forwards" });
+  ghost.animate([{ transform: "none" }, { transform: "translateY(100vh)" }], { duration: SHEET.down, easing: "cubic-bezier(.4, 0, .7, .2)", fill: "forwards" })
+    .finished.then(() => { ghost.remove(); dim.remove(); });
+}
 // The button's two thumbnails: the two newest saved combos, or the first polishes on the shelf until
 // there are any.
 // Favorite combos only appears once a combo is saved, rising in the first time.
@@ -1098,7 +1153,7 @@ function setView(v) {
   state.view = v;
   $("#comboBtn").setAttribute("aria-pressed", v === "combos");
   $(".shelf-head").classList.toggle("combos-view", v === "combos");
-  $("#shelfTitle").textContent = v === "combos" ? "Favorite combos" : "My polish shelf";
+  $("#shelfTitle").textContent = v === "combos" ? "Favorite combos" : "Polish shelf";
   $("#filters").inert = v === "combos";
   $("#grid").classList.toggle("combos-grid", v === "combos");
   // The combos page always shows at the most zoomed in level (zoom bar hidden); the shelf keeps its own zoom.
@@ -1639,7 +1694,7 @@ function openDetail(p, card) {
   // The dialog's backdrop (body.detail-open) starts with the swatch's flight, below, not now: starting it in
   // the same frame as all this setup used to eat the flight before it was ever painted.
   const m = $("#modal"); m.hidden = false; document.body.style.overflow = "hidden";
-  m.scrollTop = 0; heroLag(m);
+  m.scrollTop = 0;
   $("#mPills").querySelectorAll(".scope-icon").forEach(fitIcon);
   const stage = $("#mStage"); stage.innerHTML = "";
   const cv = document.createElement("canvas"); cv.className = "swatch";
@@ -1689,14 +1744,6 @@ function openDetail(p, card) {
   document.title = `${p.name} · ${p.brand} · ${SITE_TITLE}`;
 }
 
-
-// Parallax on the polish page: the hero lags a third of the scroll behind, so the photos rise faster than it.
-const HERO_LAG = 1 / 3;
-function heroLag(m) {
-  const y = reduceMotion ? 0 : Math.max(0, m.scrollTop) * HERO_LAG;
-  m.querySelector(".modal-body").style.setProperty("--lag", y.toFixed(1) + "px");
-}
-$("#modal").addEventListener("scroll", e => heroLag(e.currentTarget), { passive: true });
 
 function closeDetail() {
   const m = $("#modal"); if (m.hidden || detail.closing) return;
@@ -1784,6 +1831,101 @@ function addLayer(p) {
 function removePolish(p) {
   bench.layers = bench.layers.filter(l => l.pid !== p.id);
   saveBench(); renderBench();
+}
+
+/* ---------- quick add: press and hold ---------- */
+// On touch screens, pressing and holding a shelf swatch adds it to the Layers without opening its page
+// (the touch version of the + that shows on hover at 4 per row on desktop). While the finger stays down the
+// swatch squishes in a little; at the end of the hold it springs back and a copy flies into the Layers peek
+// bar (or the pane on wider screens), which pulses as it lands. Holding a polish that's already in the
+// Layers takes it back out, like its + / check button. A plain tap still opens the polish page, and moving
+// the finger (scrolling) cancels the hold.
+const HOLD = { ms: 420, squish: .92, slop: 10 };
+// Flies a picture of the shelf swatch into the Layers. The target is read every frame, so the flight follows
+// the peek bar while the sheet is still rising. Resolves once it has landed.
+function flyToLayers(wrap, sw) {
+  const target = () => [$("#peekMini"), $("#stage")].find(el => { const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0; })
+    || $("#bench");
+  const from = wrap.getBoundingClientRect(), W = from.width, H = from.height;
+  if (!W || !sw.width) return Promise.resolve();
+  const PAD = 28, dpr = Math.min(2, devicePixelRatio || 1), cv = document.createElement("canvas");
+  cv.width = Math.round((W + PAD * 2) * dpr); cv.height = Math.round((H + PAD * 2) * dpr);
+  const g = cv.getContext("2d"); g.scale(dpr, dpr); g.translate(PAD, PAD);
+  const shape = new Path2D();
+  if (wrap._drop) shape.addPath(new Path2D(wrap._drop.d), new DOMMatrix().scale(W / 100, H / wrap._drop.vh));
+  else shape.roundRect(0, 0, W, H, parseFloat(getComputedStyle(wrap).borderTopLeftRadius) || 12);
+  g.save(); g.shadowColor = "rgba(0, 0, 0, .22)"; g.shadowBlur = 24; g.shadowOffsetY = 10; g.fillStyle = "#fff"; g.fill(shape); g.restore();
+  g.save(); g.clip(shape); g.drawImage(sw, 0, 0, W, H); g.restore();
+  cv.className = "fly-swatch";
+  Object.assign(cv.style, { left: from.left - PAD + "px", top: from.top - PAD + "px", width: W + PAD * 2 + "px", height: H + PAD * 2 + "px" });
+  document.body.appendChild(cv);
+  const ox = from.left + W / 2, oy = from.top + H / 2, DUR = 560, t0 = performance.now();
+  const ease = t => t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+  return new Promise(res => {
+    const step = now => {
+      const t = Math.min(1, (now - t0) / DUR), e = ease(t), u = 1 - e;
+      const r = target().getBoundingClientRect(), dx = r.left + r.width / 2 - ox, dy = r.top + r.height / 2 - oy;
+      // An arc: a little lift first, then down and across into the bar, shrinking evenly to the thumbnail's size.
+      const cx = dx * .25, cy = Math.min(0, dy) - 60;
+      const x = 2 * u * e * cx + e * e * dx, y = 2 * u * e * cy + e * e * dy, s = Math.pow(Math.max(.05, r.width / W), e);
+      cv.style.transform = `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0) scale(${(s * (e < .12 ? HOLD.squish + (1 - HOLD.squish) * e / .12 : 1)).toFixed(4)})`;
+      cv.style.opacity = e < .85 ? 1 : 1 - (e - .85) / .15 * .8;
+      if (t < 1) requestAnimationFrame(step); else { cv.remove(); res(); }
+    };
+    requestAnimationFrame(step);
+  });
+}
+function quickAdd(p, wrap, sw) {
+  if (bench.layers.some(l => l.pid === p.id)) { removePolish(p); pulsePeek(); return; }
+  if (reduceMotion) { addLayer(p); return; }
+  // With the Layers closed, they open right away (the sheet rises while the swatch flies down to it);
+  // already open, the polish joins them as it lands.
+  const open = benchIsOpen();
+  if (!open) addLayer(p);
+  flyToLayers(wrap, sw).then(() => { if (open) addLayer(p); else pulsePeek(); });
+}
+{
+  const grid = $("#grid");
+  let hold = null, swallowClick = 0, held = null; // held: the finger of a hold that went through, until it lifts
+  const release = (fired) => {
+    if (!hold) return;
+    const { wrap, timer, squish } = hold; hold = null; clearTimeout(timer);
+    if (squish) {
+      // Springs back: a little past its size when the hold went through, straight back when it was let go early.
+      const now = getComputedStyle(wrap).transform; squish.cancel();
+      if (!reduceMotion) wrap.animate(fired ? [{ transform: now }, { transform: "scale(1.04)", offset: .45 }, { transform: "none" }]
+        : [{ transform: now }, { transform: "none" }], { duration: fired ? 360 : 180, easing: "cubic-bezier(.2, .8, .2, 1)" });
+    }
+  };
+  grid.addEventListener("pointerdown", e => {
+    if (e.pointerType === "mouse" || !e.isPrimary || state.view === "combos") return;
+    const sw = e.target.closest(".card .swatch"), wrap = sw && sw.parentElement, card = sw && sw.closest(".card");
+    if (!sw || !card._p) return;
+    release(false);
+    hold = { wrap, x: e.clientX, y: e.clientY, id: e.pointerId };
+    // The squish waits a beat, so a quick tap doesn't flinch.
+    if (!reduceMotion) hold.squish = wrap.animate([{ transform: "none" }, { transform: "none", offset: .25 }, { transform: `scale(${HOLD.squish})` }],
+      { duration: HOLD.ms, easing: "cubic-bezier(.3, 0, .4, 1)", fill: "forwards" });
+    hold.timer = setTimeout(() => {
+      const h = hold; release(true);
+      held = h.id; // the tap that ends the hold isn't also a tap on the swatch (see click, below)
+      if (navigator.vibrate) try { navigator.vibrate(8); } catch (_) {}
+      quickAdd(card._p, h.wrap, sw);
+    }, HOLD.ms);
+  });
+  grid.addEventListener("pointermove", e => {
+    if (hold && e.pointerId === hold.id && Math.hypot(e.clientX - hold.x, e.clientY - hold.y) > HOLD.slop) release(false);
+  });
+  ["pointerup", "pointercancel"].forEach(t => addEventListener(t, e => {
+    if (hold && e.pointerId === hold.id) release(false);
+    if (held === e.pointerId) { held = null; swallowClick = performance.now() + 400; }
+  }, true));
+  addEventListener("scroll", () => release(false), { passive: true, capture: true });
+  // No callout menu, text selection or context menu on a held swatch.
+  grid.addEventListener("contextmenu", e => { if (e.target.closest(".card .swatch")) e.preventDefault(); });
+  grid.addEventListener("click", e => {
+    if ((held !== null || performance.now() < swallowClick) && e.target.closest(".card .swatch")) { e.stopPropagation(); e.preventDefault(); swallowClick = 0; }
+  }, true);
 }
 
 // Swatch buttons show a checkmark while that polish is on the bench.
@@ -1998,6 +2140,7 @@ const sheetMQ = matchMedia("(max-width: 760px)");
 function renderPeek() {
   if (!sheetMQ.matches) return;
   const n = bench.layers.length, mini = $("#peekMini"); mini.innerHTML = "";
+  $("#peekCount").textContent = n ? `(${n})` : ""; // "Layers (2)", Figma node 2412:20759
   $("#peekSub").textContent = n ? `${n} layer${n > 1 ? "s" : ""}` : "Start adding polishes to see how they layer together.";
   const cv = stackCanvas(44, 44); if (cv) { mini.appendChild(cv); dropify(mini, dropKeyFor(bench.layers), 1, { small: true }); }
   const th = $("#peekThumbs"); th.innerHTML = "";

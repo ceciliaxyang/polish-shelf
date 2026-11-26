@@ -274,9 +274,11 @@ body.detail-open .mini-nav { opacity: 0; visibility: hidden; pointer-events: non
 .combo-fab[hidden] { display: none; }
 .combo-fab:hover { background: rgba(255, 255, 255, .5); }
 .combo-fab[aria-pressed="true"] { background: #222; color: #fff; }
-/* The number of saved combos after the label, in the regular weight (the label is medium) and even-width
-   digits so it doesn't shift as it changes. It stays the label's color so it reads over any swatch under the glass. */
-.combo-count { position: relative; display: inline-grid; overflow: hidden; margin-left: -1px; font-weight: 400; font-variant-numeric: tabular-nums; }
+/* The number of saved combos after the label, in Foggy (Figma's grey 700, #6a6a6a, the --muted token), the regular
+   weight (the label is medium) and even-width digits so it doesn't shift as it changes. On the dark pressed pill it
+   becomes a soft white so it stays readable. */
+.combo-count { position: relative; display: inline-grid; overflow: hidden; margin-left: -1px; font-weight: 400; font-variant-numeric: tabular-nums; color: var(--muted); }
+.combo-fab[aria-pressed="true"] .combo-count { color: rgba(255, 255, 255, .6); }
 /* Its numbers share one grid cell, so the old one can roll out while the new one rolls in (see rollCount). */
 .cc-num { grid-area: 1 / 1; justify-self: end; }
 /* On phones the zoom bar and the pill are centered together as one group so the pill stays inside the screen. */
@@ -546,13 +548,13 @@ body { transition: background-color .3s ease; }
 .layout { position: relative; }
 .bench-titles { flex: 1; min-width: 0; }
 .peek { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; }
-.sheet-handle, .peek-mini, .peek-sub, .peek-thumbs { display: none; }
+.sheet-handle, .peek-mini, .peek-sub, .peek-count, .peek-thumbs { display: none; }
 /* Phones: the pane is a bottom sheet. Collapsed, only the peek bar shows (combined swatch, layer count,
    thumbnails); tap or drag it up to expand, drag down to tuck it away. */
 @media (max-width: 760px) {
   .bench { --peek: calc(84px + env(safe-area-inset-bottom)); position: fixed; z-index: 60; left: 0; right: 0; top: auto; bottom: 0; width: auto; border-left: 0;
     max-height: 78vh; margin: 0; gap: 16px; padding: 0 16px calc(24px + env(safe-area-inset-bottom)); background: var(--bg);
-    border-radius: 24px 24px 0 0; box-shadow: 0 -4px 24px rgba(0, 0, 0, .12); overflow: hidden;
+    border-radius: 24px 24px 0 0; box-shadow: 0 -4px 12px rgba(0, 0, 0, .12); overflow: hidden;
     transform: translateY(calc(100% - var(--peek))); transition: transform .38s cubic-bezier(.2, .8, .2, 1); }
   .bench.expanded { transform: none; overflow-y: auto; }
   .bench-head { position: sticky; top: 0; z-index: 1; flex-direction: column; align-items: stretch; gap: 0; padding: 8px 0 12px; background: var(--bg); touch-action: none; cursor: grab; }
@@ -570,10 +572,18 @@ body { transition: background-color .3s ease; }
   .bench.no-layers .layers .hint { display: none; } /* the peek bar already says it */
   .peek-mini.pulse { animation: peek-pulse .5s cubic-bezier(.2, .8, .2, 1); }
   @keyframes peek-pulse { 40% { transform: scale(1.12); } }
-  .bench-title { font-size: 17px; line-height: 22px; letter-spacing: -.2px; padding: 0; }
-  .peek-sub { display: block; margin: 2px 0 0; font-size: 13px; line-height: 18px; color: #6c6c6c; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .peek-thumbs { display: flex; flex-shrink: 0; padding-left: 8px; }
-  .peek-thumbs canvas { width: 24px; height: 24px; margin-left: -8px; border-radius: 7px; box-shadow: 0 0 0 2px var(--bg); }
+  /* Layers title in the headline serif (Instrument Serif 22 on 22, #222), like the shelf title and polish names. */
+  .bench-title { font-family: "Instrument Serif", Georgia, serif; font-size: 22px; line-height: 22px; font-weight: 400; letter-spacing: -.4px; color: #222; padding: 0; }
+  /* Header row (Figma node 2412:20759): swatch, "Layers (2)" on one line with the count in grey, thumbnails, Clear.
+     The "1 layer" line is gone; the sub line only shows the hint while the sheet is empty. */
+  .bench-titles { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 5px; }
+  .bench-titles .bench-title { flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .peek-count { display: block; font-family: "Instrument Serif", Georgia, serif; font-size: 22px; line-height: 22px; letter-spacing: -.4px; color: #6c6c6c; }
+  .peek-count:empty { display: none; }
+  .bench:not(.no-layers) .peek-sub { display: none; }
+  .peek-sub { flex-basis: 100%; display: block; margin: 2px 0 0; font-size: 13px; line-height: 18px; color: #6c6c6c; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .peek-thumbs { display: flex; flex-shrink: 0; padding-left: 8px; } /* 2px in from the title, thumbnails overlapping 6px */
+  .peek-thumbs canvas { width: 24px; height: 24px; margin-left: -6px; border-radius: 7px; box-shadow: 0 0 0 2px var(--bg); }
   .bench.expanded .peek-thumbs { opacity: 0; }
   .peek-thumbs { transition: opacity .2s ease; }
   .stage { width: min(100%, 280px); border-radius: 40px; align-self: center; }
@@ -651,10 +661,6 @@ body.detail-open .page::after { opacity: 1; }
 .mh-pills { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
 .mh-pill { display: inline-flex; align-items: center; gap: 8px; padding: 11px 16px; border-radius: 32px; color: #222; font-size: 14px; line-height: 18px; white-space: nowrap;
   background: rgba(255, 255, 255, .4); -webkit-backdrop-filter: blur(16px) saturate(1.4); backdrop-filter: blur(16px) saturate(1.4); }
-/* Parallax: as the dialog scrolls, the hero (swatch and titles) trails behind at 2/3 speed (app.js sets
-   --lag) and the photos, which scroll at full speed, come up over it. */
-#mStage, .mh-content { translate: 0 var(--lag, 0px); }
-.m-photos { position: relative; z-index: 4; }
 .m-photos { align-self: stretch; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
 .m-photos img { display: block; width: 100%; aspect-ratio: 1; height: auto; object-fit: cover; border-radius: 48px; background: var(--swatch); }
 @media (max-width: 1000px) {
@@ -722,3 +728,22 @@ body.detail-open .page::after { opacity: 1; }
 /* A swatch's old picture, fading out over its redraw at a new size (see drawCard in js/app.js). */
 .swatch-ghost { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
 .drops .drop > canvas.swatch-ghost { position: absolute; }
+
+/* Favorite combos is a full-screen takeover: tapping the pill slides the page up over a frozen, dimmed copy of
+   the shelf, and the close button (top right) drops it back down (app.js, openCombos / closeCombos). */
+.combos-close { position: fixed; z-index: 4; top: calc(32px + env(safe-area-inset-top)); right: calc(48px + env(safe-area-inset-right)); }
+html:not(.view-combos) .combos-close { display: none; }
+@media (max-width: 600px) { .combos-close { top: calc(16px + env(safe-area-inset-top)); right: 16px; } }
+html.combos-dark.view-combos .combos-close { background: rgba(255, 255, 255, .16); box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .2); }
+html.combos-dark.view-combos .combos-close svg { stroke: #f7f7f7; }
+/* The frozen copy is clipped to the screen; contain makes it the box its pinned close button sits in. */
+.page-ghost { position: fixed; inset: 0; overflow: hidden; contain: paint; pointer-events: none; will-change: transform; }
+.page-ghost > .page { margin-top: var(--gy, 0); }
+.sheet-dim { position: fixed; inset: 0; background: rgba(0, 0, 0, .22); pointer-events: none; }
+body.sheet-moving > .page { z-index: 3; will-change: transform; border-radius: 20px 20px 0 0; box-shadow: 0 -12px 40px rgba(0, 0, 0, .14); }
+/* Press and hold a swatch to add it to the Layers (touch screens, app.js): no callout menu, text selection
+   or tap flash while holding. */
+@media (hover: none) {
+  .grid .card { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+  .grid .swatch { -webkit-tap-highlight-color: transparent; }
+}
