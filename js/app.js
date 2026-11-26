@@ -350,7 +350,7 @@ function filterShelf() {
   // A swatch shown again is drawn only if it never was, or the card's size changed while it was hidden.
   entering.forEach(c => {
     const cv = c.querySelector(".swatch");
-    if (cv._w && Math.abs(cv.parentElement.clientWidth - cv._w) <= 2) return;
+    if (cv._w && sizeStillFits(cv)) return;
     cv._w = 0; drawIO && drawIO.unobserve(cv); queueDraw(cv);
   });
   shapeForScroll(true);
@@ -1624,13 +1624,18 @@ let redrawTimer = 0;
 // picture stays up, scaled, until each one's turn. The others are marked undrawn and go back into the
 // lazy queue, so resizing (or the scrollbar appearing) doesn't redraw the whole shelf. Nothing is
 // redrawn while the zoom animation plays.
+// A swatch keeps the picture it has when its card is within 10% of the size it was drawn at (the Layers pane
+// opening or closing changes card sizes by about 8%): the picture is just scaled, instead of drawing the
+// whole swatch again, which was the stutter after the pane slid. Bigger changes (zooming) still redraw.
+// cv._w stays the size it was drawn at, so small changes that add up past 10% redraw too.
+function sizeStillFits(cv) { const w = cv.parentElement.clientWidth; return Math.abs(w - cv._w) <= Math.max(2, cv._w * .1); }
 function redrawCards() {
   clearTimeout(redrawTimer);
   redrawTimer = setTimeout(function go() {
     if (zoomBusy()) { redrawTimer = setTimeout(go, zoomBusyUntil - performance.now() + 30); return; }
     const vh = innerHeight, now = [];
     document.querySelectorAll("#grid .swatch").forEach(cv => {
-      if (!cv._w || Math.abs(cv.parentElement.clientWidth - cv._w) <= 2) return;
+      if (!cv._w || sizeStillFits(cv)) return;
       const r = cv.getBoundingClientRect();
       cv._w = 0;
       if (r.bottom > -40 && r.top < vh + 40) { cv._soft = true; now.push([r.top, r.left, cv]); } else queueDraw(cv);
