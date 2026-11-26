@@ -1393,26 +1393,25 @@ function saveCombo() {
   if (liveLayers(bench.layers).length < 2 || benchCombo()) return;
   const c = { id: newId(), name: comboName(bench.layers), layers: bench.layers.map(l => ({ pid: l.pid, coats: l.coats })), createdAt: new Date().toISOString() };
   combos.push(c); saveCombos();
+  // Like checking out a cart: the combo's swatch lifts off the Layers preview and flies into the Combos
+  // button while the Layers pane closes behind it (and its layers clear, as with Clear).
   flyToCombos(c.layers);
-  renderBench();
+  clearBench();
   if (state.view === "combos") renderShelf();
 }
 $("#saveCombo").onclick = () => { const saved = benchCombo(); saved ? deleteCombo(saved) : saveCombo(); };
 // Like dropping something into a shopping cart: a copy of the layered swatch leaves the Layers preview
-// (or the phone's peek bar) and, in one smooth arc, shrinks into the Favorite combos button, which gives a little
-// bump as it lands and then shows the new combo in its thumbnails.
+// (or the phone's peek bar) and, in one smooth arc, shrinks into the Combos button, which gives a little
+// bump as it lands and then shows the new combo in its thumbnails. The Layers pane closes as it flies, which
+// moves the button (the dock recenters), so the flight steers toward wherever the button is on every frame.
 function flyToCombos(layers) {
   // The first save is what makes the button appear: show it right away (no rise, which would move the
   // landing spot) so it's there to catch the swatch.
   syncComboBtn(); $("#comboBtn").classList.remove("rise-in");
-  const btn = $("#comboBtn"), tr = $("#comboThumbs").getBoundingClientRect();
+  const btn = $("#comboBtn"), thumbs = $("#comboThumbs"), tr = thumbs.getBoundingClientRect();
   const src = [$("#stage"), $("#peekMini")].find(el => { const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0; });
   if (reduceMotion || !src || !tr.width) return;
   const from = src.getBoundingClientRect();
-  // The button floats beside the zoom bar, so it's always in sight; on phones let the expanded sheet
-  // drop back to its peek bar first.
-  const target = tr;
-  if (sheetMQ.matches) setSheet(false);
   const cv = document.createElement("canvas");
   if (!drawStack(cv, layers, Math.round(from.width), Math.round(from.height))) return;
   const radius = DROPS ? 0 : parseFloat(getComputedStyle(src).borderTopLeftRadius) || 12;
@@ -1421,26 +1420,31 @@ function flyToCombos(layers) {
   Object.assign(cv.style, { left: from.left + "px", top: from.top + "px", width: from.width + "px", height: from.height + "px", borderRadius: radius + "px" });
   document.body.appendChild(cv);
   renderComboThumbs.hold = true;
-  const s = target.width / from.width;
-  const dx = target.left + target.width / 2 - (from.left + from.width / 2), dy = target.top + target.height / 2 - (from.top + from.height / 2);
+  const s = tr.width / from.width;
   const end = DROPS ? 0 : 4 / s; // the thumbnails' 4px corners, measured before scaling
   // One continuous motion that heads for the button from the first frame: a curve that rises toward the
-  // button's height first and then sweeps across into it (never above it and back), sampled into keyframes,
-  // with a single ease over the whole flight. It shrinks at an even visual rate (geometrically) while its
-  // corners round down to the thumbnail's.
-  const cx = dx * .3, cy = dy, N = 24, frames = [];
-  for (let i = 0; i <= N; i++) {
-    const t = i / N, u = 1 - t;
-    const x = 2 * u * t * cx + t * t * dx, y = 2 * u * t * cy + t * t * dy;
-    frames.push({ transform: `translate(${x}px, ${y}px) scale(${Math.pow(s, t)})`, borderRadius: radius + (end - radius) * t + "px", opacity: 1 - .1 * t });
-  }
-  const fly = cv.animate(frames, { duration: 650, easing: "cubic-bezier(.35, 0, .25, 1)", fill: "forwards" });
-  const land = () => {
+  // button's height first and then sweeps across into it (never above it and back), with a single ease over
+  // the whole flight. It shrinks at an even visual rate (geometrically) while its corners round down to the
+  // thumbnail's.
+  const ease = cubicBezier(.35, 0, .25, 1), DUR = 650, t0 = performance.now();
+  const step = now => {
+    const t = ease(Math.min(1, (now - t0) / DUR)), u = 1 - t, r = thumbs.getBoundingClientRect();
+    const dx = r.left + r.width / 2 - (from.left + from.width / 2), dy = r.top + r.height / 2 - (from.top + from.height / 2);
+    const x = 2 * u * t * dx * .3 + t * t * dx, y = 2 * u * t * dy + t * t * dy;
+    cv.style.transform = `translate(${x}px, ${y}px) scale(${Math.pow(s, t)})`;
+    cv.style.borderRadius = radius + (end - radius) * t + "px"; cv.style.opacity = 1 - .1 * t;
+    if (now - t0 < DUR) return requestAnimationFrame(step);
     cv.remove();
     renderComboThumbs.hold = false; renderComboThumbs();
     btn.animate([{ transform: "scale(1)" }, { transform: "scale(1.1)" }, { transform: "scale(.97)" }, { transform: "scale(1)" }], { duration: 420, easing: "cubic-bezier(.2, .8, .2, 1)" });
   };
-  fly.onfinish = land; fly.oncancel = land;
+  requestAnimationFrame(step);
+}
+// A CSS-style cubic-bezier easing curve as a function of time (0 to 1), solved by Newton's method.
+function cubicBezier(x1, y1, x2, y2) {
+  const f = (a, b, t) => ((1 - 3 * b + 3 * a) * t + (3 * b - 6 * a)) * t * t + 3 * a * t;
+  const df = (a, b, t) => 3 * (1 - 3 * b + 3 * a) * t * t + 2 * (3 * b - 6 * a) * t + 3 * a;
+  return x => { let t = x; for (let i = 0; i < 8; i++) { const d = df(x1, x2, t); if (Math.abs(d) < 1e-6) break; t -= (f(x1, x2, t) - x) / d; } return f(y1, y2, Math.max(0, Math.min(1, t))); };
 }
 
 /* ---------- detail view ---------- */
@@ -1568,7 +1572,8 @@ function setBenchOpen(open) {
 }
 // Layering is always available: every swatch has a + button, and adding a polish opens the Layers pane.
 // Closing the pane clears the layers, so every swatch goes back to its + button.
-$("#closeBench").onclick = () => { bench.layers = []; saveBench(); setBenchOpen(false); syncSwatchButtons(); };
+function clearBench() { bench.layers = []; saveBench(); setBenchOpen(false); syncSwatchButtons(); }
+$("#closeBench").onclick = clearBench;
 
 function addLayer(p) {
   // Toppers look right with one coat; everything else defaults to two.
