@@ -1080,6 +1080,7 @@ function fitIcon(svg) {
 }
 // Favorite combos switches the page between the shelf and your saved combos (Figma node 2201:98964).
 $("#comboBtn").onclick = () => {
+  if (document.body.classList.contains("detail-open")) closeDetail(); // tapped over the polish page (phones)
   setView(state.view === "combos" ? "shelf" : "combos");
   scrollTo({ top: 0 });
   renderShelf();

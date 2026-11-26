@@ -159,7 +159,13 @@ body.detail-open .dock { opacity: 0; pointer-events: none; }
    saved swatch has somewhere to land; it fades away again once the save is done (body.saving-combo, app.js). */
 body.detail-open.saving-combo .dock { opacity: 1; z-index: 55; }
 body.detail-open.saving-combo .zoom { opacity: 0; visibility: hidden; }
-@media (max-width: 600px) { body.detail-open.saving-combo .zoom { display: none; } } /* phones: the pill alone, centered */
+/* On phones the pill stays on the polish page whenever there are combos (not only while saving): just the pill,
+   centered, and it can be tapped to go to the combos page. */
+@media (max-width: 760px) {
+  body.detail-open .dock { display: flex; opacity: 1; pointer-events: none; z-index: 55; }
+  body.detail-open .zoom { display: none; }
+  body.detail-open .combo-fab { position: static; pointer-events: auto; }
+}
 /* The detail page covers everything behind it: the shelf's one-row nav (fixed, outside the blurred page) hides too. */
 body.detail-open .mini-nav { opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .2s ease, visibility 0s .2s; }
 @media (max-width: 760px) { body.bench-open .dock { bottom: calc(108px + env(safe-area-inset-bottom)); } }
