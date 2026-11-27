@@ -628,13 +628,17 @@ body { transition: background-color .3s ease; }
 /* The blur is a picture of the shelf drawn once and blurred (.shelf-blur, made by shelfBackdrop in app.js),
    faded in over the shelf; it goes at once on close. */
 .shelf-blur { position: absolute; z-index: 10; pointer-events: none; opacity: 0; visibility: hidden; }
-body.detail-open .shelf-blur { opacity: 1; visibility: visible; transition: opacity .25s ease; }
+body.detail-open .shelf-blur { opacity: var(--wash, 1); visibility: visible; transition: opacity .25s ease; }
 /* The white wash lives on the shelf itself, not on a fixed layer. Safari on iOS 26 shows the page (not
    fixed layers) under the status bar, and paints the bar solid in the color of any fixed layer at the
    top. With the wash part of the page, the area under the clock is blurred and washed exactly like the
    rest of the dialog, so the dialog reads as running all the way to the top of the screen. */
 .page::after { content: ""; position: absolute; inset: 0; z-index: 11; background-image: linear-gradient(rgba(255, 255, 255, .72), rgba(255, 255, 255, .72)); opacity: 0; pointer-events: none; transition: opacity .25s ease; }
-body.detail-open .page::after { opacity: 1; }
+body.detail-open .page::after { opacity: var(--wash, 1); }
+/* While a finger drags the polish page (swipe down to close, or across to the next polish) it follows the
+   finger exactly, and the backdrop fades with it. */
+body.detail-drag .shelf-blur, body.detail-drag .page::after { transition: none; }
+.modal-body-ghost { pointer-events: none; }
 .modal-blur { position: fixed; inset: 0; }
 .modal-head { opacity: 0; transition: opacity .3s ease; }
 .modal.open .modal-head { opacity: 1; }

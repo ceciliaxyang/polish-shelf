@@ -205,6 +205,7 @@ async function openCombos() {
   under.style.zIndex = SHEET.Z; dim.style.opacity = 0;
   pinToScreen(under, dim);
   body.append(under, dim); // the shelf, frozen, covers the page while it changes underneath
+  SHEET.shelfCopy = under; // kept (off the page) for swiping the combos back down to it: see the gestures below
   let sheet = null;
   try {
     showView("combos", 0);
@@ -227,6 +228,7 @@ async function openCombos() {
 }
 async function closeCombos() {
   if (state.view !== "combos") return;
+  SHEET.shelfCopy = null;
   if (reduceMotion) return showView("shelf", SHEET.shelfY);
   const sheet = freezePage(), dim = sheetDim(SHEET.Z + 1);
   sheet.style.zIndex = SHEET.Z + 2;
@@ -806,10 +808,10 @@ function prefetchPhotos(p) {
   grid.addEventListener("focusin", e => prefetchPhotos(polishAt(e)));
 })();
 
-function openDetail(p, card) {
-  if (detail.closing) detail.closing(); // a close still flying: land it first
-  prefetchPhotos(p); // (if nothing fetched them yet: a keyboard open or a share link)
-  detail.p = p; detail.card = card;
+// The polish page's content for one polish: name, description, pills, buttons, swatch and photos. The
+// dialog must already be showing (the swatch is drawn at the size it appears). Used when it opens and when
+// swiping to the next or previous polish.
+function fillDetail(p) {
   // One line: the brand's short name (as on its filter pill), an em dash, then the polish's name.
   const brand = BRAND_LABELS[p.brand] || p.brand || "";
   $("#mName").textContent = (brand ? brand + " — " : "") + (p.name || "Untitled");
@@ -832,13 +834,10 @@ function openDetail(p, card) {
   const link = $("#mLink");
   link.hidden = !p.url; if (p.url) link.href = p.url;
 
-  // Show the dialog first so the swatch can be drawn at the size it will actually appear.
-  // The dialog's backdrop (body.detail-open) starts with the swatch's flight, below, not now: starting it in
-  // the same frame as all this setup used to eat the flight before it was ever painted.
-  const m = $("#modal"); m.hidden = false; document.body.style.overflow = "hidden";
-  m.scrollTop = 0;
   $("#mPills").querySelectorAll(".scope-icon").forEach(fitIcon);
-  const stage = $("#mStage"); stage.innerHTML = "";
+  const stage = $("#mStage");
+  if (detail.cv && autoIO) { autoIO.unobserve(detail.cv); drifting.delete(detail.cv); }
+  stage.innerHTML = "";
   const cv = document.createElement("canvas"); cv.className = "swatch";
   stage.appendChild(cv); detail.cv = cv;
   dropify(stage, p.id, 260 / 240); // the card's shape (180 x 195 here), so it grows out of the card cleanly
@@ -860,7 +859,20 @@ function openDetail(p, card) {
     im.addEventListener("load", reveal, { once: true });
     row.appendChild(im); photoImgs.push(im);
   });
+  return { stage, photoImgs };
+}
 
+function openDetail(p, card) {
+  if (detail.closing) detail.closing(); // a close still flying: land it first
+  prefetchPhotos(p); // (if nothing fetched them yet: a keyboard open or a share link)
+  detail.p = p; detail.card = card; detail.swiped = false;
+  prefetchNeighbours(p);
+  // Show the dialog first so the swatch can be drawn at the size it will actually appear.
+  // The dialog's backdrop (body.detail-open) starts with the swatch's flight, below, not now: starting it in
+  // the same frame as all this setup used to eat the flight before it was ever painted.
+  const m = $("#modal"); m.hidden = false; document.body.style.overflow = "hidden";
+  m.scrollTop = 0;
+  const { stage, photoImgs } = fillDetail(p);
   // Grow the swatch out of its card (a shared element). First paint it sitting exactly over its card, with
   // the rest of the dialog still invisible, so nothing seems to change; the flight, the shelf's blur and the
   // text fade start on the frame after that, once the setup above has been painted, so the whole flight is seen.
@@ -983,7 +995,11 @@ function shelfBackdrop() {
   cv.getContext("2d").putImageData(img, -m, mt - m);
   Object.assign(cv.style, { left: -pr.left + "px", top: -pr.top - mt / S + "px", width: vw + "px", height: vh + (mt + mb) / S + "px" }); // (the picture is a few pixels larger: drawn just squeezed)
 }
-addEventListener("resize", () => { if (document.body.classList.contains("detail-open")) shelfBackdrop(); });
+let lastW = innerWidth;
+addEventListener("resize", () => {
+  if (document.body.classList.contains("detail-open")) shelfBackdrop();
+  if (innerWidth !== lastW) { lastW = innerWidth; SHEET.shelfCopy = null; } // the kept copy of the shelf no longer matches it
+});
 
 function closeDetail() {
   const m = $("#modal"); if (m.hidden || detail.closing) return;
@@ -998,7 +1014,7 @@ function closeDetail() {
   const done = () => {
     if (detail.closing !== done) return;
     detail.closing = null; clearTimeout(done.t); removeEventListener("scroll", done.scroll);
-    m.hidden = true; m.classList.remove("open"); m.style.pointerEvents = "";
+    m.hidden = true; m.classList.remove("open"); m.style.pointerEvents = ""; m.style.transform = "";
     stage.style.transition = "none"; stage.style.transform = "";
     if (card) card.style.visibility = "";
   };
@@ -1006,7 +1022,19 @@ function closeDetail() {
   m.classList.remove("open"); document.body.classList.remove("detail-open");
   m.style.pointerEvents = "none"; document.body.style.overflow = "";
   history.replaceState(null, "", SITE_ROOT); document.title = SITE_TITLE;
+  // The blurred backdrop stays exactly where it is on screen while it fades out, whatever the scrolling below
+  // does to the page under it (it's part of the page, so taking the room away used to drop it down a little).
+  const blur = $(".page > .shelf-blur"), blurTop = blur && blur.getBoundingClientRect().top;
   roomAroundPage(false); // before measuring the card, which this scrolls back to where it was
+  // Swiped to a polish whose card is off screen: the shelf scrolls to it first, so the swatch has somewhere to
+  // fly back to.
+  if (card && card.isConnected && detail.swiped) {
+    const r = card.getBoundingClientRect(), top = sheetMQ.matches ? 80 : 120;
+    if (r.top < top || r.bottom > innerHeight - 40) {
+      scrollTo({ top: Math.max(0, scrollY + r.top - (innerHeight - r.height) / 2), behavior: "instant" });
+    }
+  }
+  if (blur) blur.style.top = parseFloat(blur.style.top) + blurTop - blur.getBoundingClientRect().top + "px";
   if (card && card.isConnected) {
     const from = stage.getBoundingClientRect(), to = card.getBoundingClientRect();
     stage.style.transition = `transform .45s ${EASE}`; stage.style.transformOrigin = "0 0";
@@ -1019,6 +1047,212 @@ function closeDetail() {
 }
 $("#mClose").onclick = closeDetail;
 document.addEventListener("keydown", e => { if (e.key === "Escape") closeDetail(); });
+
+/* ---------- phone gestures ---------- */
+// On touch screens the polish page and Favorite combos close with a swipe down (from the top of the page), and
+// the polish page swipes left and right to the next and previous polish on the shelf, in the shelf's current
+// order and filters. The page follows the finger; letting go past a third of the way (or with a flick) finishes
+// the move, anything less springs back. Each gesture is picked from the finger's first movement: across is a
+// swipe between polishes, down from the top is a dismiss, anything else scrolls as usual. Touches that start at
+// the screen's left or right edge are left to Safari's own back and forward swipes.
+const GESTURE = { edge: 24, flick: .5, back: 320, spring: "cubic-bezier(.2, .8, .2, 1)" };
+
+// The polishes before and after this one on the shelf, as it's filtered and ordered right now.
+function shelfNeighbours(p) {
+  if (state.view !== "shelf") return {};
+  const cards = [...$("#grid").children].filter(c => c._p && !c.hidden && c.style.position !== "absolute");
+  const i = cards.findIndex(c => c._p === p);
+  return i < 0 ? {} : { prev: cards[i - 1], next: cards[i + 1] };
+}
+// The neighbours' photos download a moment after a polish page opens (so they don't hold up its own), ready
+// for a swipe to them.
+function prefetchNeighbours(p) {
+  clearTimeout(prefetchNeighbours.t);
+  prefetchNeighbours.t = setTimeout(() => {
+    if (detail.p !== p) return;
+    const n = shelfNeighbours(p); [n.next, n.prev].forEach(c => c && prefetchPhotos(c._p));
+  }, 900);
+}
+
+// Moves the polish page to the next (dir 1) or previous (-1) polish. The page as it is slides off with the
+// swipe (a frozen copy), while the page itself, filled with the new polish, slides in from the other side.
+// `x` is where the swipe left the page; `v` its speed (px per ms), so a flick carries on as fast.
+function switchDetail(dir, x = 0, v = 0) {
+  const m = $("#modal"), n = shelfNeighbours(detail.p), card = dir > 0 ? n.next : n.prev;
+  if (!card || m.hidden || detail.closing || detail.switching) return false;
+  if (detail.anim) { detail.anim.finish(); detail.anim = null; } // still landing from its card: land it now
+  if (detail.pool) { detail.pool(); detail.pool = null; }
+  detail.token = null; // the old polish's photos (if they hadn't started loading) never will
+  const body = $("#modal .modal-body"), W = innerWidth, sy = m.scrollTop;
+  // The copy keeps its swatch's picture (a canvas copies blank) and its photos as they were.
+  const copy = body.cloneNode(true);
+  copy.querySelectorAll("[id]").forEach(e => { if (!e.closest("svg")) e.removeAttribute("id"); });
+  const from = body.querySelector("canvas"), to = copy.querySelector("canvas");
+  if (from && to && from.width) try { to.getContext("2d").drawImage(from, 0, 0); } catch (e) {}
+  copy.classList.add("modal-body-ghost"); copy.setAttribute("aria-hidden", "true"); copy.inert = true;
+  copy.style.transform = `translate(${x}px, 0)`;
+  body.before(copy);
+  // The new polish.
+  const old = detail.card, p = card._p, wrap = card.querySelector(".swatch-wrap");
+  if (old) old.style.visibility = "";
+  detail.p = p; detail.card = wrap; detail.swiped = true; wrap.style.visibility = "hidden";
+  body.style.transform = `translate(${dir * W}px, 0)`; body.style.opacity = "";
+  const stage = $("#mStage"); stage.style.transition = "none"; stage.style.transform = "";
+  m.scrollTop = 0;
+  copy.style.marginTop = -sy + "px"; // (it was scrolled with the page)
+  const { photoImgs } = fillDetail(p);
+  photoImgs.forEach(im => { im.loading = "eager"; im.src = im.dataset.src; });
+  history.replaceState(null, "", SITE_ROOT + "p/" + encodeURIComponent(p.id) + "/");
+  document.title = `${p.name} · ${p.brand} · ${SITE_TITLE}`;
+  prefetchNeighbours(p);
+  // As fast as the flick, but never slower than a normal page turn.
+  const rest = W - Math.abs(x), ms = reduceMotion ? 1 : Math.round(Math.max(220, Math.min(380, Math.abs(v) > .3 ? rest / Math.abs(v) * 1.6 : 380)));
+  const ease = "cubic-bezier(.25, .8, .25, 1)";
+  const outA = copy.animate([{ transform: `translate(${x}px, 0)`, opacity: 1 }, { transform: `translate(${-dir * W}px, 0)`, opacity: .4 }], { duration: ms, easing: ease, fill: "forwards" });
+  const inA = body.animate([{ transform: `translate(${dir * W + x}px, 0)` }, { transform: "none" }], { duration: ms, easing: ease });
+  body.style.transform = "";
+  const done = () => { if (detail.switching !== done) return; detail.switching = null; copy.remove(); };
+  detail.switching = done;
+  Promise.all([outA.finished, inA.finished]).then(done, done); setTimeout(done, ms + 200);
+  return true;
+}
+
+(() => {
+  if (!matchMedia("(hover: none)").matches) return; // touch screens only
+  const m = $("#modal");
+  let g = null; // the gesture in progress: { x0, y0, mode, samples, ... }
+  const track = (t, x, y) => { g.samples.push({ t, x, y }); while (g.samples.length > 2 && t - g.samples[0].t > 80) g.samples.shift(); };
+  const speed = k => { const s = g.samples, a = s[0], b = s[s.length - 1]; return b.t > a.t ? (b[k] - a[k]) / (b.t - a.t) : 0; };
+  // Past the first or last polish the page still moves, but less and less (like the end of a scroll).
+  const rubber = d => { const L = innerWidth * .5; return Math.sign(d) * L * (1 - 1 / (Math.abs(d) / L * .55 + 1)); };
+
+  /* The polish page. */
+  const body = () => $("#modal .modal-body");
+  const setWash = o => document.body.style.setProperty("--wash", o.toFixed(3));
+  m.addEventListener("touchstart", e => {
+    if (e.touches.length > 1) { if (g) cancel(); return; }
+    if (detail.closing || detail.switching || !document.body.classList.contains("detail-open")) { g = null; return; }
+    const t = e.touches[0];
+    g = { x0: t.clientX, y0: t.clientY, mode: null, samples: [], edge: t.clientX < GESTURE.edge || t.clientX > innerWidth - GESTURE.edge };
+    track(e.timeStamp, t.clientX, t.clientY);
+  }, { passive: true });
+  m.addEventListener("touchmove", e => {
+    if (!g) return;
+    if (e.touches.length > 1) return cancel();
+    const t = e.touches[0], dx = t.clientX - g.x0, dy = t.clientY - g.y0;
+    if (!g.mode) {
+      if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return;
+      if (Math.abs(dx) > Math.abs(dy) && !g.edge && state.view === "shelf") g.mode = "x";
+      else if (dy > 0 && Math.abs(dy) >= Math.abs(dx) && m.scrollTop <= 0) g.mode = "down";
+      else { g = null; return; } // a scroll: the page's own
+      document.body.classList.add("detail-drag");
+      if (g.mode === "x") g.n = shelfNeighbours(detail.p);
+    }
+    if (e.cancelable) e.preventDefault(); // no scroll, bounce or Safari page swipe while the page follows the finger
+    track(e.timeStamp, t.clientX, t.clientY);
+    if (g.mode === "x") {
+      const open = dx < 0 ? g.n.next : g.n.prev, x = open ? dx : rubber(dx);
+      g.x = x; body().style.transform = `translate(${x}px, 0)`;
+    } else {
+      const y = Math.max(0, dy) + Math.min(0, dy) * .2; g.y = y;
+      m.style.transform = `translate(0, ${y}px)`;
+      setWash(Math.max(0, 1 - y / (innerHeight * .7)));
+    }
+  }, { passive: false });
+  const settle = (el, from) => {
+    el.style.transform = "";
+    if (!reduceMotion) el.animate([{ transform: from }, { transform: "none" }], { duration: GESTURE.back, easing: GESTURE.spring });
+  };
+  function cancel() {
+    if (!g) return;
+    const was = g; g = null;
+    document.body.classList.remove("detail-drag"); document.body.style.removeProperty("--wash");
+    if (was.mode === "x") settle(body(), `translate(${was.x || 0}px, 0)`);
+    if (was.mode === "down") settle(m, `translate(0, ${was.y || 0}px)`);
+  }
+  const end = e => {
+    if (!g || !g.mode) { g = null; return; }
+    const was = g, W = innerWidth;
+    if (was.mode === "x") {
+      const vx = speed("x"), dir = was.x < 0 ? 1 : -1;
+      const far = Math.abs(was.x) > W * .3 || (Math.abs(vx) > GESTURE.flick && Math.sign(vx) === -dir && Math.abs(was.x) > 12);
+      const target = dir > 0 ? was.n.next : was.n.prev;
+      if (e.type === "touchend" && far && target) {
+        g = null; document.body.classList.remove("detail-drag");
+        if (switchDetail(dir, was.x, vx)) return;
+      }
+      g = was; return cancel();
+    }
+    const vy = speed("y");
+    if (e.type === "touchend" && (was.y > Math.min(140, innerHeight * .2) || (vy > GESTURE.flick && was.y > 12))) {
+      // Let go: the page fades from where it is and the swatch flies back to its card (closeDetail).
+      g = null; document.body.classList.remove("detail-drag"); document.body.style.removeProperty("--wash");
+      return closeDetail();
+    }
+    cancel();
+  };
+  m.addEventListener("touchend", end); m.addEventListener("touchcancel", end);
+})();
+
+(() => {
+  if (!matchMedia("(hover: none)").matches) return;
+  /* Favorite combos: pulled down from the top of the page, a copy of it follows the finger over the dimmed
+     shelf (the copy of the shelf kept from opening it); let go far enough and it drops away as the close
+     button does, otherwise it springs back up and the copies go. The live page never moves (see openCombos). */
+  let g = null;
+  const blocked = t => t.closest && t.closest(".bench, .dock, .modal, .mini-nav");
+  document.addEventListener("touchstart", e => {
+    g = null;
+    if (state.view !== "combos" || e.touches.length > 1 || SHEET.busy || reduceMotion) return;
+    if (scrollY > 0 || blocked(e.target) || document.documentElement.classList.contains("sheet-lock")) return;
+    const t = e.touches[0]; g = { y0: t.clientY, x0: t.clientX, samples: [{ t: e.timeStamp, y: t.clientY }] };
+  }, { passive: true });
+  document.addEventListener("touchmove", e => {
+    if (!g) return;
+    if (e.touches.length > 1) return back();
+    const t = e.touches[0], dy = t.clientY - g.y0, dx = t.clientX - g.x0;
+    if (!g.sheet) {
+      if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return;
+      if (!(dy > 0 && dy >= Math.abs(dx)) || scrollY > 0) { g = null; return; }
+      // The copies, as openCombos stacks them: shelf, dim, then the combos on top.
+      const sheet = freezePage(), dim = sheetDim(SHEET.Z + 1), under = SHEET.shelfCopy;
+      sheet.style.zIndex = SHEET.Z + 2;
+      if (under) { under.style.zIndex = SHEET.Z; pinToScreen(under); document.body.append(under); }
+      pinToScreen(dim, sheet); document.body.append(dim, sheet);
+      Object.assign(g, { sheet, dim, under });
+    }
+    if (e.cancelable) e.preventDefault();
+    g.samples.push({ t: e.timeStamp, y: t.clientY }); while (g.samples.length > 2 && e.timeStamp - g.samples[0].t > 80) g.samples.shift();
+    g.y = Math.max(0, dy);
+    g.sheet.style.transform = `translate(0, ${g.y}px)`;
+    g.dim.style.opacity = Math.max(0, 1 - g.y / innerHeight).toFixed(3);
+  }, { passive: false });
+  function back() {
+    const was = g; g = null; if (!was || !was.sheet) return;
+    const { sheet, dim, under } = was, from = `translate(0, ${was.y}px)`, o = dim.style.opacity;
+    SHEET.busy = true;
+    const a = sheet.animate([{ transform: from }, { transform: "none" }], { duration: GESTURE.back, easing: GESTURE.spring, fill: "forwards" });
+    dim.animate([{ opacity: o }, { opacity: 1 }], { duration: GESTURE.back, easing: "ease-out", fill: "forwards" });
+    const done = () => { if (!sheet.isConnected) return; sheet.remove(); dim.remove(); if (under) under.remove(); SHEET.busy = false; };
+    a.finished.then(done, done); setTimeout(done, GESTURE.back + 250);
+  }
+  const end = e => {
+    const was = g; if (!was || !was.sheet) { g = null; return; }
+    const s = was.samples, a = s[0], b = s[s.length - 1], v = b.t > a.t ? (b.y - a.y) / (b.t - a.t) : 0;
+    if (e.type !== "touchend" || !(was.y > Math.min(160, innerHeight * .22) || (v > GESTURE.flick && was.y > 12))) return back();
+    g = null;
+    // Let go: the shelf comes back underneath (where you left it) and the copy of the combos drops away.
+    const { sheet, dim, under } = was, H = innerHeight;
+    try { showView("shelf", SHEET.shelfY); pinToScreen(dim, sheet); } catch (err) { sheet.remove(); dim.remove(); if (under) under.remove(); throw err; }
+    if (under) requestAnimationFrame(() => under.remove()); // the live shelf is painted under it by then
+    SHEET.shelfCopy = null;
+    const ms = Math.round(Math.max(180, Math.min(SHEET.down, v > .3 ? (H - was.y) / v * 1.4 : SHEET.down)));
+    dim.animate([{ opacity: dim.style.opacity }, { opacity: 0 }], { duration: ms, easing: "ease-out", fill: "forwards" });
+    const move = sheet.animate([{ transform: `translate(0, ${was.y}px)` }, { transform: `translate(0, ${H}px)` }], { duration: ms, easing: "cubic-bezier(.3, .6, .5, 1)", fill: "forwards" });
+    afterSheet(ms, move, dim, sheet);
+  };
+  document.addEventListener("touchend", end); document.addEventListener("touchcancel", end);
+})();
 
 /* ---------- layering bench ---------- */
 function polishById(id) { return state.polishes.find(p => p.id === id); }
