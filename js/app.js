@@ -650,8 +650,10 @@ function flySwatch(layers) {
   const src = [$("#stage"), $("#peekMini")].find(el => { const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0 && r.top < innerHeight && r.bottom > 0; });
   if (!src || !tr.width) return Promise.resolve();
   const from = src.getBoundingClientRect(), W = from.width, H = from.height;
-  // The picture: reuse what's already on screen when there is one, otherwise draw the stack once.
-  let pic = src.querySelector("canvas");
+  // The picture: reuse the combined picture already on screen when there is one, otherwise draw the stack
+  // once. (Only a canvas directly in the preview: the preview also keeps each layer's own canvas hidden
+  // inside it, and those come first, so a plain first-canvas lookup flew just the bottom layer.)
+  let pic = src.querySelector(":scope > canvas:not(.drop-swirl)");
   if (!pic || !pic.width) { pic = document.createElement("canvas"); if (!drawStack(pic, layers, Math.round(W), Math.round(H))) return Promise.resolve(); }
   const PAD = 28, dpr = Math.min(2, devicePixelRatio || 1), cv = document.createElement("canvas");
   cv.width = Math.round((W + PAD * 2) * dpr); cv.height = Math.round((H + PAD * 2) * dpr);

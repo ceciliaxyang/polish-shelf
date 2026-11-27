@@ -248,7 +248,7 @@ html:not(.no-sf) .fx-row .scope { letter-spacing: -.4px; }
 /* The dock holds the zoom bar and sits at the bottom center; the Favorite combos button hangs off its right
    side, so the zoom bar stays centered whether or not the button is showing. */
 .dock { position: fixed; z-index: 50; left: 50%; translate: -50% 0; bottom: calc(8px + env(safe-area-inset-bottom));
-  transition: bottom .38s cubic-bezier(.2, .8, .2, 1), left .45s cubic-bezier(.2, .8, .2, 1), opacity .2s ease; }
+  transition: bottom .38s cubic-bezier(.2, .8, .2, 1), left .45s cubic-bezier(.2, .8, .2, 1), opacity .3s ease, transform .42s cubic-bezier(.2, .8, .2, 1); }
 .zoom { --i: 1; position: relative;
   display: flex; gap: 4px; padding: 4px; border-radius: 100px; color: #222;
   background: rgba(255, 255, 255, .32); -webkit-backdrop-filter: blur(16px) saturate(1.8); backdrop-filter: blur(16px) saturate(1.8);
@@ -463,11 +463,12 @@ body.detail-open .mini-nav { opacity: 0; visibility: hidden; pointer-events: non
   .combo-art .swatch-wrap { border-radius: 22%; }
 }
 .zoom { transition: opacity .2s ease, visibility 0s; }
-/* With the zoom bar gone, the Favorite combos button glides to the middle of the dock (centered on screen). */
-.combo-fab { transition: background .15s ease, opacity .2s ease, left .35s cubic-bezier(.2, .8, .2, 1), translate .35s cubic-bezier(.2, .8, .2, 1); }
-.view-combos .combo-fab { left: 50%; translate: -50% 0; }
-.view-combos .zoom { opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .2s ease, visibility 0s .2s; }
-@media (max-width: 600px) { .view-combos .zoom { display: none; } .view-combos .combo-fab { translate: none; } } /* phones center the dock's contents, so the pill centers once the bar is out */
+.combo-fab { transition: background .15s ease, opacity .2s ease; }
+/* Opening the combos page, the whole dock (zoom bar and Combos pill together, nothing moving inside it) fades
+   out as it slides 32px down, while the sheet rises; closing it, the dock fades back in as it slides up into
+   place, while the sheet drops away. Its slide is a transform, so nothing is laid out again. */
+html.view-combos .dock { opacity: 0; transform: translateY(32px); pointer-events: none; }
+html.view-combos .dock * { pointer-events: none !important; }
 /* Dark combos page (a developer setting; Figma node 2406:3849): black page, #f7f7f7 title and names, #8c8c8c
    polish lists, and the Favorite combos button as grey glass. Only the combos page changes. */
 html.combos-dark.view-combos, html.combos-dark.view-combos body { background: #000; --swatch: #1a1a1a; }
@@ -762,10 +763,10 @@ html.combos-dark.view-combos .combos-close svg { stroke: #f7f7f7; }
 .page-ghost { position: absolute; left: 0; right: 0; top: 0; height: 100vh; height: 100lvh; overflow: hidden; contain: paint; pointer-events: none; will-change: transform; }
 .page-ghost > .page { margin-top: var(--gy, 0); }
 .sheet-dim { position: absolute; left: 0; right: 0; top: 0; height: 100vh; height: 100lvh; background: rgba(0, 0, 0, .22); pointer-events: none; }
-/* The Combos pill fades out once the combos page is up (the close button takes you back), unless a combo is
-   being saved from there, when it shows to catch the swatch. */
-html.view-combos .dock .combo-fab { opacity: 0; pointer-events: none; transition: opacity .2s ease; }
-html.view-combos body.saving-combo .dock .combo-fab { opacity: 1; }
+/* While a combo is saved from the combos page, the dock comes back with just the Combos pill (the zoom bar
+   stays hidden, holding its place) to catch the swatch. */
+html.view-combos body.saving-combo .dock { opacity: 1; transform: none; }
+html.view-combos body.saving-combo .zoom { opacity: 0; visibility: hidden; }
 .page-ghost .card { transition: none !important; }
 /* The combos page always fills the screen, however few combos there are, so the sheet covers the shelf
    completely (lvh: the full height with Safari's toolbars hidden, so no strip of shelf shows below). */
