@@ -771,8 +771,33 @@ function liquidPool(stage, from, to) {
   return stop;
 }
 
+// The polish page's photos start downloading as soon as its swatch looks about to be opened: when the
+// pointer rests on it (desktop) or presses it (phone), and at the latest when it opens. Only the download
+// happens early; the photos are still decoded and shown once the swatch has landed (openDetail), so the
+// flight stays smooth, but by then they're usually already here. Each is kept so it stays in the cache.
+const prefetched = new Map();
+function prefetchPhotos(p) {
+  (p && p.photos || []).slice(0, 4).forEach(src => {
+    if (prefetched.has(src)) return;
+    const im = new Image(); im.decoding = "async"; im.src = src; prefetched.set(src, im);
+  });
+}
+(() => {
+  const grid = $("#grid"); let hover = 0;
+  const polishAt = e => { const sw = e.target.closest && e.target.closest(".swatch-wrap"); return sw && sw.closest(".card")?._p; };
+  // A short rest first, so sweeping the pointer across the shelf doesn't fetch everything it passes over.
+  grid.addEventListener("pointerover", e => {
+    if (e.pointerType !== "mouse") return;
+    const p = polishAt(e); clearTimeout(hover); if (p) hover = setTimeout(() => prefetchPhotos(p), 120);
+  });
+  grid.addEventListener("pointerout", () => clearTimeout(hover));
+  grid.addEventListener("pointerdown", e => prefetchPhotos(polishAt(e)), { passive: true });
+  grid.addEventListener("focusin", e => prefetchPhotos(polishAt(e)));
+})();
+
 function openDetail(p, card) {
   if (detail.closing) detail.closing(); // a close still flying: land it first
+  prefetchPhotos(p); // (if nothing fetched them yet: a keyboard open or a share link)
   detail.p = p; detail.card = card;
   // One line: the brand's short name (as on its filter pill), an em dash, then the polish's name.
   const brand = BRAND_LABELS[p.brand] || p.brand || "";
@@ -819,7 +844,7 @@ function openDetail(p, card) {
     const im = document.createElement("img"); im.loading = "lazy"; im.decoding = "async"; im.dataset.src = src; im.alt = `${p.name} photo ${i + 1}`;
     // Staggered entry: each photo a beat after the last, with a little randomness so it feels organic.
     // It starts once the photo has loaded, so the rise is actually seen.
-    im.style.setProperty("--d", (.12 + i * .1 + Math.random() * .05).toFixed(3) + "s");
+    im.style.setProperty("--d", (.06 + i * .08 + Math.random() * .04).toFixed(3) + "s");
     const reveal = () => requestAnimationFrame(() => requestAnimationFrame(() => im.classList.add("in")));
     im.addEventListener("load", reveal, { once: true });
     row.appendChild(im); photoImgs.push(im);
