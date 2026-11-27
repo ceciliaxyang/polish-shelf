@@ -24,7 +24,7 @@ const SEED = 3;
 // The swatches, in the order they light up, with their size. Chosen for a spread of color and finish.
 const PICKS = [
   "anp-great-purple-emperor", "mooncat-dark-horse", "ilnp-bubbly", "mooncat-fake-halo", "cracked-lahar",
-  "mooncat-jewel-beetle", "mooncat-into-the-abyss", "prettydiva-mermaid-pink-chrome-powder", "anp-sapphire-morpho",
+  "mooncat-jewel-beetle", "mooncat-into-the-abyss", "mooncat-garden-of-evil", "anp-sapphire-morpho",
   "mooncat-moonlight-lullaby", "beesknees-sprites", "mooncat-koi-whiskers", "mooncat-kafkaesque",
   "mooncat-pandoras-box", "cracked-taro-milk-tea", "beesknees-the-horror-of-the-truth", "mooncat-fields-of-lavender",
   "anp-yotsuya-kaidan",
@@ -65,6 +65,46 @@ function layout(n) {
   return placed;
 }
 
+// The mean color (CIE Lab) and the spread of lightness inside each swatch, from a screenshot of the collage.
+function lookOf(png, items) {
+  const raw = execFileSync("ffmpeg", ["-loglevel", "error", "-i", "-", "-f", "rawvideo", "-pix_fmt", "rgb24", "-"], { input: png, maxBuffer: 64 << 20 });
+  const lin = c => (c /= 255) <= .04045 ? c / 12.92 : ((c + .055) / 1.055) ** 2.4;
+  const f = t => t > .008856 ? Math.cbrt(t) : 7.787 * t + 16 / 116;
+  return items.map(({ x, y, d }) => {
+    let n = 0, L = 0, A = 0, B = 0, LL = 0;
+    const r = d * .4;
+    for (let py = Math.round(y - r); py <= y + r; py += 2) for (let px = Math.round(x - r); px <= x + r; px += 2) {
+      if ((px - x) ** 2 + (py - y) ** 2 > r * r) continue;
+      const o = (py * W + px) * 3, R = lin(raw[o]), G = lin(raw[o + 1]), Bl = lin(raw[o + 2]);
+      const X = f((.4124 * R + .3576 * G + .1805 * Bl) / .9505), Y = f(.2126 * R + .7152 * G + .0722 * Bl), Z = f((.0193 * R + .1192 * G + .9505 * Bl) / 1.089);
+      const l = 116 * Y - 16; L += l; LL += l * l; A += 500 * (X - Y); B += 200 * (Y - Z); n++;
+    }
+    L /= n; return { L, a: A / n, b: B / n, sd: Math.sqrt(Math.max(0, LL / n - L * L)) };
+  });
+}
+const NEAR = 60;        // px between two swatches' edges for them to count as neighbours
+const ALIKE = 45;       // how different (Lab distance, plus the lightness spread) two neighbours should be
+function spread(items, looks) {
+  const n = items.length, ids = items.map((_, i) => i);
+  const near = [];
+  for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++)
+    if (Math.hypot(items[i].x - items[j].x, items[i].y - items[j].y) - (items[i].d + items[j].d) / 2 < NEAR) near.push([i, j]);
+  const diff = (p, q) => Math.hypot(p.L - q.L, p.a - q.a, p.b - q.b) + .5 * Math.abs(p.sd - q.sd);
+  // at[spot] = which swatch (by its index in looks) sits there
+  const cost = at => near.reduce((c, [i, j]) => c + Math.max(0, ALIKE - diff(looks[at[i]], looks[at[j]])) ** 2, 0);
+  let s = SEED; const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647;
+  let at = ids.slice(), c = cost(at);
+  for (let t = 0; t < 40000 && c > 0; t++) {
+    const i = Math.floor(rnd() * n), j = Math.floor(rnd() * n); if (i === j) continue;
+    [at[i], at[j]] = [at[j], at[i]];
+    const c2 = cost(at);
+    if (c2 <= c) c = c2; else [at[i], at[j]] = [at[j], at[i]];
+  }
+  const close = near.map(([i, j]) => [items[at[i]].id, items[at[j]].id, Math.round(diff(looks[at[i]], looks[at[j]]))]).filter(x => x[2] < ALIKE);
+  if (close.length) console.warn("still alike:", close);
+  return items.map((it, k) => ({ ...it, id: items[at[k]].id }));
+}
+
 (async () => {
   const server = await serve();
   const browser = await chromium.launch(process.env.CHROME ? { executablePath: process.env.CHROME } : {});
@@ -75,7 +115,8 @@ function layout(n) {
 
   const spots = layout(PICKS.length);
   if (spots.length < PICKS.length) console.warn(`only ${spots.length} of ${PICKS.length} swatches fit`);
-  const items = spots.map((s, i) => ({ ...s, id: PICKS[i] }));
+  let items = spots.map((s, i) => ({ ...s, id: PICKS[i] }));
+  const stageUp = async items => {
   const moves = await page.evaluate(({ items, W, H, BG }) => {
     document.getElementById("og-stage")?.remove();
     const stage = document.createElement("div"); stage.id = "og-stage";
@@ -110,6 +151,16 @@ function layout(n) {
   await page.clock.runFor(1500);
   await page.evaluate(moves => og.forEach((_, i) => moves[i] && ogMove(i, .5, .5)), moves);
   await page.clock.runFor(2500);
+  return moves;
+  };
+
+  // Look-alikes kept apart: each swatch's rendered color is measured, then the swatches are swapped between
+  // the spots until no two neighbours (spots within NEAR px of each other) look too much alike.
+  await stageUp(items);
+  const looks = lookOf(await page.screenshot({ type: "png", clip: { x: 0, y: 0, width: W, height: H } }), items);
+  items = spread(items, looks);
+  const moves = await stageUp(items);
+  console.log(items.map(it => `${it.id} ${Math.round(it.d)}`).join("\n"));
 
   const shot = () => page.screenshot({ type: "png", clip: { x: 0, y: 0, width: W, height: H } });
   const frames = [await shot()];
