@@ -168,10 +168,11 @@ html:not(.no-sf) .fx-row .scope { letter-spacing: -.4px; }
   .ia-play .ia-magnetic .body { animation: ia-buzz .6s linear; }
   .ia-play .ia-magnetic .spk { animation: ia-spark .8s ease-out both; }
   .ia-play .ia-magnetic .spk2 { animation-delay: .08s; }
-  /* Flakies: the flakes tumble */
-  .ia-play .ia-flakies .sh1 { animation: ia-tumbleL .9s ease-in-out; }
-  .ia-play .ia-flakies .sh2 { animation: ia-tumbleR .9s ease-in-out .06s; }
-  .ia-play .ia-flakies .sh3 { animation: ia-tumbleL .9s ease-in-out .12s; }
+  /* Flakies: a cascade. One flake after another, top to bottom, tumbles down and out, then drops back into
+     place from above. */
+  .ia-play .ia-flakies .sh1 { animation: ia-cascadeL .6s cubic-bezier(.45, 0, .3, 1) both; }
+  .ia-play .ia-flakies .sh2 { animation: ia-cascadeR .6s cubic-bezier(.45, 0, .3, 1) .14s both; }
+  .ia-play .ia-flakies .sh3 { animation: ia-cascadeL .6s cubic-bezier(.45, 0, .3, 1) .28s both; }
   /* Thermal: the mercury climbs and the bulb fills */
   .ia-play .ia-thermal .merc { animation: ia-merc 1s cubic-bezier(.4, 0, .2, 1); }
   .ia-play .ia-thermal .bulb { animation: ia-bulb 1s ease; }
@@ -218,8 +219,8 @@ html:not(.no-sf) .fx-row .scope { letter-spacing: -.4px; }
 }
 @keyframes ia-buzz { 0%, 70%, 100% { transform: translate(0, 0); } 10% { transform: translate(-.6px, 0) rotate(-2deg); } 20% { transform: translate(.6px, 0) rotate(2deg); } 30% { transform: translate(-.5px, 0) rotate(-1.5deg); } 40% { transform: translate(.5px, 0) rotate(1.5deg); } 50% { transform: translate(-.3px, 0); } 60% { transform: translate(.3px, 0); } }
 @keyframes ia-spark { 0%, 25% { opacity: 0; transform: scale(.4); } 45% { opacity: 1; transform: scale(1); } 75% { opacity: 1; } 100% { opacity: 0; transform: scale(1.1); } }
-@keyframes ia-tumbleL { 0%, 100% { transform: rotate(0); } 30% { transform: rotate(-32deg); } 60% { transform: rotate(14deg); } 82% { transform: rotate(-5deg); } }
-@keyframes ia-tumbleR { 0%, 100% { transform: rotate(0); } 30% { transform: rotate(32deg); } 60% { transform: rotate(-14deg); } 82% { transform: rotate(5deg); } }
+@keyframes ia-cascadeL { 0%, 100% { transform: translateY(0) rotate(0); opacity: 1; } 40% { transform: translateY(5px) rotate(-45deg); opacity: 0; } 41% { transform: translateY(-5px) rotate(30deg); opacity: 0; } 78% { transform: translateY(.5px) rotate(-6deg); opacity: 1; } }
+@keyframes ia-cascadeR { 0%, 100% { transform: translateY(0) rotate(0); opacity: 1; } 40% { transform: translateY(5px) rotate(45deg); opacity: 0; } 41% { transform: translateY(-5px) rotate(-30deg); opacity: 0; } 78% { transform: translateY(.5px) rotate(6deg); opacity: 1; } }
 @keyframes ia-merc { 0% { transform: scaleY(0); } 45%, 70% { transform: scaleY(1); } 100% { transform: scaleY(0); } }
 @keyframes ia-bulb { 0%, 100% { opacity: 0; } 20%, 70% { opacity: 1; } }
 @keyframes ia-dilate { 0%, 100% { transform: scaleX(1); } 35%, 65% { transform: scaleX(2); } }
