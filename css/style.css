@@ -606,7 +606,7 @@ body { transition: background-color .3s ease; }
   .peek-count:empty { display: none; }
   .bench:not(.no-layers) .peek-sub { display: none; }
   .peek-sub { flex-basis: 100%; display: block; margin: 2px 0 0; font-size: 13px; line-height: 18px; color: #6c6c6c; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .peek-thumbs { display: flex; flex-shrink: 0; padding-left: 8px; } /* 2px in from the title, thumbnails overlapping 6px */
+  .peek-thumbs { position: relative; display: flex; flex-shrink: 0; padding-left: 8px; } /* 2px in from the title, thumbnails overlapping 6px */
   .peek-thumbs canvas { width: 24px; height: 24px; margin-left: -6px; border-radius: 7px; box-shadow: 0 0 0 2px var(--bg); }
   .bench.expanded .peek-thumbs { opacity: 0; }
   .peek-thumbs { transition: opacity .2s ease; }

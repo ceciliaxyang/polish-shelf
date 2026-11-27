@@ -1297,7 +1297,8 @@ $("#closeBench").onclick = clearBench;
 
 function addLayer(p) {
   // Toppers look right with one coat; everything else defaults to two.
-  const layer = { pid: p.id, coats: ["glitter", "flakies", "chrome"].includes(p.effect) ? 1 : 2 };
+  // added: when it was added, so the peek bar's thumbnails can run oldest to newest (see renderPeek).
+  const layer = { pid: p.id, coats: ["glitter", "flakies", "chrome"].includes(p.effect) ? 1 : 2, added: Date.now() };
   // Default order, base to top (see LAYER_RANK): a new layer goes just above the last layer that ranks the same
   // or lower, so cremes and jellies stay at the base and chrome powder on top. Layers can still be dragged.
   const rank = layerRank(p);
@@ -1688,20 +1689,35 @@ function renderPeek() {
   $("#peekCount").textContent = n ? `(${n})` : ""; // "Layers (2)", Figma node 2412:20759
   $("#peekSub").textContent = n ? `${n} layer${n > 1 ? "s" : ""}` : "Start adding polishes to see how they layer together.";
   const cv = stackCanvas(44, 44); if (cv) { mini.appendChild(cv); dropify(mini, dropKeyFor(bench.layers), 1, { small: true }); }
-  // The thumbnails, top layer first. A polish that's still flying in (see quickAdd) keeps its spot but stays
-  // invisible until it lands; the others glide aside to make room for it rather than jumping.
-  const th = $("#peekThumbs"), was = new Map([...th.children].map(t => [t.dataset.pid, t.getBoundingClientRect().left]));
+  // The thumbnails run in the order the polishes were added, oldest on the left and the newest on the right
+  // (layers from a saved combo, which carry no time, count as added base first), showing the last four.
+  // A polish that's still flying in (see quickAdd) keeps its spot but stays invisible until it lands; the
+  // others glide over rather than jumping, and one pushed off the left end fades away.
+  const th = $("#peekThumbs"), old = [...th.children].filter(t => t.dataset.pid), was = new Map(old.map(t => [t.dataset.pid, t.getBoundingClientRect()]));
   th.innerHTML = "";
-  [...bench.layers].reverse().slice(0, 4).forEach(l => {
+  const order = bench.layers.map((l, i) => ({ l, k: l.added || i })).sort((a, b) => a.k - b.k).map(o => o.l);
+  order.slice(-4).forEach(l => {
     const p = polishById(l.pid); if (!p) return;
     const c = document.createElement("canvas"); renderSwatch(c, p, 24, 24);
     const t = dropThumb(c, p.id, { ring: 16 }); t.dataset.pid = p.id; // a 2px ring
     if (peekLanding.has(p.id)) t.style.opacity = 0;
     th.appendChild(t);
   });
-  if (!reduceMotion) [...th.children].forEach(t => {
-    const dx = was.has(t.dataset.pid) ? was.get(t.dataset.pid) - t.getBoundingClientRect().left : 0;
+  if (reduceMotion) return;
+  const now = new Set([...th.children].map(t => t.dataset.pid));
+  [...th.children].forEach(t => {
+    const dx = was.has(t.dataset.pid) ? was.get(t.dataset.pid).left - t.getBoundingClientRect().left : 0;
     if (Math.abs(dx) > .5) t.animate([{ transform: `translateX(${dx}px)` }, { transform: "none" }], { duration: 300, easing: "cubic-bezier(.2, .8, .2, 1)" });
+  });
+  // Still in the Layers but pushed out of the last four: it fades and shrinks away where it was.
+  if (bench.layers.length) old.forEach(t => {
+    const r = was.get(t.dataset.pid);
+    if (now.has(t.dataset.pid) || !bench.layers.some(l => l.pid === t.dataset.pid) || !r.width) return;
+    const box = th.getBoundingClientRect();
+    delete t.dataset.pid;
+    Object.assign(t.style, { position: "absolute", margin: 0, left: r.left - box.left + "px", top: r.top - box.top + "px", pointerEvents: "none" });
+    th.prepend(t);
+    t.animate([{ opacity: 1, transform: "none" }, { opacity: 0, transform: "scale(.6)" }], { duration: 260, easing: "ease-out", fill: "forwards" }).onfinish = () => t.remove();
   });
 }
 function setSheet(expanded) {
