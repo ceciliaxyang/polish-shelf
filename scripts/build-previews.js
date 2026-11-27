@@ -1,6 +1,6 @@
 /*
   Builds the link previews for each polish:
-    images/og/<id>.jpg   1200x630 image: the polish's swatch next to its first photo
+    images/og/<id>.jpg   1200x630 image: the polish's round swatch centred on white
     p/<id>/index.html    the polish's share link; carries the preview tags, then opens the polish on the shelf
 
   Run after adding or changing a polish:  npm run previews
@@ -48,7 +48,7 @@ function sharePage(m) {
   <meta property="og:image:type" content="image/jpeg">
   <meta property="og:image:width" content="${W}">
   <meta property="og:image:height" content="${H}">
-  <meta property="og:image:alt" content="${esc(`A swatch of ${m.name} by ${m.brand} next to a photo of the polish`)}">
+  <meta property="og:image:alt" content="${esc(`A round swatch of ${m.name} by ${m.brand}`)}">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="${esc(title)}">
   <meta name="twitter:description" content="${esc(m.desc)}">
@@ -72,38 +72,28 @@ function sharePage(m) {
   fs.mkdirSync(path.join(ROOT, "images/og"), { recursive: true });
 
   for (const id of ids) {
-    const m = await page.evaluate(async ({ id, W, H }) => {
+    const m = await page.evaluate(async ({ id, W, H, D }) => {
       const p = polishById(id);
-      // Two rounded panels on white: the swatch on the left, the first photo on the right.
-      const pad = 24, gap = 24, pw = (W - pad * 2 - gap) / 2, ph = H - pad * 2, r = 40;
-      const out = document.createElement("canvas"); out.width = W; out.height = H;
-      const ctx = out.getContext("2d");
-      ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, W, H);
-      const panel = (x, draw) => { ctx.save(); ctx.beginPath(); ctx.roundRect(x, pad, pw, ph, r); ctx.clip(); ctx.fillStyle = "#ececec"; ctx.fillRect(x, pad, pw, ph); draw(x); ctx.restore(); };
-
-      // The swatch, drawn the way the detail view draws it (at rest).
-      const holder = document.createElement("div");
-      holder.style.cssText = `position:fixed;left:0;top:0;width:${pw}px;height:${ph}px;`;
-      const cv = document.createElement("canvas"); cv.className = "swatch"; holder.appendChild(cv); document.body.appendChild(holder);
-      renderSwatch(cv, p, pw, ph);
-      await new Promise(r => setTimeout(r, 400));
-      panel(pad, x => ctx.drawImage(cv, x, pad, pw, ph));
-      holder.remove();
-
-      const src = (p.photos || [])[0];
-      if (src) {
-        const im = new Image(); im.src = src; await im.decode();
-        // Cover the panel, keeping the photo centred.
-        const s = Math.max(pw / im.naturalWidth, ph / im.naturalHeight), dw = im.naturalWidth * s, dh = im.naturalHeight * s;
-        panel(pad + pw + gap, x => ctx.drawImage(im, x + (pw - dw) / 2, pad + (ph - dh) / 2, dw, dh));
-      }
+      // The polish's round swatch, drawn the way the shelf draws it (a droplet with its gloss and contact
+      // shadow, at rest), centred on a plain white stage the size of the image.
+      document.getElementById("og-stage")?.remove();
+      const stage = document.createElement("div"); stage.id = "og-stage";
+      stage.style.cssText = `position:fixed;left:0;top:0;width:${W}px;height:${H}px;z-index:2147483647;background:#fff;display:flex;align-items:center;justify-content:center;`;
+      const box = document.createElement("div");
+      box.style.cssText = `position:relative;width:${D}px;height:${D}px;`;
+      const cv = document.createElement("canvas"); cv.className = "swatch"; box.appendChild(cv);
+      stage.appendChild(box); document.body.appendChild(stage);
+      renderSwatch(cv, p, D, D);
+      dropify(box, p.id, 1);
+      await new Promise(r => setTimeout(r, 600));
       const fx = effectsOf(p).map(k => EFFECTS[k] || k).join(", ");
-      return { id, name: p.name || "Untitled", brand: p.brand || "", desc: `${fx} polish by ${p.brand || "unknown"}, swatched on Polish shelf.`, jpg: out.toDataURL("image/jpeg", .9), hasPhoto: !!src };
-    }, { id, W, H });
-    fs.writeFileSync(path.join(ROOT, "images/og", `${id}.jpg`), Buffer.from(m.jpg.split(",")[1], "base64"));
+      return { id, name: p.name || "Untitled", brand: p.brand || "", desc: `${fx} polish by ${p.brand || "unknown"}, swatched on Polish shelf.` };
+    }, { id, W, H, D: 440 });
+    const jpg = await page.screenshot({ type: "jpeg", quality: 90, clip: { x: 0, y: 0, width: W, height: H } });
+    fs.writeFileSync(path.join(ROOT, "images/og", `${id}.jpg`), jpg);
     fs.mkdirSync(path.join(ROOT, "p", id), { recursive: true });
     fs.writeFileSync(path.join(ROOT, "p", id, "index.html"), sharePage(m));
-    console.log(`${id}${m.hasPhoto ? "" : " (no photo)"}`);
+    console.log(id);
   }
   await browser.close(); server.close();
 })().catch(e => { console.error(e); process.exit(1); });
