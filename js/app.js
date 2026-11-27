@@ -373,6 +373,9 @@ function labelsOf(p) {
 
 // Plus while the polish is off the bench; it spins away and a checkmark draws in once it's added.
 const PLUS_CHECK = `<svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><path class="plus" d="M10 3.5v13M3.5 10h13"/><path class="check" pathLength="1" d="M4.5 10.5l3.5 3.5 7.5-8"/></svg>`;
+// The dialog's add button sits beside the 16px link and close icons, so its + is drawn shorter (11px, not
+// 13px) at the same 1.5px stroke as them, rather than scaled down, which thinned the stroke.
+const MODAL_PLUS_CHECK = PLUS_CHECK.replace("M10 3.5v13M3.5 10h13", "M10 4.5v11M4.5 10h11");
 
 function emptyMsg(title, body) { return `<div class="empty"><strong>${title}</strong>${body}</div>`; }
 
@@ -769,7 +772,7 @@ function openDetail(p, card) {
   });
   // The dialog's add button does what the swatch's + does, and shows the same + / check state.
   const addBtn = $("#mAdd");
-  if (!addBtn.firstChild) addBtn.innerHTML = PLUS_CHECK;
+  if (!addBtn.firstChild) addBtn.innerHTML = MODAL_PLUS_CHECK;
   addBtn.dataset.pid = p.id; addBtn.dataset.name = p.name;
   addBtn.onclick = () => bench.layers.some(l => l.pid === p.id) ? removePolish(p) : addLayer(p);
   syncSwatchButtons();
