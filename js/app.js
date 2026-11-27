@@ -493,7 +493,8 @@ function renderCombos() {
     const title = document.createElement("div"); title.className = "card-title";
     const nm = document.createElement("p"); nm.className = "name"; nm.textContent = c.name; nm.title = c.name;
     const made = document.createElement("p"); made.className = "combo-polishes";
-    made.textContent = polishes.map(p => p.name).join(", "); made.title = made.textContent;
+    // Top coat first, down to the base, so the order reads plainly: "Pandora's Box on top of Fields of Lavender".
+    made.textContent = polishes.slice().reverse().map(p => p.name).join(" on top of "); made.title = made.textContent;
     title.append(nm, made);
     text.append(title);
     card.append(art, text); grid.appendChild(card);
