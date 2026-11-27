@@ -349,6 +349,22 @@ function pourLight(card) {
   card.classList.add("pour-lit");
   cv.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 650, easing: "cubic-bezier(.4, 0, .2, 1)" }).onfinish = () => { card._pourShown = true; pourDone(card); };
 }
+// Lands a drop at once, mid-pour or still waiting to pour (for a frozen copy of the page, which can't carry
+// the pour's animations: copied mid-pour it showed square puddles, flat grey blobs, or nothing at all). The
+// puddle takes its final outline and the shadow, gloss, button and text show. If the swatch has been drawn
+// it shows too and the puddle goes; if it's still being drawn, the puddle stays in its place until it is.
+function pourFinish(card) {
+  if (!card.classList.contains("pour-wait") && !card.classList.contains("pouring")) return;
+  if (pourIO) pourIO.unobserve(card);
+  const wrap = card.querySelector(".swatch-wrap"), base = wrap && wrap.querySelector(".pour-base"), cv = card.querySelector("canvas.swatch");
+  if (!wrap || !base) return;
+  card.getAnimations({ subtree: true }).forEach(a => { const t = a.effect && a.effect.target; if (t && t !== cv && (t === base || t === card.querySelector(".card-text") || t.matches(".drop-under, .drop-gloss, .swatch-btn"))) a.cancel(); });
+  card.getAnimations({ subtree: true }).forEach(a => { if (a.effect && a.effect.target === cv) a.cancel(); });
+  base.style.clipPath = `path("${dropPath(wrap._drop.pts.map(([x, y]) => [wrap.clientWidth * .1 + x * wrap.clientWidth / 100, wrap.clientHeight * .1 + y * wrap.clientHeight / wrap._drop.vh]))}")`;
+  card.classList.remove("pour-wait"); card.classList.add("pouring");
+  card._pourLanded = card._pourSettled = true;
+  if (cv && cv._w && !cv._pending) { card._pourShown = true; card.classList.remove("pouring", "pour-lit"); base.remove(); }
+}
 // Once the drop has settled and the swatch is fully shown, the puddle underneath is no longer needed.
 function pourDone(card) {
   if (!card._pourSettled || !card._pourShown) return;
