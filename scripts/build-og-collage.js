@@ -1,8 +1,8 @@
 /*
   Builds the shelf's own link preview:
     images/og-collage.gif   960x504 animated image: a loose scatter of round swatches of different sizes on
-                            off-white. One after another, each swatch's flash or shift wanders the way it does on
-                            a phone and settles back. The first frame is every swatch at rest, so previews that
+                            off-white. All at once, each swatch's flash or shift drifts a little, its own way, the
+                            way it does on a phone, and settles back. The first frame is every swatch at rest, so previews that
                             only show one frame (iMessage) show the finished collage.
 
   Run:  node scripts/build-og-collage.js        (KEEP=1 keeps the frames; FIRST=1 writes only the first frame as PNG)
@@ -16,8 +16,9 @@ const ROOT = path.resolve(__dirname, "..");
 const W = 1200, H = 630, OUT_W = 960;
 const BG = "#f1efe9";
 const FRAME = 100;      // ms per frame
-const WANDER = 2600;    // ms each swatch's light wanders
-const STAGGER = 260;    // ms between one swatch starting and the next
+const WANDER = 4000;    // ms the swatches' light drifts
+const STAGGER = 0;      // ms between one swatch starting and the next (0: all together)
+const AMP = .13;        // how far the light drifts from the middle, 0 to .5 across the swatch
 const SEED = 3;
 
 // The swatches, in the order they light up, with their size. Chosen for a spread of color and finish.
@@ -100,9 +101,15 @@ function layout(n) {
       cv.onpointermove && cv.onpointermove({ clientX: r.left + x * r.width, clientY: r.top + y * r.height, pointerType: "touch" });
     };
     window.ogLeave = i => og[i].onpointerleave && og[i].onpointerleave({ pointerType: "touch" });
-    return og.map(cv => cv.classList.contains("interactive"));
+    // Glow swatches are left untouched: held at the middle, their glow blooms into a white spot, which doesn't
+    // read as the swatch at rest.
+    return og.map((cv, i) => cv.classList.contains("interactive") && polishById(items[i].id).effect !== "glow");
   }, { items, W, H, BG });
+  // Rest is the light held at the middle of each swatch (where the loop starts and ends), so the loop has
+  // no jump where the swatches are let go and drift back to their untouched look.
   await page.clock.runFor(1500);
+  await page.evaluate(moves => og.forEach((_, i) => moves[i] && ogMove(i, .5, .5)), moves);
+  await page.clock.runFor(2500);
 
   const shot = () => page.screenshot({ type: "png", clip: { x: 0, y: 0, width: W, height: H } });
   const frames = [await shot()];
@@ -111,8 +118,8 @@ function layout(n) {
     await browser.close(); server.close(); return;
   }
 
-  // Each swatch takes its turn: its light traces a figure eight through the middle, easing out from rest and
-  // back, then it's let go. The turns overlap, so a ripple of light runs across the collage.
+  // Every swatch's light traces a small loop through the middle, easing out from rest and back, then it's let
+  // go of at the middle. Each starts its loop at its own angle and some turn the other way, so they don't move in lockstep.
   const live = items.map((_, i) => i).filter(i => moves[i]);
   const total = STAGGER * (live.length - 1) + WANDER;
   const n = Math.round(total / FRAME);
@@ -123,15 +130,15 @@ function layout(n) {
     live.forEach((i, k) => {
       const u = (t - k * STAGGER) / WANDER;
       if (u <= 0) return;
-      if (u >= 1) { if (!done.has(i)) { done.add(i); pos.push([i, null]); } return; }
-      const e = Math.sin(Math.PI * u), dir = k % 2 ? -1 : 1;
-      pos.push([i, [.5 + dir * .3 * e * Math.sin(2 * Math.PI * u), .5 + .26 * e * Math.sin(4 * Math.PI * u)]]);
+      if (u >= 1) { if (!done.has(i)) { done.add(i); pos.push([i, [.5, .5]]); } return; }
+      const e = Math.sin(Math.PI * u), dir = k % 2 ? -1 : 1, a = 2 * Math.PI * (u + k * .37);
+      pos.push([i, [.5 + AMP * e * Math.cos(dir * a), .5 + AMP * .85 * e * Math.sin(dir * a)]]);
     });
     await page.evaluate(pos => pos.forEach(([i, xy]) => xy ? ogMove(i, xy[0], xy[1]) : ogLeave(i)), pos);
     await page.clock.runFor(FRAME);
     frames.push(await shot());
   }
-  await page.evaluate(ids => ids.forEach(i => ogLeave(i)), live.filter(i => !done.has(i)));
+  await page.evaluate(ids => ids.forEach(i => ogMove(i, .5, .5)), live.filter(i => !done.has(i)));
   for (let i = 0; i < 40; i++) {
     await page.clock.runFor(FRAME);
     const f = await shot();
