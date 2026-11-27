@@ -7,6 +7,7 @@
 })();
 const SITE_ROOT = document.baseURI;
 const SITE_TITLE = document.title;
+const peekLanding = new Set(); // phones: polishes still flying into the Layers peek bar's stack (see quickAdd)
 
 /* ---------- vocabulary ---------- */
 const EFFECTS = {
@@ -521,9 +522,14 @@ function renderCombos() {
     const text = document.createElement("div"); text.className = "card-text";
     const title = document.createElement("div"); title.className = "card-title";
     const nm = document.createElement("p"); nm.className = "name"; nm.textContent = c.name; nm.title = c.name;
-    const made = document.createElement("p"); made.className = "combo-polishes";
-    // Top coat first, down to the base, so the order reads plainly: "Pandora's Box on top of Fields of Lavender".
-    made.textContent = polishes.slice().reverse().map(p => p.name).join(" on top of "); made.title = made.textContent;
+    // One line per polish, base first: "Base: Fields of Lavender", "Topper: Pandora's Box". With more than one
+    // topper they're numbered in the order they go on ("Topper 1", "Topper 2").
+    const made = document.createElement("div"); made.className = "combo-polishes";
+    polishes.forEach((p, i) => {
+      const label = i === 0 ? "Base" : polishes.length > 2 ? `Topper ${i}` : "Topper";
+      const line = document.createElement("p"); line.textContent = `${label}: ${p.name}`; line.title = line.textContent;
+      made.append(line);
+    });
     title.append(nm, made);
     text.append(title);
     card.append(art, text); grid.appendChild(card);
@@ -1300,7 +1306,7 @@ function addLayer(p) {
   bench.layers.splice(at, 0, layer);
   saveBench();
   if (!benchIsOpen()) setBenchOpen(true); else renderBench();
-  pulsePeek();
+  if (!peekLanding.has(p.id)) pulsePeek(); // one flying in pops its own thumbnail instead (see quickAdd)
 }
 // Pressing a checked swatch button takes that polish back off the bench.
 function removePolish(p) {
@@ -1318,9 +1324,12 @@ function removePolish(p) {
 const HOLD = { ms: 420, squish: .92, slop: 10 };
 // Flies a picture of the shelf swatch into the Layers. The target is read every frame, so the flight follows
 // the peek bar while the sheet is still rising. Resolves once it has landed.
-function flyToLayers(wrap, sw) {
-  const target = () => [$("#peekMini"), $("#stage")].find(el => { const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0; })
-    || $("#bench");
+// On phones it heads for the polish's own thumbnail in the peek bar's stack (looked up by its id each frame, as
+// the bar can be drawn again mid-flight), not the combined swatch.
+const peekThumb = pid => pid && $("#peekThumbs").querySelector(`[data-pid="${CSS.escape(pid)}"]`);
+function flyToLayers(wrap, sw, landPid) {
+  const shown = el => { if (!el) return false; const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
+  const target = () => [peekThumb(landPid), landPid && $("#peekThumbs").lastElementChild, $("#peekMini"), $("#stage")].find(shown) || $("#bench");
   const from = wrap.getBoundingClientRect(), W = from.width, H = from.height;
   if (!W || !sw.width) return Promise.resolve();
   const PAD = 28, dpr = Math.min(2, devicePixelRatio || 1), cv = document.createElement("canvas");
@@ -1344,7 +1353,10 @@ function flyToLayers(wrap, sw) {
       const cx = dx * .25, cy = Math.min(0, dy) - 60;
       const x = 2 * u * e * cx + e * e * dx, y = 2 * u * e * cy + e * e * dy, s = Math.pow(Math.max(.05, r.width / W), e);
       cv.style.transform = `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0) scale(${(s * (e < .12 ? HOLD.squish + (1 - HOLD.squish) * e / .12 : 1)).toFixed(4)})`;
-      cv.style.opacity = e < .85 ? 1 : 1 - (e - .85) / .15 * .8;
+      // Into the stack it fades out completely (the thumbnail takes over); elsewhere it melts in to 20%.
+      cv.style.opacity = e < .85 ? 1 : 1 - (e - .85) / .15 * (landPid ? 1 : .8);
+      // The thumbnail it lands in fades up underneath over the same last stretch, so the two cross over.
+      const land = peekThumb(landPid); if (land) land.style.opacity = e < .85 ? 0 : (e - .85) / .15;
       if (t < 1) requestAnimationFrame(step); else { cv.remove(); res(); }
     };
     requestAnimationFrame(step);
@@ -1356,6 +1368,19 @@ function quickAdd(p, wrap, sw) {
   // With the Layers closed, they open right away (the sheet rises while the swatch flies down to it);
   // already open, the polish joins them as it lands.
   const open = benchIsOpen();
+  // Phones: the polish joins the Layers right away, its thumbnail held invisible in the peek bar's stack
+  // (the rest move aside for it), and the copy flies into that spot; the thumbnail pops as it lands.
+  if (sheetMQ.matches && !$("#bench").classList.contains("expanded")) {
+    peekLanding.add(p.id); addLayer(p);
+    flyToLayers(wrap, sw, p.id).then(() => {
+      peekLanding.delete(p.id);
+      const t = peekThumb(p.id) || $("#peekThumbs").lastElementChild;
+      if (!t) return pulsePeek();
+      t.style.opacity = "";
+      t.animate([{ transform: "scale(1)" }, { transform: "scale(1.25)", offset: .4 }, { transform: "scale(1)" }], { duration: 420, easing: "cubic-bezier(.2, .8, .2, 1)" });
+    });
+    return;
+  }
   if (!open) addLayer(p);
   flyToLayers(wrap, sw).then(() => { if (open) addLayer(p); else pulsePeek(); });
 }
@@ -1663,10 +1688,20 @@ function renderPeek() {
   $("#peekCount").textContent = n ? `(${n})` : ""; // "Layers (2)", Figma node 2412:20759
   $("#peekSub").textContent = n ? `${n} layer${n > 1 ? "s" : ""}` : "Start adding polishes to see how they layer together.";
   const cv = stackCanvas(44, 44); if (cv) { mini.appendChild(cv); dropify(mini, dropKeyFor(bench.layers), 1, { small: true }); }
-  const th = $("#peekThumbs"); th.innerHTML = "";
+  // The thumbnails, top layer first. A polish that's still flying in (see quickAdd) keeps its spot but stays
+  // invisible until it lands; the others glide aside to make room for it rather than jumping.
+  const th = $("#peekThumbs"), was = new Map([...th.children].map(t => [t.dataset.pid, t.getBoundingClientRect().left]));
+  th.innerHTML = "";
   [...bench.layers].reverse().slice(0, 4).forEach(l => {
     const p = polishById(l.pid); if (!p) return;
-    const c = document.createElement("canvas"); renderSwatch(c, p, 24, 24); th.appendChild(dropThumb(c, p.id, { ring: 16 })); // a 2px ring
+    const c = document.createElement("canvas"); renderSwatch(c, p, 24, 24);
+    const t = dropThumb(c, p.id, { ring: 16 }); t.dataset.pid = p.id; // a 2px ring
+    if (peekLanding.has(p.id)) t.style.opacity = 0;
+    th.appendChild(t);
+  });
+  if (!reduceMotion) [...th.children].forEach(t => {
+    const dx = was.has(t.dataset.pid) ? was.get(t.dataset.pid) - t.getBoundingClientRect().left : 0;
+    if (Math.abs(dx) > .5) t.animate([{ transform: `translateX(${dx}px)` }, { transform: "none" }], { duration: 300, easing: "cubic-bezier(.2, .8, .2, 1)" });
   });
 }
 function setSheet(expanded) {

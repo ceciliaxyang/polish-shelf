@@ -462,9 +462,8 @@ body.detail-open .mini-nav { opacity: 0; visibility: hidden; pointer-events: non
 .combo-art .stage-layers canvas { width: 100%; height: 100%; } /* same size as the card's canvas, for the layers' pointer maths */
 .combo-card .name { line-height: 24px; color: #000; }
 .combo-card .combo-polishes { font-size: 14px; line-height: 18px; color: #6c6c6c; }
-/* "Pandora's Box on top of Fields of Lavender" can run long with three or more layers, so it wraps (up to three
-   balanced lines) instead of being cut off. */
-.combo-card .combo-polishes { white-space: normal; text-wrap: balance; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
+/* "Base: …" and "Topper: …" each get their own line, cut off with an ellipsis if a name runs long. */
+.combo-card .combo-polishes { display: flex; flex-direction: column; min-width: 0; }
 @media (max-width: 600px) {
   .grid.combos-grid { grid-template-columns: minmax(0, 1fr); row-gap: 40px; }
   .combo-art { width: 56%; }
