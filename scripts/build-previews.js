@@ -1,17 +1,24 @@
 /*
   Builds the link previews for each polish:
-    images/og/<id>.jpg   1200x630 image: the polish's round swatch centred on white
+    images/og/<id>.gif   800x420 animated image: the polish's round swatch centred on white, its flash or
+                         shift wandering the way it does on a phone, then settling back. The first frame is
+                         the swatch at rest, so previews that only show one frame (iMessage) show that.
     p/<id>/index.html    the polish's share link; carries the preview tags, then opens the polish on the shelf
 
   Run after adding or changing a polish:  npm run previews
   The swatches are drawn by the site's own code (js/app.js) in a headless browser, so they match the shelf.
 */
-const fs = require("fs"), path = require("path"), http = require("http");
+const fs = require("fs"), path = require("path"), http = require("http"), os = require("os");
+const { execFileSync } = require("child_process");
 const { chromium } = require("playwright");
 
 const ROOT = path.resolve(__dirname, "..");
 const SITE = "https://ceciliayang.com/polish-shelf/";
 const W = 1200, H = 630;
+const D = 440;          // the swatch's size in the image
+const FRAME = 100;      // ms per frame (10 a second: the motion is slow, and it keeps the files small)
+const OUT_W = 800;      // the GIF is drawn at 1200 wide and scaled down to this, to keep it under ~2 MB
+const LOOP = 3600;      // ms the swatch wanders before settling back
 
 const TYPES = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".jpg": "image/jpeg", ".png": "image/png", ".gif": "image/gif", ".webp": "image/webp" };
 function serve() {
@@ -29,7 +36,7 @@ function serve() {
 const esc = s => String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
 
 function sharePage(m) {
-  const url = `${SITE}p/${m.id}/`, img = `${SITE}images/og/${m.id}.jpg`;
+  const url = `${SITE}p/${m.id}/`, img = `${SITE}images/og/${m.id}.gif`;
   const title = `${m.name} · ${m.brand}`;
   return `<!doctype html>
 <html lang="en">
@@ -45,9 +52,9 @@ function sharePage(m) {
   <meta property="og:description" content="${esc(m.desc)}">
   <meta property="og:url" content="${url}">
   <meta property="og:image" content="${img}">
-  <meta property="og:image:type" content="image/jpeg">
-  <meta property="og:image:width" content="${W}">
-  <meta property="og:image:height" content="${H}">
+  <meta property="og:image:type" content="image/gif">
+  <meta property="og:image:width" content="${OUT_W}">
+  <meta property="og:image:height" content="${Math.round(H * OUT_W / W)}">
   <meta property="og:image:alt" content="${esc(`A round swatch of ${m.name} by ${m.brand}`)}">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="${esc(title)}">
@@ -67,15 +74,20 @@ function sharePage(m) {
   const server = await serve();
   const browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  // A stand-in clock, so every frame is exactly FRAME ms after the last however long a screenshot takes.
+  await page.clock.install();
   await page.goto(`http://localhost:${server.address().port}/index.html`, { waitUntil: "load" });
+  await page.clock.runFor(1500);
   const ids = (await page.evaluate(() => state.polishes.map(p => p.id))).filter(id => !only.length || only.includes(id));
   fs.mkdirSync(path.join(ROOT, "images/og"), { recursive: true });
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "og-"));
+  const shot = () => page.screenshot({ type: "png", clip: { x: 0, y: 0, width: W, height: H } });
 
   for (const id of ids) {
-    const m = await page.evaluate(async ({ id, W, H, D }) => {
+    const m = await page.evaluate(({ id, W, H, D }) => {
       const p = polishById(id);
       // The polish's round swatch, drawn the way the shelf draws it (a droplet with its gloss and contact
-      // shadow, at rest), centred on a plain white stage the size of the image.
+      // shadow), centred on a plain white stage the size of the image.
       document.getElementById("og-stage")?.remove();
       const stage = document.createElement("div"); stage.id = "og-stage";
       stage.style.cssText = `position:fixed;left:0;top:0;width:${W}px;height:${H}px;z-index:2147483647;background:#fff;display:flex;align-items:center;justify-content:center;`;
@@ -85,15 +97,52 @@ function sharePage(m) {
       stage.appendChild(box); document.body.appendChild(stage);
       renderSwatch(cv, p, D, D);
       dropify(box, p.id, 1);
-      await new Promise(r => setTimeout(r, 600));
+      // Moves the swatch's light to (x, y), 0 to 1 across it, the way a phone's drift does (see drift in app.js).
+      window.ogMove = (x, y) => {
+        if (cv.drift) return cv.drift(x, y);
+        const r = cv.getBoundingClientRect();
+        cv.onpointermove && cv.onpointermove({ clientX: r.left + x * r.width, clientY: r.top + y * r.height, pointerType: "touch" });
+      };
+      window.ogLeave = () => cv.onpointerleave && cv.onpointerleave();
       const fx = effectsOf(p).map(k => EFFECTS[k] || k).join(", ");
-      return { id, name: p.name || "Untitled", brand: p.brand || "", desc: `${fx} polish by ${p.brand || "unknown"}, swatched on Polish shelf.` };
-    }, { id, W, H, D: 440 });
-    const jpg = await page.screenshot({ type: "jpeg", quality: 90, clip: { x: 0, y: 0, width: W, height: H } });
-    fs.writeFileSync(path.join(ROOT, "images/og", `${id}.jpg`), jpg);
+      return { id, name: p.name || "Untitled", brand: p.brand || "", desc: `${fx} polish by ${p.brand || "unknown"}, swatched on Polish shelf.`,
+               moves: cv.classList.contains("interactive") };
+    }, { id, W, H, D });
+    await page.clock.runFor(800);
+
+    // Frame 1: at rest (the still a one-frame preview shows). Then the light wanders a figure eight through
+    // the middle, is let go, and the frames run until it has settled back to rest, which loops cleanly.
+    const frames = [await shot()];
+    if (m.moves) {
+      const n = Math.round(LOOP / FRAME);
+      for (let i = 1; i <= n; i++) {
+        const u = i / n, e = Math.sin(Math.PI * u);  // eases in from and out to the middle
+        await page.evaluate(([x, y]) => ogMove(x, y), [.5 + .3 * e * Math.sin(2 * Math.PI * u), .5 + .26 * e * Math.sin(4 * Math.PI * u)]);
+        await page.clock.runFor(FRAME);
+        frames.push(await shot());
+      }
+      await page.evaluate(() => ogLeave());
+      for (let i = 0; i < 40; i++) {
+        await page.clock.runFor(FRAME);
+        const f = await shot();
+        if (f.equals(frames[frames.length - 1])) break;
+        frames.push(f);
+      }
+      if (frames.length > 1 && frames[frames.length - 1].equals(frames[0])) frames.pop();
+    }
+    const dir = fs.mkdtempSync(path.join(tmp, "f-"));
+    frames.forEach((f, i) => fs.writeFileSync(path.join(dir, `${String(i).padStart(4, "0")}.png`), f));
+    const out = path.join(ROOT, "images/og", `${id}.gif`);
+    // One palette for the whole loop; later frames store only the part that changed.
+    execFileSync("ffmpeg", ["-y", "-loglevel", "error", "-framerate", String(1000 / FRAME), "-i", path.join(dir, "%04d.png"),
+      "-filter_complex", `[0]scale=${OUT_W}:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=128:stats_mode=diff[p];[b][p]paletteuse=dither=bayer:bayer_scale=4:diff_mode=rectangle`,
+      "-loop", "0", out]);
+    if (!process.env.KEEP) fs.rmSync(dir, { recursive: true });
+    const old = path.join(ROOT, "images/og", `${id}.jpg`); if (fs.existsSync(old)) fs.rmSync(old);
     fs.mkdirSync(path.join(ROOT, "p", id), { recursive: true });
     fs.writeFileSync(path.join(ROOT, "p", id, "index.html"), sharePage(m));
-    console.log(id);
+    console.log(`${id}  ${frames.length} frames, ${(fs.statSync(out).size / 1024).toFixed(0)} KB`);
   }
+  if (!process.env.KEEP) fs.rmSync(tmp, { recursive: true }); else console.log(tmp);
   await browser.close(); server.close();
 })().catch(e => { console.error(e); process.exit(1); });
