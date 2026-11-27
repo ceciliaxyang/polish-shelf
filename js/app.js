@@ -647,7 +647,7 @@ function saveCombo() {
 // 3. the Combos button grows a little and settles as the new combo appears in its thumbnails and the count
 //    ticks up;
 // 4. the Layers pane slides out to the right and disappears (on phones the sheet slides down off the screen).
-// Only then does the shelf take back the pane's room and the dock recenter, and the layers clear (as with Clear).
+// Only then does the shelf take back the pane's room and the dock recenter, and the layers clear (as with Close).
 const wait = ms => new Promise(r => setTimeout(r, ms));
 async function saveSequence(layers, after) {
   const b = $("#bench"), save = $("#saveCombo"), btn = $("#comboBtn");

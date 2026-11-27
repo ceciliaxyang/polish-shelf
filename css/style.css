@@ -64,7 +64,7 @@ button, input, select { font: inherit; color: inherit; }
   /* Layers title in the polish page's title style (Instrument Serif 40 on 40, -1.5px, #222). */
   .bench .bench-title { font-family: "Instrument Serif", "EB Garamond", serif; font-weight: 400; letter-spacing: -1.5px; color: #222; padding: 0 0 12px; }
   /* Over the detail page, the pane's top row moves up to the buttons' row (32px down, 40px tall), so the
-     title and Clear line up with add / link / close. */
+     title and Close line up with add / link / close. */
   .bench { transition: transform .45s cubic-bezier(.2, .8, .2, 1), --bench-bg .35s ease, border-color .35s ease, padding-top .35s cubic-bezier(.2, .8, .2, 1); }
   body.detail-open .bench { padding-top: calc(32px + env(safe-area-inset-top)); }
 }
@@ -598,7 +598,7 @@ body { transition: background-color .3s ease; }
   @keyframes peek-pulse { 40% { transform: scale(1.12); } }
   /* Layers title in the headline serif (Instrument Serif 22 on 22, #222), like the shelf title and polish names. */
   .bench-title { font-family: "Instrument Serif", "EB Garamond", serif; font-size: 22px; line-height: 22px; font-weight: 400; letter-spacing: -.4px; color: #222; padding: 0; }
-  /* Header row (Figma node 2412:20759): swatch, "Layers (2)" on one line with the count in grey, thumbnails, Clear.
+  /* Header row (Figma node 2412:20759): swatch, "Layers (2)" on one line with the count in grey, thumbnails, Close.
      The "1 layer" line is gone; the sub line only shows the hint while the sheet is empty. */
   .bench-titles { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 5px; }
   .bench-titles .bench-title { flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -662,7 +662,7 @@ body.detail-drag .shelf-blur, body.detail-drag .page::after { transition: none; 
   background: rgba(242, 242, 242, .7); -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6);
   box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .6); cursor: pointer; transition: background .15s ease; }
 .mh-btn:hover { background: rgba(232, 232, 232, .85); }
-/* "Clear" empties the stack and closes the pane */
+/* "Close" empties the stack and closes the pane */
 .bench-clear { flex-shrink: 0; padding: 12px 16px; border: 0; border-radius: 100px; background: #f2f2f2; color: var(--text); font-size: 12px; line-height: 16px; font-weight: 500; cursor: pointer; } /* same type as the filter pills */
 .bench-clear:hover { background: #ebebeb; }
 .bench-clear:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
