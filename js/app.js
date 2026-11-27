@@ -293,6 +293,7 @@ function rollCount(n) {
 function toggleFx(k) {
   state.fx.has(k) ? state.fx.delete(k) : state.fx.add(k);
   document.querySelectorAll("#fxPills .scope").forEach(b => b.setAttribute("aria-pressed", state.fx.has(b.dataset.fx)));
+  showFilterCounts();
   filterShelf();
 }
 // A magnetic topper also counts as Magnetic for the filter (its card still reads just "Magnetic topper").
@@ -302,7 +303,22 @@ const matchesFx = p => (!state.fx.size || filterKeysOf(p).some(k => state.fx.has
 function toggleBrand(k) {
   state.brands.has(k) ? state.brands.delete(k) : state.brands.add(k);
   document.querySelectorAll("#brandPills .scope").forEach(b => b.setAttribute("aria-pressed", state.brands.has(b.dataset.brand)));
+  showFilterCounts();
   filterShelf();
+}
+// "Effects (2)" / "Brands (1)": how many pills are picked in each row, in grey like "Layers (2)" on the phone sheet.
+// On phones the label sits right next to its pills, so a count showing up (or going) makes the label wider (or
+// narrower) and the pill row would jump sideways under your finger. The row is scrolled by the same amount
+// instead, so every pill stays exactly where it was. (On wider screens the count sits in the gap, see style.css.)
+function showFilterCounts() {
+  [["#fxCount", "#fxPills", state.fx.size], ["#brandCount", "#brandPills", state.brands.size]].forEach(([c, row, n]) => {
+    const el = $(c), box = $(row), x = box.getBoundingClientRect().left, text = n ? `(${n})` : "";
+    if (el.textContent === text) return;
+    el.textContent = text;
+    const dx = box.getBoundingClientRect().left - x;
+    if (dx) box.scrollLeft += dx;
+  });
+  fadeScopes();
 }
 
 /* Filtering keeps the shelf as it is: no card is rebuilt and no swatch redrawn. Polishes that don't
@@ -373,6 +389,9 @@ function labelsOf(p) {
 
 // Plus while the polish is off the bench; it spins away and a checkmark draws in once it's added.
 const PLUS_CHECK = `<svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><path class="plus" d="M10 3.5v13M3.5 10h13"/><path class="check" pathLength="1" d="M4.5 10.5l3.5 3.5 7.5-8"/></svg>`;
+// The dialog's add button sits beside the 16px link and close icons, so its + is drawn shorter (11px, not
+// 13px) at the same 1.5px stroke as them, rather than scaled down, which thinned the stroke.
+const MODAL_PLUS_CHECK = PLUS_CHECK.replace("M10 3.5v13M3.5 10h13", "M10 4.5v11M4.5 10h11");
 
 function emptyMsg(title, body) { return `<div class="empty"><strong>${title}</strong>${body}</div>`; }
 
@@ -490,7 +509,8 @@ function renderCombos() {
     const title = document.createElement("div"); title.className = "card-title";
     const nm = document.createElement("p"); nm.className = "name"; nm.textContent = c.name; nm.title = c.name;
     const made = document.createElement("p"); made.className = "combo-polishes";
-    made.textContent = polishes.map(p => p.name).join(", "); made.title = made.textContent;
+    // Top coat first, down to the base, so the order reads plainly: "Pandora's Box on top of Fields of Lavender".
+    made.textContent = polishes.slice().reverse().map(p => p.name).join(" on top of "); made.title = made.textContent;
     title.append(nm, made);
     text.append(title);
     card.append(art, text); grid.appendChild(card);
@@ -650,8 +670,10 @@ function flySwatch(layers) {
   const src = [$("#stage"), $("#peekMini")].find(el => { const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0 && r.top < innerHeight && r.bottom > 0; });
   if (!src || !tr.width) return Promise.resolve();
   const from = src.getBoundingClientRect(), W = from.width, H = from.height;
-  // The picture: reuse what's already on screen when there is one, otherwise draw the stack once.
-  let pic = src.querySelector("canvas");
+  // The picture: reuse the combined picture already on screen when there is one, otherwise draw the stack
+  // once. (Only a canvas directly in the preview: the preview also keeps each layer's own canvas hidden
+  // inside it, and those come first, so a plain first-canvas lookup flew just the bottom layer.)
+  let pic = src.querySelector(":scope > canvas:not(.drop-swirl)");
   if (!pic || !pic.width) { pic = document.createElement("canvas"); if (!drawStack(pic, layers, Math.round(W), Math.round(H))) return Promise.resolve(); }
   const PAD = 28, dpr = Math.min(2, devicePixelRatio || 1), cv = document.createElement("canvas");
   cv.width = Math.round((W + PAD * 2) * dpr); cv.height = Math.round((H + PAD * 2) * dpr);
@@ -749,8 +771,33 @@ function liquidPool(stage, from, to) {
   return stop;
 }
 
+// The polish page's photos start downloading as soon as its swatch looks about to be opened: when the
+// pointer rests on it (desktop) or presses it (phone), and at the latest when it opens. Only the download
+// happens early; the photos are still decoded and shown once the swatch has landed (openDetail), so the
+// flight stays smooth, but by then they're usually already here. Each is kept so it stays in the cache.
+const prefetched = new Map();
+function prefetchPhotos(p) {
+  (p && p.photos || []).slice(0, 4).forEach(src => {
+    if (prefetched.has(src)) return;
+    const im = new Image(); im.decoding = "async"; im.src = src; prefetched.set(src, im);
+  });
+}
+(() => {
+  const grid = $("#grid"); let hover = 0;
+  const polishAt = e => { const sw = e.target.closest && e.target.closest(".swatch-wrap"); return sw && sw.closest(".card")?._p; };
+  // A short rest first, so sweeping the pointer across the shelf doesn't fetch everything it passes over.
+  grid.addEventListener("pointerover", e => {
+    if (e.pointerType !== "mouse") return;
+    const p = polishAt(e); clearTimeout(hover); if (p) hover = setTimeout(() => prefetchPhotos(p), 120);
+  });
+  grid.addEventListener("pointerout", () => clearTimeout(hover));
+  grid.addEventListener("pointerdown", e => prefetchPhotos(polishAt(e)), { passive: true });
+  grid.addEventListener("focusin", e => prefetchPhotos(polishAt(e)));
+})();
+
 function openDetail(p, card) {
   if (detail.closing) detail.closing(); // a close still flying: land it first
+  prefetchPhotos(p); // (if nothing fetched them yet: a keyboard open or a share link)
   detail.p = p; detail.card = card;
   // One line: the brand's short name (as on its filter pill), an em dash, then the polish's name.
   const brand = BRAND_LABELS[p.brand] || p.brand || "";
@@ -767,7 +814,7 @@ function openDetail(p, card) {
   });
   // The dialog's add button does what the swatch's + does, and shows the same + / check state.
   const addBtn = $("#mAdd");
-  if (!addBtn.firstChild) addBtn.innerHTML = PLUS_CHECK;
+  if (!addBtn.firstChild) addBtn.innerHTML = MODAL_PLUS_CHECK;
   addBtn.dataset.pid = p.id; addBtn.dataset.name = p.name;
   addBtn.onclick = () => bench.layers.some(l => l.pid === p.id) ? removePolish(p) : addLayer(p);
   syncSwatchButtons();
@@ -797,7 +844,7 @@ function openDetail(p, card) {
     const im = document.createElement("img"); im.loading = "lazy"; im.decoding = "async"; im.dataset.src = src; im.alt = `${p.name} photo ${i + 1}`;
     // Staggered entry: each photo a beat after the last, with a little randomness so it feels organic.
     // It starts once the photo has loaded, so the rise is actually seen.
-    im.style.setProperty("--d", (.12 + i * .1 + Math.random() * .05).toFixed(3) + "s");
+    im.style.setProperty("--d", (.06 + i * .08 + Math.random() * .04).toFixed(3) + "s");
     const reveal = () => requestAnimationFrame(() => requestAnimationFrame(() => im.classList.add("in")));
     im.addEventListener("load", reveal, { once: true });
     row.appendChild(im); photoImgs.push(im);
@@ -1487,7 +1534,7 @@ function renderBench() {
 /* ---------- grid fit ---------- */
 // Fill the full width: use the column count whose cards come closest to the breakpoint size, then
 // size the cards to exactly fill the row (never above 1.4x the design, 336px). Phones use CSS.
-const GAP = 40, MAX_CARD = 336, COMBO_CARD = 600;
+const GAP = 40, MAX_CARD = 336, COMBO_CARD = 600, COMBO_MIN = 420;
 // Zoom levels (see "zoom" below): swatches per row on a phone, and how much smaller desktop cards get.
 const ZOOMS = [2, 3, 4], ZOOM_SCALE = { 2: 1, 3: 2 / 3, 4: 1 / 2 };
 // The shelf opens at the middle zoom (3 per row) on larger screens and the most zoomed out (4 per row) on
@@ -1683,7 +1730,10 @@ function fitGrid() {
   // Favorite combos: cards are 600px across at 2 per row (Figma node 2406:3621, room for the polishes
   // scattered around each swatch), 2/3 and 1/2 of that zoomed out, spread across the row.
   const combos = grid.classList.contains("combos-grid"), size = combos ? COMBO_CARD * scale : base;
-  const n = Math.max(1, Math.round((avail + gap) / (size + gap)));
+  let n = Math.max(1, Math.round((avail + gap) / (size + gap)));
+  // Combos between two and three full-size cards wide (about 1400 to 1750px windows) left a wide empty
+  // middle at 2 per row: they go 3 across instead, shrinking the cards, as long as each stays 420px or more.
+  if (combos && n === 2 && (avail - 2 * gap) / 3 >= COMBO_MIN * scale) n = 3;
   const card = Math.min(combos ? size : MAX_CARD * scale, (avail - (n - 1) * gap) / n);
   grid.style.setProperty("--card", Math.floor(card) + "px");
   grid.style.setProperty("--cols", n);
@@ -1903,7 +1953,24 @@ function syncMiniNav() {
   const rows = filtersEl.querySelectorAll(".filter-row"), last = rows[rows.length - 1] || filtersEl;
   const show = state.view !== "combos" && last.getBoundingClientRect().bottom < -16;
   if (show === document.body.classList.contains("show-mini")) return;
-  if (show) placeMiniNav();
+  clearTimeout(miniNav._hide);
+  if (show) {
+    placeMiniNav();
+    // Back in the layout first, with a style flush, so the slide in still runs from its hidden state.
+    if (miniNav.hidden) { miniNav.hidden = false; void miniNav.offsetWidth; }
+  } else {
+    // Once the fade out is over, the mini nav leaves the layout altogether (display: none). Desktop Safari could
+    // keep showing the faded-out nav's layer over the headline, and leave the Effects row (a sideways scroller
+    // too) blank; taking the nav's layers away and re-layering the filter rows makes it draw them afresh.
+    miniNav._hide = setTimeout(() => {
+      if (document.body.classList.contains("show-mini")) return;
+      miniNav.hidden = true;
+      filtersEl.querySelectorAll(".scopes").forEach(el => {
+        el.style.willChange = "transform";
+        requestAnimationFrame(() => requestAnimationFrame(() => { el.style.willChange = ""; }));
+      });
+    }, 340);
+  }
   document.body.classList.toggle("show-mini", show);
   miniNav.inert = !show;
 }
@@ -1919,6 +1986,7 @@ document.addEventListener("visibilitychange", syncMiniNav);
 { const rows = filtersEl.querySelectorAll(".filter-row");
   new IntersectionObserver(syncMiniNav, { rootMargin: "16px 0px 0px 0px" }).observe(rows[rows.length - 1] || filtersEl); }
 addEventListener("resize", () => { placeMiniNav(); syncMiniNav(); });
+if (!document.body.classList.contains("show-mini")) miniNav.hidden = true;
 var miniReady = true; // var, so setView (which can run before this point) sees undefined rather than throwing
 // The shelf column narrows when the Layers pane opens; keep the mini nav over it.
 new ResizeObserver(placeMiniNav).observe($("main"));

@@ -18,11 +18,17 @@
   <meta property="og:image:alt" content="An animated nail polish bottle slowly rotating, its green and gold magnetic polish shimmering">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:image" content="https://ceciliayang.com/polish-shelf/images/og-7.gif">
+  <!-- Tab icon: a drop of Pandora's Box (Mooncat), drawn by the site's own swatch and droplet code. The small
+       sizes carry a faint magenta rim so the drop's dark edge still reads on a dark tab bar. -->
+  <link rel="icon" type="image/png" sizes="16x16" href="images/icon/favicon-16.png?v=1">
+  <link rel="icon" type="image/png" sizes="32x32" href="images/icon/favicon-32.png?v=1">
+  <link rel="icon" type="image/png" sizes="48x48" href="images/icon/favicon-48.png?v=1">
+  <link rel="apple-touch-icon" sizes="180x180" href="images/icon/apple-touch-icon.png?v=1">
   <!-- The title and the filter labels are set in Instrument Serif (Figma node 2384:82780), served from
        fonts/ (see the @font-face rules at the top of css/style.css). -->
   <link rel="preload" href="fonts/instrument-serif-latin.woff2" as="font" type="font/woff2" crossorigin>
   <!-- ?v= changes with each release so browsers never pair new HTML with an old cached stylesheet or script. -->
-  <link rel="stylesheet" href="css/style.css?v=74">
+  <link rel="stylesheet" href="css/style.css?v=84">
   <!-- Is SF Pro (installed, or the Apple system font) available? If not, the page falls back to Inter and
        html gets "no-sf", which tightens Inter's letter spacing (see css/style.css). Checked by comparing
        text widths against a font that doesn't exist. -->
@@ -56,11 +62,11 @@
         <div class="filters" id="filters">
           <div class="filter-rows" id="filterRows">
           <div class="filter-row">
-            <h2 class="filter-label" id="fxLabel">Effects</h2>
+            <h2 class="filter-label" id="fxLabel">Effects<span class="filter-count" id="fxCount"></span></h2>
             <div class="scopes fx-row" id="fxPills" role="group" aria-labelledby="fxLabel"></div>
           </div>
           <div class="filter-row">
-            <h2 class="filter-label" id="brandLabel">Brands</h2>
+            <h2 class="filter-label" id="brandLabel">Brands<span class="filter-count" id="brandCount"></span></h2>
             <div class="scopes fx-row" id="brandPills" role="group" aria-labelledby="brandLabel"></div>
           </div>
           </div>
@@ -119,11 +125,11 @@
     </div>
   </div>
 
-  <script src="js/polishes.js?v=74"></script>
-  <script src="js/droplet.js?v=74"></script>
-  <script src="js/icons.js?v=74"></script>
-  <script src="js/brand-icons.js?v=74"></script>
-  <script src="js/swatch-render.js?v=74"></script>
-  <script src="js/app.js?v=74"></script>
+  <script src="js/polishes.js?v=84"></script>
+  <script src="js/droplet.js?v=84"></script>
+  <script src="js/icons.js?v=84"></script>
+  <script src="js/brand-icons.js?v=84"></script>
+  <script src="js/swatch-render.js?v=84"></script>
+  <script src="js/app.js?v=84"></script>
 </body>
 </html>
