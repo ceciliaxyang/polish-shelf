@@ -1493,7 +1493,7 @@ function renderBench() {
 /* ---------- grid fit ---------- */
 // Fill the full width: use the column count whose cards come closest to the breakpoint size, then
 // size the cards to exactly fill the row (never above 1.4x the design, 336px). Phones use CSS.
-const GAP = 40, MAX_CARD = 336, COMBO_CARD = 600;
+const GAP = 40, MAX_CARD = 336, COMBO_CARD = 600, COMBO_MIN = 420;
 // Zoom levels (see "zoom" below): swatches per row on a phone, and how much smaller desktop cards get.
 const ZOOMS = [2, 3, 4], ZOOM_SCALE = { 2: 1, 3: 2 / 3, 4: 1 / 2 };
 // The shelf opens at the middle zoom (3 per row) on larger screens and the most zoomed out (4 per row) on
@@ -1689,7 +1689,10 @@ function fitGrid() {
   // Favorite combos: cards are 600px across at 2 per row (Figma node 2406:3621, room for the polishes
   // scattered around each swatch), 2/3 and 1/2 of that zoomed out, spread across the row.
   const combos = grid.classList.contains("combos-grid"), size = combos ? COMBO_CARD * scale : base;
-  const n = Math.max(1, Math.round((avail + gap) / (size + gap)));
+  let n = Math.max(1, Math.round((avail + gap) / (size + gap)));
+  // Combos between two and three full-size cards wide (about 1400 to 1750px windows) left a wide empty
+  // middle at 2 per row: they go 3 across instead, shrinking the cards, as long as each stays 420px or more.
+  if (combos && n === 2 && (avail - 2 * gap) / 3 >= COMBO_MIN * scale) n = 3;
   const card = Math.min(combos ? size : MAX_CARD * scale, (avail - (n - 1) * gap) / n);
   grid.style.setProperty("--card", Math.floor(card) + "px");
   grid.style.setProperty("--cols", n);
