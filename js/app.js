@@ -521,9 +521,14 @@ function renderCombos() {
     const text = document.createElement("div"); text.className = "card-text";
     const title = document.createElement("div"); title.className = "card-title";
     const nm = document.createElement("p"); nm.className = "name"; nm.textContent = c.name; nm.title = c.name;
-    const made = document.createElement("p"); made.className = "combo-polishes";
-    // Top coat first, down to the base, so the order reads plainly: "Pandora's Box on top of Fields of Lavender".
-    made.textContent = polishes.slice().reverse().map(p => p.name).join(" on top of "); made.title = made.textContent;
+    // One line per polish, base first: "Base: Fields of Lavender", "Topper: Pandora's Box". With more than one
+    // topper they're numbered in the order they go on ("Topper 1", "Topper 2").
+    const made = document.createElement("div"); made.className = "combo-polishes";
+    polishes.forEach((p, i) => {
+      const label = i === 0 ? "Base" : polishes.length > 2 ? `Topper ${i}` : "Topper";
+      const line = document.createElement("p"); line.textContent = `${label}: ${p.name}`; line.title = line.textContent;
+      made.append(line);
+    });
     title.append(nm, made);
     text.append(title);
     card.append(art, text); grid.appendChild(card);
