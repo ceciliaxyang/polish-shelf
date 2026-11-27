@@ -28,7 +28,7 @@
        fonts/ (see the @font-face rules at the top of css/style.css). -->
   <link rel="preload" href="fonts/instrument-serif-latin.woff2" as="font" type="font/woff2" crossorigin>
   <!-- ?v= changes with each release so browsers never pair new HTML with an old cached stylesheet or script. -->
-  <link rel="stylesheet" href="css/style.css?v=80">
+  <link rel="stylesheet" href="css/style.css?v=81">
   <!-- Is SF Pro (installed, or the Apple system font) available? If not, the page falls back to Inter and
        html gets "no-sf", which tightens Inter's letter spacing (see css/style.css). Checked by comparing
        text widths against a font that doesn't exist. -->
@@ -62,11 +62,11 @@
         <div class="filters" id="filters">
           <div class="filter-rows" id="filterRows">
           <div class="filter-row">
-            <h2 class="filter-label" id="fxLabel">Effects</h2>
+            <h2 class="filter-label" id="fxLabel">Effects<span class="filter-count" id="fxCount"></span></h2>
             <div class="scopes fx-row" id="fxPills" role="group" aria-labelledby="fxLabel"></div>
           </div>
           <div class="filter-row">
-            <h2 class="filter-label" id="brandLabel">Brands</h2>
+            <h2 class="filter-label" id="brandLabel">Brands<span class="filter-count" id="brandCount"></span></h2>
             <div class="scopes fx-row" id="brandPills" role="group" aria-labelledby="brandLabel"></div>
           </div>
           </div>
@@ -125,11 +125,11 @@
     </div>
   </div>
 
-  <script src="js/polishes.js?v=80"></script>
-  <script src="js/droplet.js?v=80"></script>
-  <script src="js/icons.js?v=80"></script>
-  <script src="js/brand-icons.js?v=80"></script>
-  <script src="js/swatch-render.js?v=80"></script>
-  <script src="js/app.js?v=80"></script>
+  <script src="js/polishes.js?v=81"></script>
+  <script src="js/droplet.js?v=81"></script>
+  <script src="js/icons.js?v=81"></script>
+  <script src="js/brand-icons.js?v=81"></script>
+  <script src="js/swatch-render.js?v=81"></script>
+  <script src="js/app.js?v=81"></script>
 </body>
 </html>

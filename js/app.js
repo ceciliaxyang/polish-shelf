@@ -293,6 +293,7 @@ function rollCount(n) {
 function toggleFx(k) {
   state.fx.has(k) ? state.fx.delete(k) : state.fx.add(k);
   document.querySelectorAll("#fxPills .scope").forEach(b => b.setAttribute("aria-pressed", state.fx.has(b.dataset.fx)));
+  showFilterCounts();
   filterShelf();
 }
 // A magnetic topper also counts as Magnetic for the filter (its card still reads just "Magnetic topper").
@@ -302,7 +303,22 @@ const matchesFx = p => (!state.fx.size || filterKeysOf(p).some(k => state.fx.has
 function toggleBrand(k) {
   state.brands.has(k) ? state.brands.delete(k) : state.brands.add(k);
   document.querySelectorAll("#brandPills .scope").forEach(b => b.setAttribute("aria-pressed", state.brands.has(b.dataset.brand)));
+  showFilterCounts();
   filterShelf();
+}
+// "Effects (2)" / "Brands (1)": how many pills are picked in each row, in grey like "Layers (2)" on the phone sheet.
+// On phones the label sits right next to its pills, so a count showing up (or going) makes the label wider (or
+// narrower) and the pill row would jump sideways under your finger. The row is scrolled by the same amount
+// instead, so every pill stays exactly where it was. (On wider screens the count sits in the gap, see style.css.)
+function showFilterCounts() {
+  [["#fxCount", "#fxPills", state.fx.size], ["#brandCount", "#brandPills", state.brands.size]].forEach(([c, row, n]) => {
+    const el = $(c), box = $(row), x = box.getBoundingClientRect().left, text = n ? `(${n})` : "";
+    if (el.textContent === text) return;
+    el.textContent = text;
+    const dx = box.getBoundingClientRect().left - x;
+    if (dx) box.scrollLeft += dx;
+  });
+  fadeScopes();
 }
 
 /* Filtering keeps the shelf as it is: no card is rebuilt and no swatch redrawn. Polishes that don't
