@@ -127,7 +127,18 @@ $("#combosClose").onclick = () => closeCombos();
 // the reverse: the shelf comes back underneath (where you left it) and a copy of the combos drops away.
 const SHEET = { up: 580, down: 420, shelfY: 0, Z: 45 }; // above the filter bar (40), below the Layers pane (60)
 function freezePage() {
-  const page = $(".page"), copy = page.cloneNode(true), wrap = document.createElement("div");
+  const page = $(".page");
+  // Swatches still pouring in (or waiting to) are landed first: the copy can't carry the pour's animations,
+  // so copied mid-pour they showed as square puddles, flat grey blobs, or nothing at all. One still undrawn
+  // is drawn now, so it's in the copy too.
+  page.querySelectorAll(".card.pour-wait, .card.pouring").forEach(card => {
+    const r = card.getBoundingClientRect();
+    if (r.bottom < 0 || r.top > innerHeight) return;
+    const cv = card.querySelector("canvas.swatch");
+    if (cv && !cv._w && (cv._p || cv._combo)) { if (drawIO) drawIO.unobserve(cv); try { drawCard(cv); } catch (e) {} }
+    if (typeof pourFinish === "function") pourFinish(card);
+  });
+  const copy = page.cloneNode(true), wrap = document.createElement("div");
   // The real elements keep their ids. Ids inside the droplets' SVG stay: their gloss, rim and shadow point
   // to them (an SVG url(#id) finds the live twin, which is identical), and without them the copy goes matte.
   copy.querySelectorAll("[id]").forEach(e => { if (!e.closest("svg")) e.removeAttribute("id"); });
