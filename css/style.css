@@ -112,6 +112,11 @@ button, input, select { font: inherit; color: inherit; }
 /* On desktop, keep at least 300px between the label and its pills, growing with the window on wider screens
    (about 350px at 1280, 400px at 1440, 490px at 1728, 550px at 1920, up to 640px). */
 .filter-label { flex-shrink: 0; margin: 0; font-family: "Instrument Serif", "EB Garamond", serif; font-size: 20px; line-height: 24px; font-weight: 400; color: #222; } /* Figma node 2384:82738 */
+/* The picked count after a label, "Effects (2)", in the grey of the phone sheet's "Layers (2)" (.peek-count). */
+.filter-count { margin-left: 5px; color: #6c6c6c; }
+.filter-count:empty { display: none; }
+/* Wider screens have 300px+ between a label and its pills, so the count sits in that gap and nothing moves. */
+@media (min-width: 761px) { .filter-label { position: relative; } .filter-count { position: absolute; left: 100%; white-space: nowrap; } }
 /* The space between a label and its pills (--label-gap) is padding inside the pill scroller rather than a gap,
    so pills scrolled sideways keep showing until they reach the label (8px short of it), not 24-640px before. */
 .filter-row { --label-gap: 24px; gap: 8px; }
