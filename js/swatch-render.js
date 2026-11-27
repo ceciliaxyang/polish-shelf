@@ -29,6 +29,11 @@ function rng(seed) {
 function gauss(R) { return Math.sqrt(-2 * Math.log(R() + 1e-9)) * Math.cos(2 * Math.PI * R()); }
 // Opacity after n coats of a polish with single-coat opacity a.
 function coat(a, n) { return 1 - Math.pow(1 - a, n); }
+// How brightly a shimmer particle catches the light as its facet turns, as a lookup table: a sharp peak
+// like the holo swatch's (sin to the 7th power here, a little broader than holo's 10th, so a few more are
+// lit at once). Index with ((facet + turn) * TWINKLE_N) & (TWINKLE_N - 1), where turn grows as the light moves.
+const TWINKLE_N = 1024, TWINKLE = new Float32Array(TWINKLE_N);
+for (let i = 0; i < TWINKLE_N; i++) { const f = Math.sin(i / TWINKLE_N * 6.283); TWINKLE[i] = f > 0 ? f ** 7 : 0; }
 
 function sprinkle(ctx, R, b, count, cols, rmin, rmax, amin, amax) {
   for (let i = 0; i < count; i++) {
@@ -271,6 +276,13 @@ function magneticSwatch(cv, p, W, H) {
     const big = R() < .03;
     sparkles.push([x, y, (big ? .5 + R() * .4 : .16 + Math.pow(R(), 2) * .3) * spk.size, big ? .85 + R() * .15 : .3 + R() * .6, R(), spk.dark > 0 && R() < spk.dark, spk.deep > 0 && R() < spk.deep]);
   }
+  // Shimmers drawn with this swatch (a glowing spot of shimmer) twinkle like the holo swatch, only softer:
+  // each sparkle has its own facet angle and brightens briefly as the light moves past it. Optional
+  // twinkle: { strength } in js/polishes.js (default .75; 0 turns it off). Its own random stream, so the
+  // sparkles keep their exact places.
+  const tw = p.effect === "shimmer" ? { strength: .75, ...p.twinkle } : null;
+  const tp = tw && tw.strength ? new Float32Array(sparkles.length) : null;
+  if (tp) { const R3 = rng((p.id || "p") + ":twinkle"); for (let i = 0; i < tp.length; i++) tp[i] = R3(); }
 
   // h: 0 = glass bead, 1 = cat eye, in between blends the two. x/y: pointer, 0 to 1 across the swatch.
   // The resting shape comes from the Glass bead / Cat eye pills; with neither picked it sits in between.
@@ -405,14 +417,28 @@ function magneticSwatch(cv, p, W, H) {
       for (let yy = y0; yy < y1; yy++) for (let xx = x0, o = (yy * cw + x0) * 4; xx < x1; xx++, o += 4) { L[o] = c0; L[o + 1] = c1; L[o + 2] = c2; L[o + 3] = A; }
     };
     const dk0 = shadow[0] * .8, dk1 = shadow[1] * .8, dk2 = shadow[2] * .8;
-    for (const [x, y, r, b, c, dk, dp] of sparkles) {
+    const turn = cur.x * 2.3 + cur.y * 1.7; // moving the light turns each sparkle's facet (as in the holo swatch)
+    for (let si = 0; si < sparkles.length; si++) {
+      const [x, y, r, b, c, dk, dp] = sparkles[si];
       if (dp) continue; // already drawn inside the body
       if (dk) { // a flake turned away from the light: a dark speck of the shadow color
         if (L) { put(x, y, r, dk0, dk1, dk2, .4 * b); continue; }
         ctx.globalCompositeOperation = "source-over"; ctx.globalAlpha = .4 * b; ctx.fillStyle = `rgb(${dk0 | 0},${dk1 | 0},${dk2 | 0})`;
         ctx.fillRect(x - r, y - r, r * 2, r * 2); ctx.globalCompositeOperation = spkCols ? "source-over" : "lighter"; continue;
       }
-      const q = sparkColor(x, y, r, b, c);
+      let q = sparkColor(x, y, r, b, c);
+      if (tp) { // facing the light right now: brighter and paler, even out in the base
+        const f = TWINKLE[((tp[si] + turn) * TWINKLE_N | 0) & (TWINKLE_N - 1)] * tw.strength;
+        if (f > .01) {
+          const [q0, q1, q2, qal, qa] = q || [...pal.subarray(0, 3), 0, 0], w = f * .8;
+          q = [q0 + (255 - q0) * w, q1 + (255 - q1) * w, q2 + (255 - q2) * w, Math.min(1, qal + f * b * 1.3), Math.min(1, qa + f * b * 1.3)];
+          if (f > .3) { // a faint glow around the brightest
+            ctx.globalCompositeOperation = "lighter"; ctx.globalAlpha = .16 * f; ctx.fillStyle = `rgb(${q[0] | 0},${q[1] | 0},${q[2] | 0})`;
+            ctx.beginPath(); ctx.arc(x, y, Math.max(1.4, r * 2.6), 0, 7); ctx.fill();
+            ctx.globalCompositeOperation = spkCols ? "source-over" : "lighter";
+          }
+        }
+      }
       if (!q) continue;
       const [s0, s1, s2, al, a] = q;
       if (L && r <= .5) { put(x, y, r, s0, s1, s2, al); continue; }
@@ -734,14 +760,24 @@ function multichromeSwatch(cv, p, W, H) {
   const gl = p.glimmer ? { share: .04, ...p.glimmer } : null;
   const glC = gl ? rgb(gl.color) : null, gp = gl ? new Float32Array(N) : null;
   if (gl) { const R2 = rng((p.id || "p") + ":glimmer"); for (let i = 0; i < N; i++) gp[i] = R2(); }
+  // Shimmers twinkle like the holo swatch (Fake Halo), only softer: each particle has its own facet
+  // angle and lights up briefly as the light moves past it (pointer, or the touch-screen drift).
+  // Optional twinkle: { strength } in js/polishes.js (default .75; 0 turns it off). Its own random
+  // stream, so the particles keep their exact look.
+  const tw = isShimmer ? { strength: .8 * (1 - opt.smooth * .45), ...p.twinkle } : null; // a satin gleam (smooth) twinkles less
+  const tp = tw && tw.strength ? new Float32Array(N) : null;
+  if (tp) { const R3 = rng((p.id || "p") + ":twinkle"); for (let i = 0; i < N; i++) tp[i] = R3(); }
   const img = ctx.createImageData(cw, ch), px = img.data;
   const rest = { x: .5, y: .5 }, cur = { ...rest }, target = { ...rest };
+  const blooms = [];
   let raf = 0;
 
   function draw() {
     cv._v = (cv._v || 0) + 1; // counts redraws, so a stack built from this swatch knows when to recompose (see liveStack)
+    blooms.length = 0;
     const axis = .5 + (cur.x - .5) * (isShimmer ? 1.1 : .7); // where the facing band sits
     const shift = (cur.y - .5) * .5;               // slide the whole range of colors
+    const turn = cur.x * 2.3 + cur.y * 1.7;        // moving the light turns each particle's facet (as in the holo swatch)
     for (let cy = 0; cy < gy; cy++) {
       const ny = (cy + .5) / gy, dome = (ny - .5) * (ny - .5) * .6; // the nail also curves top to bottom, so bands bend near the ends
       const along = (.5 - ny) * opt.along; // colors drift along the length (e.g. greener toward the tip)
@@ -767,6 +803,15 @@ function multichromeSwatch(cv, p, W, H) {
           const catchY = isShimmer ? .55 + .75 * Math.exp(-(ny - cur.y) * (ny - cur.y) * 7) : 1;
           const a = Math.min(1, opt.cover * catchY * (.25 + q * q * 1.1) * (light / 1.14) * (opt.sheen ? Math.exp(-ang * ang * opt.sheen) : 1));
           r = tint[0] + (r - tint[0]) * a; gg = tint[1] + (gg - tint[1]) * a; bl = tint[2] + (bl - tint[2]) * a;
+          if (tp) { // a particle facing the light right now flashes a paler version of its color
+            const f = TWINKLE[((tp[i] + turn) * TWINKLE_N | 0) & (TWINKLE_N - 1)];
+            if (f > .02) {
+              const m = Math.min(1, f * tw.strength * (.35 + .65 * Math.exp(-ang * ang * 3)) * Math.min(1, a * 1.6));
+              const c0 = pal[k] + (255 - pal[k]) * .7, c1 = pal[k + 1] + (255 - pal[k + 1]) * .7, c2 = pal[k + 2] + (255 - pal[k + 2]) * .7;
+              r += (c0 - r) * m; gg += (c1 - gg) * m; bl += (c2 - bl) * m;
+              if (m > .25) blooms.push((cx + .5) * CELL, (cy + .5) * CELL, c0, c1, c2, m); // the brightest get a faint glow
+            }
+          }
         }
         r += (255 - r) * sparkle * .5; gg += (255 - gg) * sparkle * .5; bl += (255 - bl) * sparkle * .5;
         if (gl && gp[i] < gl.share) { // a colored glint, lit at its own tilt angle
@@ -781,6 +826,14 @@ function multichromeSwatch(cv, p, W, H) {
       }
     }
     ctx.putImageData(img, 0, 0);
+    if (blooms.length) { // a faint glow around the brightest glints, softer than the holo swatch's
+      ctx.globalCompositeOperation = "lighter";
+      for (let j = 0; j < blooms.length; j += 6) {
+        ctx.fillStyle = `rgb(${blooms[j + 2] | 0},${blooms[j + 3] | 0},${blooms[j + 4] | 0})`; ctx.globalAlpha = .11 * blooms[j + 5];
+        ctx.beginPath(); ctx.arc(blooms[j], blooms[j + 1], 2 * dpr, 0, 7); ctx.fill();
+      }
+      ctx.globalCompositeOperation = "source-over"; ctx.globalAlpha = 1;
+    }
   }
 
   function tick() {
