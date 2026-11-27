@@ -158,8 +158,8 @@ body.show-mini .mini-nav { opacity: 1; transform: none; visibility: visible; tra
 html:not(.no-sf) .fx-row .scope { letter-spacing: -.4px; }
 .scope-icon { flex-shrink: 0; display: block; width: 24px; height: 24px; overflow: visible; }
 /* ---------- Pill icon animations ----------
-   Each filter pill's icon plays a short animation (0.4 to 1s, once) when the pointer comes onto the pill or
-   it's tapped: js/app.js adds "ia-play" to the pill. (Glow-in-the-dark's moon is animated in js/app.js instead,
+   Each filter pill's icon plays a short animation (0.4 to 1s a cycle) when the pointer comes onto the pill or
+   it's pressed: js/app.js adds "ia-play" to the pill and plays it 3 times (ICON_CYCLES). (Glow-in-the-dark's moon is animated in js/app.js instead,
    since its shape changes.) Icons and their moving parts are in js/icons.js and
    js/brand-icons.js. Off with Reduce Motion. */
 .ia .an { transform-box: fill-box; transform-origin: 50% 50%; }
