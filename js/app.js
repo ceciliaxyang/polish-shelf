@@ -647,7 +647,7 @@ function saveCombo() {
 // 3. the Combos button grows a little and settles as the new combo appears in its thumbnails and the count
 //    ticks up;
 // 4. the Layers pane slides out to the right and disappears (on phones the sheet slides down off the screen).
-// Only then does the shelf take back the pane's room and the dock recenter, and the layers clear (as with Clear).
+// Only then does the shelf take back the pane's room and the dock recenter, and the layers clear (as with Close).
 const wait = ms => new Promise(r => setTimeout(r, ms));
 async function saveSequence(layers, after) {
   const b = $("#bench"), save = $("#saveCombo"), btn = $("#comboBtn");
@@ -2188,30 +2188,57 @@ function zoomFlip() {
 /* ---------- boot ---------- */
 buildPills();
 document.querySelectorAll("#filters .scope-icon").forEach(fitIcon);
-// Pill icons play a short animation when the pointer comes onto the pill, or on a tap (the animations are in
-// css/style.css, under "Pill icon animations", and are off with Reduce Motion). It plays once to the end even if
-// the pointer leaves, and restarts on the next hover. Delegated, so the mini nav's copies of the pills play too.
+// Pill icons play a short animation when the pointer comes onto the pill, or when it's pressed (the animations
+// are in css/style.css, under "Pill icon animations", and are off with Reduce Motion). Each plays through
+// ICON_CYCLES times, to the end even if the pointer leaves, and starts over on the next hover or press.
+// Delegated, so the mini nav's copies of the pills play too.
+const ICON_CYCLES = 3, ICON_REST = 120; // ms between cycles
 function playIcon(btn) {
+  clearTimeout(btn._ia); cancelAnimationFrame(btn._moon);
   btn.classList.remove("ia-play"); void btn.offsetWidth; btn.classList.add("ia-play");
-  clearTimeout(btn._ia); btn._ia = setTimeout(() => btn.classList.remove("ia-play"), 1300);
-  // Glow-in-the-dark: the moon's shadow slides off (waxing to full) and back (waning), over 1s.
+  // One cycle lasts as long as the icon's longest part (delay included). Each later cycle rewinds the same
+  // animations and plays them again, so the parts stay in step with each other.
+  const anims = btn.getAnimations ? btn.getAnimations({ subtree: true }).filter(a => a.animationName) : [];
+  const cycle = anims.reduce((m, a) => Math.max(m, a.effect.getComputedTiming().endTime || 0), 0) || 1000;
+  let left = ICON_CYCLES - 1;
+  const again = () => {
+    if (left-- <= 0) { btn.classList.remove("ia-play"); return; }
+    anims.forEach(a => { a.currentTime = 0; a.play(); });
+    btn._ia = setTimeout(again, cycle + ICON_REST);
+  };
+  btn._ia = setTimeout(again, cycle + ICON_REST);
+  // Glow-in-the-dark: the moon's shadow slides off (waxing to full) and back (waning), over 1s, each cycle.
   const moon = btn.querySelector(".ia-glow .moon");
   if (moon && !reduceMotion) {
-    const t0 = performance.now(), far = 2 * MOON_R + 1;
-    cancelAnimationFrame(btn._moon);
+    const t0 = performance.now(), far = 2 * MOON_R + 1, per = 1000 + ICON_REST;
     const step = now => {
-      const t = Math.min(1, (now - t0) / 1000), e = (1 - Math.cos(t * 2 * Math.PI)) / 2;
-      moon.setAttribute("d", moonPath(MOON_REST + (far - MOON_REST) * e));
-      if (t < 1) btn._moon = requestAnimationFrame(step);
+      const t = Math.max(0, now - t0), k = Math.min(1, (t % per) / 1000), e = (1 - Math.cos(k * 2 * Math.PI)) / 2;
+      moon.setAttribute("d", moonPath(MOON_REST + (far - MOON_REST) * (t >= per * ICON_CYCLES ? 0 : e)));
+      if (t < per * ICON_CYCLES) btn._moon = requestAnimationFrame(step);
     };
     btn._moon = requestAnimationFrame(step);
   }
+}
+// Pressing a pill filters the shelf, and laying the shelf out again can hold up the page for a few frames.
+// The icon (an SVG, which Safari animates on the page's main thread) would sit still through that and only
+// catch up at the end, so after a press it starts once frames are flowing again (at most about 1/3s later).
+function playIconAfterFilter(btn) {
+  cancelAnimationFrame(btn._wait);
+  const t0 = performance.now(); let last = 0;
+  const tick = now => {
+    if (last && (now - last < 40 || now - t0 > 350)) return playIcon(btn);
+    last = now; btn._wait = requestAnimationFrame(tick);
+  };
+  btn._wait = requestAnimationFrame(tick);
 }
 const iconPill = e => { const b = e.target.closest && e.target.closest(".scope"); return b && b.querySelector(".ia") ? b : null; };
 document.addEventListener("pointerover", e => {
   const b = iconPill(e); if (b && e.pointerType === "mouse" && !b.contains(e.relatedTarget)) playIcon(b);
 });
-document.addEventListener("pointerdown", e => { const b = iconPill(e); if (b && e.pointerType !== "mouse") playIcon(b); });
+// A press (a tap, or a click if the hover's animation has already finished) plays it, once the filter is applied.
+document.addEventListener("click", e => {
+  const b = iconPill(e); if (b && !(b.classList.contains("ia-play") && b.matches(":hover") && matchMedia("(hover: hover)").matches)) playIconAfterFilter(b);
+});
 // A filter row with more pills than fit fades out at the edge that has more to scroll to.
 function fadeScopes() {
   document.querySelectorAll(".filter-row .scopes").forEach(el => {
