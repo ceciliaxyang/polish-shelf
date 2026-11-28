@@ -1017,12 +1017,17 @@ function closeDetail() {
   // The dialog stops catching the pointer and the shelf can scroll again right away. If the shelf does
   // scroll mid-flight, the card moves out from under the swatch's landing spot, so the flight finishes at
   // once (the swatch hands straight back to its card) instead of being left behind where the card was.
+  // Keyboard focus goes back to the swatch that opened the page (it was left on the hidden dialog otherwise),
+  // once the swatch is visible again.
+  const refocus = m.contains(document.activeElement);
   const done = () => {
     if (detail.closing !== done) return;
     detail.closing = null; clearTimeout(done.t); removeEventListener("scroll", done.scroll);
     m.hidden = true; m.classList.remove("open"); m.style.pointerEvents = ""; m.style.transform = "";
     stage.style.transition = "none"; stage.style.transform = "";
     if (card) card.style.visibility = "";
+    const opener = refocus && card && card.isConnected && card.querySelector(".swatch");
+    if (opener) opener.focus({ preventScroll: true });
   };
   detail.closing = done;
   m.classList.remove("open"); document.body.classList.remove("detail-open");
@@ -2155,6 +2160,8 @@ function zoomFlip() {
   const cards = [...grid.querySelectorAll(":scope > .card:not([hidden])")].filter(wrapOf);
   const before = new Map();
   cards.forEach(c => { const r = wrapOf(c).getBoundingClientRect(); if (near(r)) before.set(c, r); });
+  // Which cards show their + button now (it's hidden at 4 per row), so one that appears fades in with the text.
+  const btnOf = c => c.querySelector(".swatch-btn"), hadBtn = new Set(cards.filter(c => btnOf(c) && btnOf(c).offsetParent));
   // Stay with the card in the middle of the screen, unless the top of the shelf is showing.
   let anchor = null, anchorY = vh / 2;
   if (grid.getBoundingClientRect().top < 0) {
@@ -2178,6 +2185,8 @@ function zoomFlip() {
           { transformOrigin: `${ox}px ${oy}px`, transform: "none" }], opts));
         const text = c.querySelector(".card-text");
         if (text && text.offsetParent) zoomAnims.push(text.animate([{ opacity: 0 }, { opacity: 1 }], { duration: ZOOM_MS * .55, delay: ZOOM_MS * .45, easing: "ease-out", fill: "backwards" }));
+        const btn = btnOf(c);
+        if (btn && !hadBtn.has(c) && btn.offsetParent && getComputedStyle(btn).opacity !== "0") zoomAnims.push(btn.animate([{ opacity: 0 }, { opacity: 1 }], { duration: ZOOM_MS * .55, delay: ZOOM_MS * .45, easing: "ease-out", fill: "backwards" }));
       } else {
         zoomAnims.push(c.animate([{ opacity: 0, transform: "scale(.94)" }, { opacity: 1, transform: "none" }], { ...opts, delay: ZOOM_MS * .25, fill: "backwards" }));
       }
